@@ -12,20 +12,29 @@ const Router = {
     },
 
     /** 페이지 전환 */
-    async navigate(pageName) {
+    async navigate(pageName, tabName = null) {
         if (!this.pages[pageName]) {
             console.warn('Unknown page:', pageName);
             return;
         }
 
         this.currentPage = pageName;
+        if (pageName === 'club' && tabName && window.ClubPage) {
+            ClubPage.currentTab = tabName;
+        }
+
+        const effectiveTab = pageName === 'club' ? (tabName || (window.ClubPage ? ClubPage.currentTab : 'games') || 'games') : null;
 
         // 네비게이션 활성 상태 업데이트
         document.querySelectorAll('.nav-item').forEach(item => {
             item.classList.toggle('active', item.dataset.page === pageName);
         });
         document.querySelectorAll('.bottom-nav-item').forEach(item => {
-            item.classList.toggle('active', item.dataset.page === pageName);
+            if (pageName === 'club') {
+                item.classList.toggle('active', item.dataset.page === pageName && item.dataset.tab === effectiveTab);
+            } else {
+                item.classList.toggle('active', item.dataset.page === pageName && !item.dataset.tab);
+            }
         });
 
         // 페이지 타이틀 업데이트
