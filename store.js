@@ -299,6 +299,9 @@ const Store = {
     },
 
     async addGame(game, participants) {
+        if (game && game.game_date) {
+            game.game_date = String(game.game_date).slice(0, 10);
+        }
         let dbGame = null;
         try {
             const { data: g, error: ge } = await this.from('club_games').insert(game).select().single();
@@ -330,6 +333,9 @@ const Store = {
     },
 
     async updateGame(id, game, participants) {
+        if (game && game.game_date) {
+            game.game_date = String(game.game_date).slice(0, 10);
+        }
         try {
             await this.from('club_games').update(game).eq('id', id);
             await this.from('club_game_participants').delete().eq('game_id', id);
@@ -624,10 +630,13 @@ const Store = {
 
     async saveCalcHistory(calcItem) {
         calcItem.created_at = new Date().toISOString();
+        if (calcItem.calc_date) {
+            calcItem.calc_date = String(calcItem.calc_date).slice(0, 10);
+        }
         calcItem.id = calcItem.id || 'calc_' + Date.now();
 
         let localList = this._getLocalCalcHistory();
-        localList = localList.filter(item => item.calc_date !== calcItem.calc_date);
+        localList = localList.filter(item => item && item.calc_date && String(item.calc_date).slice(0, 10) !== calcItem.calc_date);
         localList.unshift(calcItem);
         this._saveLocalCalcHistory(localList);
 
@@ -640,17 +649,29 @@ const Store = {
     },
 
     async getCalcHistoryList() {
+        let dbList = [];
         try {
             const { data, error } = await this.from('club_calc_history').select('*').order('calc_date', { ascending: false });
-            if (!error && data && data.length > 0) return data;
+            if (!error && data && data.length > 0) dbList = data;
         } catch(e) {}
 
-        return this._getLocalCalcHistory();
+        const localList = this._getLocalCalcHistory();
+        const map = {};
+        dbList.forEach(item => {
+            if (item && item.calc_date) map[String(item.calc_date).slice(0, 10)] = item;
+        });
+        localList.forEach(item => {
+            if (item && item.calc_date) map[String(item.calc_date).slice(0, 10)] = item;
+        });
+
+        return Object.values(map).sort((a, b) => new Date(b.calc_date) - new Date(a.calc_date));
     },
 
     async getCalcHistoryByDate(dateStr) {
+        if (!dateStr) return null;
+        const cleanDate = String(dateStr).slice(0, 10);
         const list = await this.getCalcHistoryList();
-        return list.find(item => item.calc_date === dateStr) || null;
+        return list.find(item => item && item.calc_date && String(item.calc_date).slice(0, 10) === cleanDate) || null;
     },
 
     async deleteCalcHistory(id) {
