@@ -274,6 +274,27 @@ const Store = {
 
         let list = Object.values(combinedMap).sort((a, b) => new Date(b.game_date) - new Date(a.game_date));
         if (filters.limit) list = list.slice(0, filters.limit);
+
+        // 멤버 정보 매핑 보완 (로컬/DB 백업 동기화)
+        try {
+            const members = await this.getMembers();
+            const memMap = {};
+            (members || []).forEach(m => memMap[m.id] = m);
+
+            list.forEach(g => {
+                if (g.club_game_participants && Array.isArray(g.club_game_participants)) {
+                    g.club_game_participants.forEach(p => {
+                        if (!p.club_members || !p.club_members.name) {
+                            const m = memMap[p.member_id];
+                            if (m) {
+                                p.club_members = { name: m.name };
+                            }
+                        }
+                    });
+                }
+            });
+        } catch(e) {}
+
         return list;
     },
 
