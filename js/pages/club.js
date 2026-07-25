@@ -71,7 +71,12 @@ const ClubPage = {
         const games = await Store.getGames({ limit: 20 });
         const calcHistories = await Store.getCalcHistoryList();
         const calcMap = {};
-        (calcHistories || []).forEach(c => calcMap[c.calc_date] = c);
+        (calcHistories || []).forEach(c => {
+            if (c && c.calc_date) {
+                const dateKey = String(c.calc_date).slice(0, 10);
+                calcMap[dateKey] = c;
+            }
+        });
 
         this.gamesMap = {};
         games.forEach(g => this.gamesMap[g.id] = g);
@@ -84,7 +89,8 @@ const ClubPage = {
             ${games.length === 0 ? '<div class="empty-state"><div class="empty-icon">⛳</div><p class="empty-text">아직 게임 기록이 없습니다</p></div>' : `
             <div class="games-vertical-list" style="display:flex;flex-direction:column;gap:14px;">
                 ${games.map(g => {
-                    const calc = calcMap[g.game_date];
+                    const gDateKey = String(g.game_date || '').slice(0, 10);
+                    const calc = calcMap[gDateKey];
                     const parts = (g.club_game_participants || []).sort((a, b) => (a.ranking || 99) - (b.ranking || 99));
                     const hasUnranked = parts.some(p => !p.ranking);
 
@@ -170,7 +176,7 @@ const ClubPage = {
             `;
         }).join('');
 
-        const defaultDate = editGame ? editGame.game_date : Utils.today();
+        const defaultDate = editGame && editGame.game_date ? Utils.formatDate(editGame.game_date) : Utils.today();
 
         Modal.open(editGame ? '🏆 게임 기록 & 순위 수정' : '⛳ 게임 기록 입력 (1차: 참석자 등록)', `
             <div class="form-grid">
