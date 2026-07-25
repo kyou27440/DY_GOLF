@@ -34,6 +34,11 @@ const ClubPage = {
         document.querySelectorAll('.tab-btn').forEach(b => {
             b.classList.toggle('active', b.dataset.tab === tabName);
         });
+        document.querySelectorAll('.bottom-nav-item').forEach(b => {
+            if (b.dataset.page === 'club') {
+                b.classList.toggle('active', b.dataset.tab === tabName);
+            }
+        });
         await this.renderTab();
     },
 
@@ -579,24 +584,25 @@ const ClubPage = {
             <div class="ranking-vertical-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(210px, 1fr));gap:14px;margin-bottom:20px;">
                 ${stats.map((s, idx) => {
                     const medal = idx === 0 ? '🥇 ' : (idx === 1 ? '🥈 ' : (idx === 2 ? '🥉 ' : ''));
+                    const rankGamesInfo = s.rankedGames !== undefined && s.rankedGames < s.games ? ` (순위 ${s.rankedGames}회)` : '';
                     return `
                     <div class="ranking-vertical-card" style="padding:16px;background:linear-gradient(135deg, rgba(30,41,59,0.9), rgba(15,23,42,0.95));border:1px solid rgba(99,102,241,0.28);border-radius:16px;box-shadow:0 4px 14px rgba(0,0,0,0.18);">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                             <span style="font-weight:700;font-size:1.08rem;color:#f8fafc;">${medal}${Utils.escapeHtml(s.name)}</span>
-                            <span class="badge badge-income" style="font-size:0.8rem;font-weight:700;">🎮 ${s.games}회 참여</span>
+                            <span class="badge badge-income" style="font-size:0.8rem;font-weight:700;">🎮 ${s.games}회 참여${rankGamesInfo}</span>
                         </div>
                         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:10px;background:rgba(15,23,42,0.6);border-radius:10px;text-align:center;font-size:0.82rem;">
                             <div>
                                 <div style="color:var(--text-muted);">평균순위</div>
-                                <div style="font-weight:700;color:#38bdf8;font-size:1rem;margin-top:2px;">${s.avgRank}등</div>
+                                <div style="font-weight:700;color:#38bdf8;font-size:1rem;margin-top:2px;">${s.avgRank === '-' ? '-' : s.avgRank + '등'}</div>
                             </div>
                             <div>
                                 <div style="color:var(--text-muted);">최고순위</div>
-                                <div style="font-weight:700;color:#34d399;font-size:1rem;margin-top:2px;">${s.best}등</div>
+                                <div style="font-weight:700;color:#34d399;font-size:1rem;margin-top:2px;">${s.best === '-' ? '-' : s.best + '등'}</div>
                             </div>
                             <div>
                                 <div style="color:var(--text-muted);">최저순위</div>
-                                <div style="font-weight:700;color:#f43f5e;font-size:1rem;margin-top:2px;">${s.worst}등</div>
+                                <div style="font-weight:700;color:#f43f5e;font-size:1rem;margin-top:2px;">${s.worst === '-' ? '-' : s.worst + '등'}</div>
                             </div>
                         </div>
                     </div>
