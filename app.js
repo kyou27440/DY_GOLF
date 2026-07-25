@@ -71,13 +71,10 @@
             const page = item.dataset.page;
             const tab = item.dataset.tab;
             
-            document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.remove('active'));
-            item.classList.add('active');
-            
-            if (page === 'club' && tab) {
+            if (page === 'club' && tab && window.ClubPage) {
                 ClubPage.currentTab = tab;
             }
-            await Router.navigate(page);
+            await Router.navigate(page, tab);
         });
     });
 
