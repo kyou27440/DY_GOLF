@@ -4,15 +4,17 @@
 
 const DashboardPage = {
     async render() {
-        const [clubBal, exchangeTotal, games, members, calcHistories] = await Promise.all([
+        const [clubBal, exchangeTotal, games, totalGamesCount, members, calcHistories] = await Promise.all([
             Store.getClubTotalBalance().catch(() => 0),
             Store.getExchangeTotal().catch(() => 0),
             Store.getGames({ limit: 5 }).catch(() => []),
+            Store.getGamesCount().catch(() => 0),
             Store.getMembers('active').catch(() => []),
             Store.getCalcHistoryList().catch(() => [])
         ]);
 
         const recentGames = (games || []).slice(0, 3);
+        const totalCountDisplay = totalGamesCount || (games || []).length;
         const nowStr = `${new Date().getFullYear()}.${String(new Date().getMonth() + 1).padStart(2, '0')}.${String(new Date().getDate()).padStart(2, '0')}`;
 
         return `
@@ -46,7 +48,7 @@ const DashboardPage = {
             <div class="summary-card indigo">
                 <div class="card-icon">🎮</div>
                 <div class="card-label">최근 게임 기록</div>
-                <div class="card-value">${games.length}회 기록</div>
+                <div class="card-value">${totalCountDisplay}회 기록</div>
                 <div class="card-sub">스크린골프 & 모임</div>
             </div>
             <div class="summary-card rose">
@@ -61,21 +63,21 @@ const DashboardPage = {
             <div class="card">
                 <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
                     <span class="card-title">🏆 최근 게임 기록 & 순위</span>
-                    <button class="btn btn-ghost btn-sm" onclick="Router.navigate('club')">더보기 ➔</button>
+                    <button class="btn btn-ghost btn-sm" onclick="Router.navigate('club', 'games')">더보기 ➔</button>
                 </div>
                 ${recentGames.length > 0 ? this.renderRecentGames(recentGames) : '<div class="empty-state"><div class="empty-icon">⛳</div><p class="empty-text">아직 게임 기록이 없습니다</p></div>'}
             </div>
             <div class="card">
                 <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
                     <span class="card-title">📊 최근 저장된 회비 산출 이력</span>
-                    <button class="btn btn-emerald btn-sm" onclick="Router.navigate('club')">산출시트 이동</button>
+                    <button class="btn btn-emerald btn-sm" onclick="Router.navigate('club', 'calculator')">산출시트 이동</button>
                 </div>
                 ${calcHistories && calcHistories.length > 0 ? this.renderRecentCalcs(calcHistories.slice(0, 3)) : '<div class="empty-state"><div class="empty-icon">📊</div><p class="empty-text">저장된 산출 이력이 없습니다</p></div>'}
             </div>
             <div class="card full-width">
                 <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
                     <span class="card-title">👥 활동 중인 모임 멤버</span>
-                    <button class="btn btn-ghost btn-sm" onclick="Router.navigate('club')">멤버 관리 ➔</button>
+                    <button class="btn btn-ghost btn-sm" onclick="Router.navigate('club', 'members')">멤버 관리 ➔</button>
                 </div>
                 ${this.renderActiveMembers(members)}
             </div>
