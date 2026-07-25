@@ -106,17 +106,18 @@
         });
     }
 
-    // ── Supabase 연결 확인 & 초기 페이지 로드 ──
-    try {
-        if (typeof supabase !== 'undefined' && supabase && typeof supabase.from === 'function') {
-            const { data, error } = await supabase.from('app_settings').select('key').limit(1);
-            if (error) throw error;
-            console.log('✅ Supabase 연결 성공');
-        }
-    } catch (err) {
-        console.warn('⚠️ Supabase 연결 실패:', err.message);
-    }
-
-    // 대시보드 로드
+    // 대시보드 로드 (모바일/PC 접속 지연 0초 보장)
     Router.navigate('dashboard');
+
+    // Supabase 연결 확인 (비동기 백그라운드 체크 - 메인 스레드 차단 안 함)
+    setTimeout(async () => {
+        try {
+            if (typeof supabase !== 'undefined' && supabase && typeof supabase.from === 'function') {
+                await supabase.from('club_members').select('id').limit(1);
+                console.log('✅ Supabase 연결 성공');
+            }
+        } catch (err) {
+            console.warn('⚠️ Supabase 연결 확인:', err.message);
+        }
+    }, 100);
 })();
