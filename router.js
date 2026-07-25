@@ -24,6 +24,9 @@ const Router = {
         document.querySelectorAll('.nav-item').forEach(item => {
             item.classList.toggle('active', item.dataset.page === pageName);
         });
+        document.querySelectorAll('.bottom-nav-item').forEach(item => {
+            item.classList.toggle('active', item.dataset.page === pageName);
+        });
 
         // 페이지 타이틀 업데이트
         const titles = {
