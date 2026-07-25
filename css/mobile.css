@@ -355,6 +355,32 @@
     .card-header {
         flex-wrap: wrap !important;
     }
+
+    /* 대시보드 최근 게임 모바일 100% 최적화 및 잘림 방지 */
+    .recent-games-container,
+    .recent-game-card {
+        max-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .recent-game-card {
+        padding: 10px 12px !important;
+    }
+
+    .recent-game-participants {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 5px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .recent-game-participant-chip {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        font-size: 0.78rem !important;
+    }
 }
 
 /* 세로 모드 강제 최적화 (Landscape 회전 시 세로 1열 스트림 유지) */
