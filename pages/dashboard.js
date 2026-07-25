@@ -82,18 +82,33 @@ const DashboardPage = {
     },
 
     renderRecentGames(games) {
-        let html = '<div style="display:flex;flex-direction:column;gap:12px">';
+        let html = '<div class="recent-games-container" style="display:flex;flex-direction:column;gap:10px;">';
         games.forEach(g => {
             const parts = (g.club_game_participants || []).sort((a, b) => (a.ranking || 99) - (b.ranking || 99));
-            const partStr = parts.map(p => {
+            
+            const partBadges = parts.map(p => {
                 const rankClass = p.ranking <= 3 && p.ranking > 0 ? `rank-${p.ranking}` : 'rank-other';
-                return `<span class="ranking-badge ${rankClass}" title="${p.club_members?.name}">${p.ranking || '-'}</span> ${Utils.escapeHtml(p.club_members?.name || '?')}`;
-            }).join('&nbsp;&nbsp;');
-            html += `<div class="activity-item">
-                <div class="activity-icon">⛳</div>
-                <div class="activity-info">
-                    <div class="activity-title">${Utils.formatDateKR(g.game_date)} ${Utils.escapeHtml(g.location || '')}</div>
-                    <div class="activity-meta" style="margin-top:4px">${partStr || '참여자 없음'}</div>
+                const memberName = p.club_members?.name || p.member_name || '?';
+                return `
+                    <div class="recent-game-participant-chip" style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px 3px 4px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:16px;font-size:0.82rem;box-sizing:border-box;">
+                        <span class="ranking-badge ${rankClass}" style="width:20px;height:20px;font-size:0.72rem;flex-shrink:0;">${p.ranking || '-'}</span>
+                        <span style="font-weight:600;color:#f8fafc;white-space:nowrap;">${Utils.escapeHtml(memberName)}</span>
+                    </div>
+                `;
+            }).join('');
+
+            html += `
+            <div class="activity-item recent-game-card" style="display:flex;flex-direction:column;gap:8px;padding:12px 14px;background:linear-gradient(135deg, rgba(30,41,59,0.7), rgba(15,23,42,0.85));border:1px solid rgba(99,102,241,0.25);border-radius:12px;box-sizing:border-box;width:100%;">
+                <div style="display:flex;justify-content:space-between;align-items:center;width:100%;flex-wrap:wrap;gap:6px;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span style="font-size:1.1rem;">⛳</span>
+                        <span style="font-weight:700;font-size:0.92rem;color:#f8fafc;">${Utils.formatDateKR(g.game_date)}</span>
+                        ${g.location ? `<span style="font-size:0.8rem;color:#38bdf8;font-weight:500;">📍 ${Utils.escapeHtml(g.location)}</span>` : ''}
+                    </div>
+                    ${g.total_cost ? `<span style="font-size:0.82rem;font-weight:700;color:#10b981;">${Utils.formatVND(g.total_cost)}</span>` : ''}
+                </div>
+                <div class="recent-game-participants" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;width:100%;box-sizing:border-box;">
+                    ${partBadges || '<span style="font-size:0.82rem;color:var(--text-muted);">참여자 기록 없음</span>'}
                 </div>
             </div>`;
         });
