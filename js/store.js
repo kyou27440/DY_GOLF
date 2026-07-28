@@ -476,11 +476,55 @@ const Store = {
             if (!ge && g) {
                 dbGame = g;
                 if (participants && participants.length > 0) {
-                    const parts = participants.map(p => ({ ...p, game_id: g.id }));
-                    await this.from('club_game_participants').insert(parts);
+                    const members = await this.getMembers();
+                    const memMap = {};
+                    (members || []).forEach(m => memMap[m.id] = m);
+
+                    const dbMembersMap = {};
+                    const { data: dbMList } = await this.from('club_members').select('*');
+                    (dbMList || []).forEach(m => { if (m && m.name) dbMembersMap[m.name] = m.id; });
+
+                    const validParts = [];
+                    for (const p of participants) {
+                        const mObj = memMap[p.member_id];
+                        const mName = mObj ? mObj.name : null;
+                        let targetMid = (dbMembersMap[mName]) || (typeof p.member_id === 'number' && p.member_id < 1000000000 ? p.member_id : null);
+
+                        if (!targetMid && mName) {
+                            try {
+                                const newMemPayload = this._formatMemberForSave({
+                                    name: mName,
+                                    company: mObj?.company || '현지',
+                                    member_type: mObj?.member_type || 'regular',
+                                    join_date: String(game.game_date).slice(0, 10)
+                                });
+                                delete newMemPayload.id;
+                                delete newMemPayload.nickname;
+                                const { data: newM } = await this.from('club_members').insert(newMemPayload).select().single();
+                                if (newM) {
+                                    targetMid = newM.id;
+                                    dbMembersMap[mName] = newM.id;
+                                }
+                            } catch(e) {}
+                        }
+
+                        if (targetMid) {
+                            validParts.push({
+                                game_id: g.id,
+                                member_id: targetMid,
+                                ranking: p.ranking ? Number(p.ranking) : null
+                            });
+                        }
+                    }
+
+                    if (validParts.length > 0) {
+                        await this.from('club_game_participants').insert(validParts);
+                    }
                 }
             }
-        } catch(e) {}
+        } catch(e) {
+            console.error('addGame error:', e);
+        }
 
         const members = await this.getMembers();
         const memMap = {};
@@ -508,10 +552,54 @@ const Store = {
             await this.from('club_games').update(game).eq('id', id);
             await this.from('club_game_participants').delete().eq('game_id', id);
             if (participants && participants.length > 0) {
-                const parts = participants.map(p => ({ ...p, game_id: id }));
-                await this.from('club_game_participants').insert(parts);
+                const members = await this.getMembers();
+                const memMap = {};
+                (members || []).forEach(m => memMap[m.id] = m);
+
+                const dbMembersMap = {};
+                const { data: dbMList } = await this.from('club_members').select('*');
+                (dbMList || []).forEach(m => { if (m && m.name) dbMembersMap[m.name] = m.id; });
+
+                const validParts = [];
+                for (const p of participants) {
+                    const mObj = memMap[p.member_id];
+                    const mName = mObj ? mObj.name : null;
+                    let targetMid = (dbMembersMap[mName]) || (typeof p.member_id === 'number' && p.member_id < 1000000000 ? p.member_id : null);
+
+                    if (!targetMid && mName) {
+                        try {
+                            const newMemPayload = this._formatMemberForSave({
+                                name: mName,
+                                company: mObj?.company || '현지',
+                                member_type: mObj?.member_type || 'regular',
+                                join_date: String(game.game_date).slice(0, 10)
+                            });
+                            delete newMemPayload.id;
+                            delete newMemPayload.nickname;
+                            const { data: newM } = await this.from('club_members').insert(newMemPayload).select().single();
+                            if (newM) {
+                                targetMid = newM.id;
+                                dbMembersMap[mName] = newM.id;
+                            }
+                        } catch(e) {}
+                    }
+
+                    if (targetMid) {
+                        validParts.push({
+                            game_id: id,
+                            member_id: targetMid,
+                            ranking: p.ranking ? Number(p.ranking) : null
+                        });
+                    }
+                }
+
+                if (validParts.length > 0) {
+                    await this.from('club_game_participants').insert(validParts);
+                }
             }
-        } catch(e) {}
+        } catch(e) {
+            console.error('updateGame error:', e);
+        }
 
         const members = await this.getMembers();
         const memMap = {};
