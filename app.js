@@ -71,8 +71,9 @@
             const page = item.dataset.page;
             const tab = item.dataset.tab;
             
-            if (page === 'club' && tab && window.ClubPage) {
-                ClubPage.currentTab = tab;
+            const clubObj = window.ClubPage || (typeof ClubPage !== 'undefined' ? ClubPage : null);
+            if (page === 'club' && tab && clubObj) {
+                clubObj.currentTab = tab;
             }
             await Router.navigate(page, tab);
         });
@@ -84,20 +85,25 @@
         fab.addEventListener('click', () => {
             // 현재 페이지에 따라 적절한 입력 모달 오픈
             const page = Router.currentPage;
+            const clubObj = window.ClubPage || (typeof ClubPage !== 'undefined' ? ClubPage : null);
+            const personalObj = window.PersonalPage || (typeof PersonalPage !== 'undefined' ? PersonalPage : null);
+            const exchangeObj = window.ExchangePage || (typeof ExchangePage !== 'undefined' ? ExchangePage : null);
+
             switch (page) {
                 case 'personal':
-                    PersonalPage.openTxModal();
+                    if (personalObj) personalObj.openTxModal();
                     break;
                 case 'club':
-                    if (ClubPage.currentTab === 'dues') ClubPage.openDuesModal();
-                    else ClubPage.openGameModal();
+                    if (clubObj) {
+                        if (clubObj.currentTab === 'dues') clubObj.openDuesModal();
+                        else clubObj.openGameModal();
+                    }
                     break;
                 case 'exchange':
-                    ExchangePage.openExchangeModal();
+                    if (exchangeObj) exchangeObj.openExchangeModal();
                     break;
                 default:
-                    // 기본: 가계부 입력 (가장 자주 쓰는 기능)
-                    PersonalPage.openTxModal();
+                    if (personalObj) personalObj.openTxModal();
                     break;
             }
         });
