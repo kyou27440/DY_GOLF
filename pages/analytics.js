@@ -104,3 +104,4 @@ const AnalyticsPage = {
 };
 
 Router.register('analytics', AnalyticsPage);
+window.AnalyticsPage = AnalyticsPage;
