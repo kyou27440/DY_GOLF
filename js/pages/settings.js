@@ -202,3 +202,4 @@ const SettingsPage = {
 };
 
 Router.register('settings', SettingsPage);
+window.SettingsPage = SettingsPage;
