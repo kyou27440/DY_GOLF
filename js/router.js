@@ -45,6 +45,7 @@ const Router = {
             club: '⛳ 모임 & 골프 관리',
             exchange: '💱 환전 현황',
             analytics: '📈 회비 & 성적 통계',
+            ghandicap: '⛳ 멤버별 G-핸디 관리',
             settings: '⚙️ 설정'
         };
         document.getElementById('page-title').textContent = titles[pageName] || pageName;
