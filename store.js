@@ -347,12 +347,102 @@ const Store = {
             });
         } catch(e) {}
 
+        // 로컬 데이터가 DB에 없는 경우 백그라운드 자동 동기화 시도
+        if (localList.length > 0 && dbList.length < localList.length) {
+            setTimeout(() => this.syncAllLocalDataToSupabase(), 300);
+        }
+
         return list;
     },
 
     async getGamesCount() {
         const games = await this.getGames();
         return games ? games.length : 0;
+    },
+
+    /** PC 로컬스토리지에만 저장되어 있는 게임기록/멤버/산출시트를 Supabase 클라우드 DB로 완전 동기화 */
+    async syncAllLocalDataToSupabase() {
+        if (typeof supabase === 'undefined' || !supabase || typeof supabase.from !== 'function') {
+            return { success: false, reason: 'Supabase client unavailable' };
+        }
+
+        let syncedGamesCount = 0;
+        let syncedMembersCount = 0;
+        let syncedCalcCount = 0;
+
+        try {
+            // 1. 멤버 동기화 (DB 멤버 매핑 확보)
+            const { data: dbMembers } = await this.from('club_members').select('*');
+            const localMembers = this._getLocalMembers();
+            const memberNameMap = {};
+            (dbMembers || []).forEach(m => { if (m && m.name) memberNameMap[m.name] = m.id; });
+
+            for (const lm of localMembers) {
+                if (lm && lm.name && !memberNameMap[lm.name]) {
+                    const prepared = this._formatMemberForSave(lm);
+                    delete prepared.id;
+                    const { data: insertedM } = await this.from('club_members').insert(prepared).select().single();
+                    if (insertedM) {
+                        memberNameMap[insertedM.name] = insertedM.id;
+                        syncedMembersCount++;
+                    }
+                }
+            }
+
+            // 2. 게임 기록 동기화
+            const { data: dbGames } = await this.from('club_games').select('*, club_game_participants(*)');
+            const localGames = this._getLocalGames();
+            const dbGameKeys = new Set((dbGames || []).map(g => `${g.game_date}_${g.location}_${g.total_cost}`));
+
+            for (const lg of localGames) {
+                if (!lg || !lg.game_date) continue;
+                const gKey = `${String(lg.game_date).slice(0, 10)}_${lg.location || '스크린골프장'}_${lg.total_cost || 0}`;
+                if (!dbGameKeys.has(gKey)) {
+                    // DB에 없는 게임 ➔ DB 추가
+                    const gamePayload = {
+                        game_date: String(lg.game_date).slice(0, 10),
+                        location: lg.location || '스크린골프장',
+                        total_cost: lg.total_cost || 0,
+                        memo: lg.memo || ''
+                    };
+                    const { data: insertedG, error: gErr } = await this.from('club_games').insert(gamePayload).select().single();
+                    if (!gErr && insertedG) {
+                        dbGameKeys.add(gKey);
+                        syncedGamesCount++;
+                        const parts = lg.club_game_participants || [];
+                        const validParts = [];
+                        for (const p of parts) {
+                            const pName = p.club_members?.name || p.member_name;
+                            const targetMid = memberNameMap[pName] || (typeof p.member_id === 'number' && p.member_id < 1000000000 ? p.member_id : null);
+                            if (targetMid) {
+                                validParts.push({
+                                    game_id: insertedG.id,
+                                    member_id: targetMid,
+                                    ranking: p.ranking ? Number(p.ranking) : null
+                                });
+                            }
+                        }
+                        if (validParts.length > 0) {
+                            await this.from('club_game_participants').insert(validParts);
+                        }
+                    }
+                }
+            }
+
+            // 3. 산출 시트 이력 동기화
+            const localCalcs = this._getLocalCalcHistory();
+            for (const lc of localCalcs) {
+                if (lc && lc.calc_date) {
+                    await this.from('club_calc_history').upsert(lc);
+                    syncedCalcCount++;
+                }
+            }
+
+        } catch(e) {
+            console.error('syncAllLocalDataToSupabase error:', e);
+        }
+
+        return { success: true, syncedGamesCount, syncedMembersCount, syncedCalcCount };
     },
 
     async addGame(game, participants) {
