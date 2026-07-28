@@ -6,19 +6,21 @@ const ClubPage = {
     currentTab: 'games',
 
     async render() {
+        const tab = this.currentTab || 'games';
         return `
         <div class="tabs">
-            <button class="tab-btn active" data-tab="games">🎮 게임 기록</button>
-            <button class="tab-btn" data-tab="members">👥 멤버 관리</button>
-            <button class="tab-btn" data-tab="dues">💵 회비 관리</button>
-            <button class="tab-btn" data-tab="ranking">🏆 순위/성적</button>
-            <button class="tab-btn" data-tab="calculator">🧮 회비 산출 시트</button>
+            <button class="tab-btn ${tab === 'games' ? 'active' : ''}" data-tab="games">🎮 게임 기록</button>
+            <button class="tab-btn ${tab === 'members' ? 'active' : ''}" data-tab="members">👥 멤버 관리</button>
+            <button class="tab-btn ${tab === 'dues' ? 'active' : ''}" data-tab="dues">💵 회비 관리</button>
+            <button class="tab-btn ${tab === 'ranking' ? 'active' : ''}" data-tab="ranking">🏆 순위/성적</button>
+            <button class="tab-btn ${tab === 'calculator' ? 'active' : ''}" data-tab="calculator">🧮 회비 산출 시트</button>
         </div>
         <div id="club-tab-content"></div>`;
     },
 
     async afterRender() {
         document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === this.currentTab);
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
@@ -146,7 +148,7 @@ const ClubPage = {
     },
 
     async openGameModal(gameId = null) {
-        const editGame = gameId ? this.gamesMap[gameId] : null;
+        const editGame = (gameId && this.gamesMap) ? this.gamesMap[gameId] : null;
         const members = await Store.getMembers('active');
 
         // 기존 참여자 맵 생성 (member_id -> ranking)
@@ -1231,3 +1233,4 @@ ${rankLines}
 };
 
 Router.register('club', ClubPage);
+window.ClubPage = ClubPage;
