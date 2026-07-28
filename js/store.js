@@ -264,13 +264,25 @@ const Store = {
             if (filters.endDate) q = q.lte('game_date', filters.endDate);
             if (filters.limit) q = q.limit(filters.limit);
             const { data, error } = await q;
-            if (!error && data && data.length > 0) dbList = data;
-        } catch(e) {}
+            if (!error && data && data.length > 0) {
+                dbList = data;
+            } else {
+                // PostgREST 관계 조인 오류 대비 백업 쿼리 (기본 테이블 조회 후 로컬 매핑)
+                let q2 = this.from('club_games').select('*, club_game_participants(*)').order('game_date', { ascending: false });
+                if (filters.startDate) q2 = q2.gte('game_date', filters.startDate);
+                if (filters.endDate) q2 = q2.lte('game_date', filters.endDate);
+                if (filters.limit) q2 = q2.limit(filters.limit);
+                const { data: data2 } = await q2;
+                if (data2 && data2.length > 0) dbList = data2;
+            }
+        } catch(e) {
+            console.error('getGames error:', e);
+        }
 
         const localList = this._getLocalGames();
         const combinedMap = {};
-        dbList.forEach(g => combinedMap[g.id] = g);
-        localList.forEach(g => combinedMap[g.id] = g);
+        dbList.forEach(g => { if (g && g.id) combinedMap[g.id] = g; });
+        localList.forEach(g => { if (g && g.id) combinedMap[g.id] = g; });
 
         let list = Object.values(combinedMap).sort((a, b) => new Date(b.game_date) - new Date(a.game_date));
         if (filters.limit) list = list.slice(0, filters.limit);
@@ -279,7 +291,7 @@ const Store = {
         try {
             const members = await this.getMembers();
             const memMap = {};
-            (members || []).forEach(m => memMap[m.id] = m);
+            (members || []).forEach(m => { if (m && m.id) memMap[m.id] = m; });
 
             list.forEach(g => {
                 if (g.club_game_participants && Array.isArray(g.club_game_participants)) {
@@ -296,6 +308,11 @@ const Store = {
         } catch(e) {}
 
         return list;
+    },
+
+    async getGamesCount() {
+        const games = await this.getGames();
+        return games ? games.length : 0;
     },
 
     async addGame(game, participants) {
