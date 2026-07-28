@@ -196,3 +196,4 @@ const ExchangePage = {
 };
 
 Router.register('exchange', ExchangePage);
+window.ExchangePage = ExchangePage;
