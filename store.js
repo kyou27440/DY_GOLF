@@ -2,10 +2,10 @@
    STORE.JS — Supabase 데이터 접근 레이어 (DAL)
    모든 DB CRUD를 이 파일에서 관리
    ============================================ */
-if (typeof supabase === 'undefined' || !supabase || typeof supabase.from !== 'function') {
+if (typeof supabaseClient === 'undefined' || !supabaseClient || typeof supabaseClient.from !== 'function') {
     try {
-        if (window.supabase && window.supabase.createClient) {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        if (typeof supabase !== 'undefined' && supabase && supabase.createClient) {
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         }
     } catch(e) {}
 }
@@ -13,14 +13,14 @@ if (typeof supabase === 'undefined' || !supabase || typeof supabase.from !== 'fu
 const Store = {
     // ── Safe Query Helper ──
     from(tableName) {
-        if (typeof supabase === 'undefined' || !supabase || typeof supabase.from !== 'function') {
+        if (typeof supabaseClient === 'undefined' || !supabaseClient || typeof supabaseClient.from !== 'function') {
             try {
-                if (window.supabase && window.supabase.createClient) {
-                    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                if (typeof supabase !== 'undefined' && supabase && supabase.createClient) {
+                    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
                 }
             } catch(e) {}
         }
-        if (!supabase || typeof supabase.from !== 'function') {
+        if (!supabaseClient || typeof supabaseClient.from !== 'function') {
             const dummy = {
                 select: () => dummy,
                 eq: () => dummy,
@@ -37,7 +37,7 @@ const Store = {
             };
             return dummy;
         }
-        return supabase.from(tableName);
+        return supabaseClient.from(tableName);
     },
 
     // ─── 개인 가계부: 카테고리 ───

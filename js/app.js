@@ -115,8 +115,8 @@
     // Supabase 연결 확인 (비동기 백그라운드 체크 - 메인 스레드 차단 안 함)
     setTimeout(async () => {
         try {
-            if (typeof supabase !== 'undefined' && supabase && typeof supabase.from === 'function') {
-                await supabase.from('club_members').select('id').limit(1);
+            if (typeof supabaseClient !== 'undefined' && supabaseClient && typeof supabaseClient.from === 'function') {
+                await supabaseClient.from('club_members').select('id').limit(1);
                 console.log('✅ Supabase 연결 성공');
             }
         } catch (err) {
