@@ -86,7 +86,10 @@ const ClubPage = {
         container.innerHTML = `
             <div class="section-header">
                 <span class="section-title">게임 기록</span>
-                <button class="btn btn-primary" id="btn-add-game">+ 게임 추가</button>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn btn-ghost btn-sm" id="btn-sync-games" style="color:#38bdf8;border:1px solid rgba(56,189,248,0.3);" title="PC 로컬 기록을 클라우드 DB로 동기화">🔄 클라우드 DB 동기화</button>
+                    <button class="btn btn-primary" id="btn-add-game">+ 게임 추가</button>
+                </div>
             </div>
             ${games.length === 0 ? '<div class="empty-state"><div class="empty-icon">⛳</div><p class="empty-text">아직 게임 기록이 없습니다</p></div>' : `
             <div class="games-vertical-list" style="display:flex;flex-direction:column;gap:14px;">
@@ -144,6 +147,20 @@ const ClubPage = {
         const btnAddGame = document.getElementById('btn-add-game');
         if (btnAddGame) {
             btnAddGame.addEventListener('click', () => this.openGameModal());
+        }
+
+        const btnSyncGames = document.getElementById('btn-sync-games');
+        if (btnSyncGames) {
+            btnSyncGames.addEventListener('click', async () => {
+                Utils.toast('⏳ 클라우드 DB 동기화 진행 중...', 'info');
+                const res = await Store.syncAllLocalDataToSupabase();
+                if (res.syncedGamesCount > 0 || res.syncedMembersCount > 0) {
+                    Utils.toast(`✅ 클라우드 DB 동기화 완료! (${res.syncedGamesCount}건 게임 동기화됨)`, 'success');
+                } else {
+                    Utils.toast('✅ 이미 클라우드 DB와 모든 데이터가 동기화되어 있습니다!', 'success');
+                }
+                await this.renderGames(container);
+            });
         }
     },
 
