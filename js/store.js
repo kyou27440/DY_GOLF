@@ -129,6 +129,7 @@ const Store = {
         } else {
             copy.memo = userMemo;
         }
+        delete copy.nickname;
         return copy;
     },
 
@@ -381,6 +382,7 @@ const Store = {
                 if (lm && lm.name && !memberNameMap[lm.name]) {
                     const prepared = this._formatMemberForSave(lm);
                     delete prepared.id;
+                    delete prepared.nickname;
                     const { data: insertedM } = await this.from('club_members').insert(prepared).select().single();
                     if (insertedM) {
                         memberNameMap[insertedM.name] = insertedM.id;
@@ -413,7 +415,26 @@ const Store = {
                         const validParts = [];
                         for (const p of parts) {
                             const pName = p.club_members?.name || p.member_name;
-                            const targetMid = memberNameMap[pName] || (typeof p.member_id === 'number' && p.member_id < 1000000000 ? p.member_id : null);
+                            let targetMid = memberNameMap[pName] || (typeof p.member_id === 'number' && p.member_id < 1000000000 ? p.member_id : null);
+
+                            if (!targetMid && pName) {
+                                try {
+                                    const newMemPayload = this._formatMemberForSave({
+                                        name: pName,
+                                        company: '현지',
+                                        member_type: 'regular',
+                                        join_date: String(lg.game_date).slice(0, 10)
+                                    });
+                                    delete newMemPayload.id;
+                                    delete newMemPayload.nickname;
+                                    const { data: newM } = await this.from('club_members').insert(newMemPayload).select().single();
+                                    if (newM) {
+                                        targetMid = newM.id;
+                                        memberNameMap[pName] = newM.id;
+                                    }
+                                } catch(e) {}
+                            }
+
                             if (targetMid) {
                                 validParts.push({
                                     game_id: insertedG.id,
