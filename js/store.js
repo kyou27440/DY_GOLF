@@ -167,14 +167,23 @@ const Store = {
             if (statusFilter) q = q.eq('status', statusFilter);
             const { data, error } = await q;
             if (!error && data && data.length > 0) dbList = data;
-        } catch(e) {}
+        } catch(e) {
+            console.error('getMembers DB error:', e);
+        }
 
         const localList = this._getLocalMembers();
         const combinedMap = {};
-        dbList.forEach(m => combinedMap[m.id] = m);
+
+        // 1. DB 데이터 우선 등록 (클라우드가 진실의 원천)
+        dbList.forEach(m => { if (m && m.id) combinedMap[String(m.id)] = m; });
+
+        // 2. 로컬에만 있는 신규 항목만 보완 (DB 데이터를 절대 덮어쓰지 않음)
         localList.forEach(m => {
+            if (!m || !m.id) return;
             if (statusFilter && m.status !== statusFilter) return;
-            combinedMap[m.id] = m;
+            if (!combinedMap[String(m.id)]) {
+                combinedMap[String(m.id)] = m;
+            }
         });
 
         const finalList = Object.values(combinedMap);
