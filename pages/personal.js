@@ -250,3 +250,4 @@ const PersonalPage = {
 };
 
 Router.register('personal', PersonalPage);
+window.PersonalPage = PersonalPage;
