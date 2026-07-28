@@ -322,8 +322,15 @@ const Store = {
 
         const localList = this._getLocalGames();
         const combinedMap = {};
-        dbList.forEach(g => { if (g && g.id) combinedMap[g.id] = g; });
-        localList.forEach(g => { if (g && g.id) combinedMap[g.id] = g; });
+        // 1. DB 클라우드 데이터 우선 추가
+        dbList.forEach(g => { if (g && g.id) combinedMap[String(g.id)] = g; });
+
+        // 2. DB에 존재하지 않는 로컬 전용 신규 항목만 보완 (DB 완전성 보장)
+        localList.forEach(g => {
+            if (g && g.id && !combinedMap[String(g.id)]) {
+                combinedMap[String(g.id)] = g;
+            }
+        });
 
         let list = Object.values(combinedMap).sort((a, b) => new Date(b.game_date) - new Date(a.game_date));
         if (filters.limit) list = list.slice(0, filters.limit);
