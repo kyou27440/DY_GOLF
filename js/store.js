@@ -241,6 +241,46 @@ const Store = {
         return this._parseMember(updatedItem);
     },
 
+    // ─── 모임: G-핸디 ───
+
+    _getLocalGHandicapConfigs() {
+        try {
+            const raw = localStorage.getItem('club_ghandicap_configs_v1');
+            return raw ? JSON.parse(raw) : {};
+        } catch(e) { return {}; }
+    },
+
+    _saveLocalGHandicapConfigs(configs) {
+        try {
+            localStorage.setItem('club_ghandicap_configs_v1', JSON.stringify(configs));
+        } catch(e) {}
+    },
+
+    async getGHandicapConfigs() {
+        let configs = this._getLocalGHandicapConfigs();
+        try {
+            const remoteConfig = await this.getSetting('ghandicap_configs');
+            if (remoteConfig && typeof remoteConfig === 'object') {
+                configs = { ...remoteConfig, ...configs };
+            }
+        } catch(e) {}
+        return configs;
+    },
+
+    async saveGHandicapConfig(memberId, configData) {
+        const configs = await this.getGHandicapConfigs();
+        configs[memberId] = {
+            ...configs[memberId],
+            ...configData,
+            updated_at: new Date().toISOString()
+        };
+        this._saveLocalGHandicapConfigs(configs);
+        try {
+            await this.setSetting('ghandicap_configs', configs);
+        } catch(e) {}
+        return configs[memberId];
+    },
+
     // ─── 모임: 게임 ───
 
     _getLocalGames() {
