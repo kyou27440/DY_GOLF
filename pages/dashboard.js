@@ -225,3 +225,4 @@ const DashboardPage = {
 };
 
 Router.register('dashboard', DashboardPage);
+window.DashboardPage = DashboardPage;
