@@ -11,9 +11,33 @@ const Router = {
         this.pages[name] = module;
     },
 
+    /** 안전한 페이지 모듈 획득 (Global Window Fallback) */
+    _getPageModule(pageName) {
+        if (this.pages[pageName]) return this.pages[pageName];
+
+        const map = {
+            dashboard: window.DashboardPage,
+            personal: window.PersonalPage,
+            club: window.ClubPage,
+            exchange: window.ExchangePage,
+            analytics: window.AnalyticsPage,
+            ghandicap: window.GHandicapPage,
+            settings: window.SettingsPage
+        };
+
+        const mod = map[pageName];
+        if (mod) {
+            this.register(pageName, mod);
+            return mod;
+        }
+
+        return null;
+    },
+
     /** 페이지 전환 */
     async navigate(pageName, tabName = null) {
-        if (!this.pages[pageName]) {
+        const pageModule = this._getPageModule(pageName);
+        if (!pageModule) {
             console.warn('Unknown page:', pageName);
             return;
         }
@@ -48,17 +72,21 @@ const Router = {
             ghandicap: '⛳ 멤버별 G-핸디 관리',
             settings: '⚙️ 설정'
         };
-        document.getElementById('page-title').textContent = titles[pageName] || pageName;
+        const titleElem = document.getElementById('page-title');
+        if (titleElem) {
+            titleElem.textContent = titles[pageName] || pageName;
+        }
 
         // 페이지 렌더링
         const container = document.getElementById('page-container');
+        if (!container) return;
         container.innerHTML = '<div class="page-content" style="text-align:center;padding:60px"><span style="font-size:2rem">⏳</span><p style="color:var(--text-muted);margin-top:8px">로딩 중...</p></div>';
 
         try {
-            const html = await this.pages[pageName].render();
+            const html = await pageModule.render();
             container.innerHTML = `<div class="page-content">${html}</div>`;
-            if (this.pages[pageName].afterRender) {
-                await this.pages[pageName].afterRender();
+            if (pageModule.afterRender) {
+                await pageModule.afterRender();
             }
         } catch (err) {
             console.error(`Page render error [${pageName}]:`, err);
@@ -66,16 +94,31 @@ const Router = {
         }
 
         // 모바일 사이드바 닫기
-        document.getElementById('sidebar').classList.remove('mobile-open');
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) {
+            sidebar.classList.remove('mobile-open');
+        }
     },
 
     init() {
-        // 네비게이션 클릭 이벤트
+        // 네비게이션 클릭 이벤트 (글로벌 위임 포함)
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
                 this.navigate(item.dataset.page);
             });
+        });
+
+        document.addEventListener('click', (e) => {
+            const link = e.target.closest('[data-page]');
+            if (link && !link.classList.contains('bottom-nav-item') && !link.classList.contains('nav-item')) {
+                const targetPage = link.dataset.page;
+                const targetTab = link.dataset.tab;
+                if (targetPage) {
+                    e.preventDefault();
+                    this.navigate(targetPage, targetTab);
+                }
+            }
         });
     }
 };
