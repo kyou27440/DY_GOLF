@@ -19,11 +19,12 @@ const Router = {
         }
 
         this.currentPage = pageName;
-        if (pageName === 'club' && tabName && window.ClubPage) {
-            ClubPage.currentTab = tabName;
+        const clubObj = window.ClubPage || (typeof ClubPage !== 'undefined' ? ClubPage : null);
+        if (pageName === 'club' && tabName && clubObj) {
+            clubObj.currentTab = tabName;
         }
 
-        const effectiveTab = pageName === 'club' ? (tabName || (window.ClubPage ? ClubPage.currentTab : 'games') || 'games') : null;
+        const effectiveTab = pageName === 'club' ? (tabName || (clubObj ? clubObj.currentTab : 'games') || 'games') : null;
 
         // 네비게이션 활성 상태 업데이트
         document.querySelectorAll('.nav-item').forEach(item => {
