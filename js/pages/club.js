@@ -70,7 +70,7 @@ const ClubPage = {
 
     // ─── 게임 기록 탭 ───
     async renderGames(container) {
-        const games = await Store.getGames({ limit: 20 });
+        const games = await Store.getGames({ limit: 50 });
         const calcHistories = await Store.getCalcHistoryList();
         const calcMap = {};
         (calcHistories || []).forEach(c => {
@@ -80,6 +80,13 @@ const ClubPage = {
             }
         });
 
+        // 비활성 멤버 포함 전체 멤버 이름 맵 (이전 기록 표시 보장)
+        let allMembersMap = {};
+        try {
+            const allMembers = await Store.getMembers(); // status 필터 없음 → 전체
+            (allMembers || []).forEach(m => { if (m && m.id) allMembersMap[m.id] = m.name; });
+        } catch(e) {}
+
         this.gamesMap = {};
         games.forEach(g => this.gamesMap[g.id] = g);
 
@@ -87,57 +94,61 @@ const ClubPage = {
             <div class="section-header">
                 <span class="section-title">게임 기록</span>
                 <div style="display:flex;gap:8px;">
-                    <button class="btn btn-ghost btn-sm" id="btn-sync-games" style="color:#38bdf8;border:1px solid rgba(56,189,248,0.3);" title="PC 로컬 기록을 클라우드 DB로 동기화">🔄 클라우드 DB 동기화</button>
-                    <button class="btn btn-primary" id="btn-add-game">+ 게임 추가</button>
+                    <button class="btn btn-ghost btn-sm" id="btn-sync-games" style="color:#38bdf8;border:1px solid rgba(56,189,248,0.3);" title="PC 로컬 기록을 클라우드 DB로 동기화">🔄 동기화</button>
+                    <button class="btn btn-primary btn-sm" id="btn-add-game">+ 게임 추가</button>
                 </div>
             </div>
             ${games.length === 0 ? '<div class="empty-state"><div class="empty-icon">⛳</div><p class="empty-text">아직 게임 기록이 없습니다</p></div>' : `
-            <div class="games-vertical-list" style="display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;flex-direction:column;gap:6px;">
                 ${games.map(g => {
                     const gDateKey = String(g.game_date || '').slice(0, 10);
                     const calc = calcMap[gDateKey];
                     const parts = (g.club_game_participants || []).sort((a, b) => (a.ranking || 99) - (b.ranking || 99));
                     const hasUnranked = parts.some(p => !p.ranking);
 
+                    // 참여자 인라인 배지 — 비활성 멤버도 allMembersMap으로 이름 보정
+                    const rankEmojis = ['🥇','🥈','🥉'];
+                    const partBadges = parts.map(p => {
+                        // club_members.name 우선, 없으면 전체멤버맵에서 보정
+                        const name = (p.club_members?.name) || allMembersMap[p.member_id] || '?';
+                        const r = p.ranking;
+                        const colors = ['#f59e0b','#94a3b8','#c084fc'];
+                        const rc = r >= 1 && r <= 3 ? colors[r-1] : '#64748b';
+                        const emoji = r >= 1 && r <= 3 ? rankEmojis[r-1] : '';
+                        const rankTxt = r ? `${emoji}${r}위` : '?위';
+                        let feeHint = '';
+                        if (calc && r && calc.rank_amounts && calc.rank_amounts[r-1] !== undefined) {
+                            feeHint = `<span style="color:#10b981;font-size:0.7rem;">(${Utils.formatVND(calc.rank_amounts[r-1])})</span>`;
+                        }
+                        return `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);font-size:0.79rem;white-space:nowrap;">
+                            <span style="color:${rc};font-weight:700;font-size:0.74rem;">${rankTxt}</span>
+                            <span style="color:#e2e8f0;font-weight:600;">${Utils.escapeHtml(name)}</span>${feeHint}
+                        </span>`;
+                    }).join('');
+
                     return `
-                    <div class="game-vertical-card" style="padding:14px;background:linear-gradient(135deg, rgba(30,41,59,0.9), rgba(15,23,42,0.95));border:1px solid rgba(99,102,241,0.28);border-radius:16px;box-shadow:0 4px 14px rgba(0,0,0,0.18);box-sizing:border-box;width:100%;max-width:100%;overflow:hidden;">
-                        <div class="game-header-row">
-                            <div class="game-header-info">
-                                <span style="font-weight:700;font-size:1rem;color:#f8fafc;">📅 ${Utils.formatDateKR(g.game_date)}</span>
-                                <span style="font-size:0.85rem;color:#38bdf8;font-weight:500;">📍 ${Utils.escapeHtml(g.location)}</span>
-                                ${calc ? `<span class="badge badge-income" style="font-size:0.75rem;padding:2px 8px;">📊 산출금 연동</span>` : ''}
+                    <div style="padding:9px 13px;background:linear-gradient(135deg, rgba(30,41,59,0.92), rgba(15,23,42,0.97));border:1px solid rgba(99,102,241,0.2);border-radius:11px;box-sizing:border-box;width:100%;">
+                        <!-- 1줄: 날짜/장소/비용/버튼 -->
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;flex:1;">
+                                <span style="font-weight:700;font-size:0.87rem;color:#f8fafc;white-space:nowrap;">📅 ${Utils.formatDateKR(g.game_date)}</span>
+                                <span style="font-size:0.8rem;color:#38bdf8;white-space:nowrap;">📍 ${Utils.escapeHtml(g.location)}</span>
+                                <span style="font-size:0.78rem;color:#94a3b8;white-space:nowrap;">💰 ${calc ? Utils.formatVND(calc.total_cost) : Utils.formatVND(g.total_cost)}</span>
+                                ${calc ? `<span style="font-size:0.7rem;color:#34d399;background:rgba(16,185,129,0.11);border:1px solid rgba(16,185,129,0.28);padding:1px 5px;border-radius:4px;white-space:nowrap;">📊연동</span>` : ''}
+                                ${g.memo ? `<span style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px;">${Utils.escapeHtml(g.memo)}</span>` : ''}
                             </div>
-                            <div class="game-action-buttons">
-                                <button class="btn ${hasUnranked ? 'btn-emerald' : 'btn-primary'} btn-sm" onclick="ClubPage.openGameModal(${g.id})">
-                                    ${hasUnranked ? '🏆 순위 입력' : '✏️ 기록 수정'}
+                            <div style="display:flex;gap:5px;flex-shrink:0;">
+                                <button class="btn ${hasUnranked ? 'btn-emerald' : 'btn-ghost'} btn-sm" onclick="ClubPage.openGameModal(${g.id})" style="font-size:0.76rem;padding:3px 9px;">
+                                    ${hasUnranked ? '🏆 순위' : '✏️ 수정'}
                                 </button>
-                                <button class="btn btn-danger btn-sm" onclick="ClubPage.deleteGame(${g.id})" title="삭제">🗑️ 삭제</button>
+                                <button class="btn btn-danger btn-sm" onclick="ClubPage.deleteGame(${g.id})" style="font-size:0.76rem;padding:3px 7px;" title="삭제">🗑️</button>
                             </div>
                         </div>
-
-                        <div style="display:flex;flex-direction:column;gap:8px;padding:10px 12px;background:rgba(15,23,42,0.6);border-radius:12px;border:1px solid rgba(255,255,255,0.05);width:100%;box-sizing:border-box;">
-                            ${parts.map(p => {
-                                const rc = p.ranking <= 3 && p.ranking > 0 ? `rank-${p.ranking}` : 'rank-other';
-                                let feeStr = '';
-                                if (calc && p.ranking && calc.rank_amounts && calc.rank_amounts[p.ranking - 1] !== undefined) {
-                                    feeStr = `<span style="font-size:0.82rem;color:#10b981;font-weight:700;flex-shrink:0;white-space:nowrap;">${Utils.formatVND(calc.rank_amounts[p.ranking - 1])}</span>`;
-                                }
-                                return `
-                                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:0.88rem;width:100%;box-sizing:border-box;">
-                                    <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;">
-                                        <span class="ranking-badge ${rc}" style="font-weight:700;flex-shrink:0;">${p.ranking || '-'}</span>
-                                        <span style="font-weight:600;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${Utils.escapeHtml(p.club_members?.name || '?')}</span>
-                                    </div>
-                                    ${feeStr}
-                                </div>
-                                `;
-                            }).join('')}
-                        </div>
-
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.08);font-size:0.85rem;color:var(--text-muted);flex-wrap:wrap;gap:6px;">
-                            <span>총 게임 비용: <strong style="color:#38bdf8;">${calc ? Utils.formatVND(calc.total_cost) : Utils.formatVND(g.total_cost)}</strong></span>
-                            ${g.memo ? `<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;">메모: ${Utils.escapeHtml(g.memo)}</span>` : ''}
-                        </div>
+                        <!-- 2줄: 참여자 배지 -->
+                        ${parts.length > 0 ? `
+                        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.055);">
+                            ${partBadges}
+                        </div>` : ''}
                     </div>
                     `;
                 }).join('')}
