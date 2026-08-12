@@ -31,10 +31,10 @@ const GHandicapPage = {
         <!-- 멤버 테이블 -->
         <div style="background:rgba(15,23,42,0.7);border:1px solid rgba(99,102,241,0.25);border-radius:14px;overflow:hidden;">
             <!-- 테이블 헤더 -->
-            <div style="display:grid;grid-template-columns:minmax(120px,1.6fr) 1fr 1fr 90px 80px;
+            <div style="display:grid;grid-template-columns:minmax(120px,1.6fr) 1.1fr 1.1fr 90px 80px;
                         padding:8px 14px;
                         background:rgba(99,102,241,0.14);border-bottom:1px solid rgba(99,102,241,0.25);
-                        font-size:0.74rem;font-weight:700;color:var(--text-muted);letter-spacing:0.04em;">
+                        font-size:0.76rem;font-weight:700;color:var(--text-muted);letter-spacing:0.04em;">
                 <div>멤버</div>
                 <div style="text-align:center;color:#a78bfa;">⛳ Normal 핸디</div>
                 <div style="text-align:center;color:#38bdf8;">🌐 Global 핸디</div>
@@ -100,8 +100,8 @@ const GHandicapPage = {
 
             html += `
             <div id="ghrow-${m.id}"
-                 style="display:grid;grid-template-columns:minmax(120px,1.6fr) 1fr 1fr 90px 80px;
-                        padding:7px 14px;align-items:center;
+                 style="display:grid;grid-template-columns:minmax(120px,1.6fr) 1.1fr 1.1fr 90px 80px;
+                        padding:8px 14px;align-items:center;
                         background:${rowBg};border-bottom:1px solid rgba(255,255,255,0.04);
                         transition:background 0.15s;"
                  onmouseover="this.style.background='rgba(99,102,241,0.09)'"
@@ -119,30 +119,38 @@ const GHandicapPage = {
                     </span>
                 </div>
 
-                <!-- Normal 핸디 입력 -->
-                <div style="display:flex;align-items:center;justify-content:center;gap:5px;padding:0 6px;">
+                <!-- Normal 핸디 키인 입력 칸 -->
+                <div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:0 6px;">
                     <input type="checkbox" id="chk-normal-${m.id}" ${useNormal ? 'checked' : ''}
-                           onchange="GHandicapPage.recalc(${m.id})"
-                           style="cursor:pointer;accent-color:#a78bfa;flex-shrink:0;">
-                    <input type="number" step="0.1" id="val-normal-${m.id}" value="${normalHandi}"
-                           placeholder="—" min="0" max="36"
+                           onchange="GHandicapPage.toggleInput(${m.id}, 'normal')"
+                           title="Normal 핸디 포함 여부"
+                           style="cursor:pointer;accent-color:#a78bfa;flex-shrink:0;width:16px;height:16px;">
+                    <input type="number" step="0.1" inputmode="decimal" id="val-normal-${m.id}" value="${normalHandi}"
+                           placeholder="0.0" min="0" max="36" ${!useNormal ? 'disabled' : ''}
                            oninput="GHandicapPage.recalc(${m.id})"
-                           style="width:68px;text-align:center;padding:4px 6px;font-size:0.88rem;
-                                  font-weight:700;color:#a78bfa;background:rgba(167,139,250,0.08);
-                                  border:1px solid rgba(167,139,250,0.3);border-radius:7px;box-sizing:border-box;">
+                           onfocus="this.style.borderColor='#a78bfa';this.style.boxShadow='0 0 8px rgba(167,139,250,0.4)';this.select();"
+                           onblur="this.style.borderColor='rgba(167,139,250,0.5)';this.style.boxShadow='none';"
+                           style="width:76px;text-align:center;padding:5px 6px;font-size:0.9rem;
+                                  font-weight:700;color:#f3e8ff;background:rgba(15,23,42,0.85);
+                                  border:1.5px solid rgba(167,139,250,0.5);border-radius:8px;box-sizing:border-box;
+                                  outline:none;transition:all 0.2s;${!useNormal ? 'opacity:0.4;cursor:not-allowed;' : 'cursor:text;'}">
                 </div>
 
-                <!-- Global 핸디 입력 -->
-                <div style="display:flex;align-items:center;justify-content:center;gap:5px;padding:0 6px;">
+                <!-- Global 핸디 키인 입력 칸 -->
+                <div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:0 6px;">
                     <input type="checkbox" id="chk-global-${m.id}" ${useGlobal ? 'checked' : ''}
-                           onchange="GHandicapPage.recalc(${m.id})"
-                           style="cursor:pointer;accent-color:#38bdf8;flex-shrink:0;">
-                    <input type="number" step="0.1" id="val-global-${m.id}" value="${globalHandi}"
-                           placeholder="—" min="0" max="36"
+                           onchange="GHandicapPage.toggleInput(${m.id}, 'global')"
+                           title="Global 핸디 포함 여부"
+                           style="cursor:pointer;accent-color:#38bdf8;flex-shrink:0;width:16px;height:16px;">
+                    <input type="number" step="0.1" inputmode="decimal" id="val-global-${m.id}" value="${globalHandi}"
+                           placeholder="0.0" min="0" max="36" ${!useGlobal ? 'disabled' : ''}
                            oninput="GHandicapPage.recalc(${m.id})"
-                           style="width:68px;text-align:center;padding:4px 6px;font-size:0.88rem;
-                                  font-weight:700;color:#38bdf8;background:rgba(56,189,248,0.08);
-                                  border:1px solid rgba(56,189,248,0.28);border-radius:7px;box-sizing:border-box;">
+                           onfocus="this.style.borderColor='#38bdf8';this.style.boxShadow='0 0 8px rgba(56,189,248,0.4)';this.select();"
+                           onblur="this.style.borderColor='rgba(56,189,248,0.5)';this.style.boxShadow='none';"
+                           style="width:76px;text-align:center;padding:5px 6px;font-size:0.9rem;
+                                  font-weight:700;color:#e0f2fe;background:rgba(15,23,42,0.85);
+                                  border:1.5px solid rgba(56,189,248,0.5);border-radius:8px;box-sizing:border-box;
+                                  outline:none;transition:all 0.2s;${!useGlobal ? 'opacity:0.4;cursor:not-allowed;' : 'cursor:text;'}">
                 </div>
 
                 <!-- 최종 G-핸디 표시 -->
@@ -157,7 +165,7 @@ const GHandicapPage = {
                 <!-- 저장 버튼 -->
                 <div style="text-align:center;">
                     <button class="btn btn-emerald btn-sm" onclick="GHandicapPage.saveSingle(${m.id})"
-                            style="font-size:0.74rem;padding:4px 10px;white-space:nowrap;">💾 저장</button>
+                            style="font-size:0.74rem;padding:5px 12px;white-space:nowrap;font-weight:700;">💾 저장</button>
                 </div>
             </div>
             `;
@@ -165,6 +173,18 @@ const GHandicapPage = {
 
         container.innerHTML = html;
         this.members.forEach(m => this.recalc(m.id));
+    },
+
+    /** 체크박스 변경 시 입력란 활성화/비활성화 제어 */
+    toggleInput(memberId, type) {
+        const chk = document.getElementById(`chk-${type}-${memberId}`);
+        const input = document.getElementById(`val-${type}-${memberId}`);
+        if (chk && input) {
+            input.disabled = !chk.checked;
+            input.style.opacity = chk.checked ? '1' : '0.4';
+            input.style.cursor = chk.checked ? 'text' : 'not-allowed';
+        }
+        this.recalc(memberId);
     },
 
     /** G-핸디 보정 공식 계산 로직 */
