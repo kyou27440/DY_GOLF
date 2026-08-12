@@ -177,7 +177,28 @@ const ClubPage = {
 
     async openGameModal(gameId = null) {
         const editGame = (gameId && this.gamesMap) ? this.gamesMap[gameId] : null;
-        const members = await Store.getMembers('active');
+
+        // 새 게임: 활성 멤버만 / 수정: 활성 멤버 + 이 게임에 참여했던 비활성 멤버도 포함
+        const activeMembers = await Store.getMembers('active');
+
+        // 수정 모드일 때, 기존 참여자 중 비활성 멤버도 가져오기 (이전 기록 보호)
+        let inactiveParticipants = [];
+        if (editGame && editGame.club_game_participants) {
+            const allMembers = await Store.getMembers(); // status 무관 전체
+            const allMembersMap = {};
+            (allMembers || []).forEach(m => { if (m && m.id) allMembersMap[m.id] = m; });
+            const activeMemberIds = new Set((activeMembers || []).map(m => m.id));
+
+            editGame.club_game_participants.forEach(p => {
+                if (!activeMemberIds.has(p.member_id)) {
+                    const m = allMembersMap[p.member_id];
+                    if (m) inactiveParticipants.push(m);
+                }
+            });
+        }
+
+        // 활성 멤버 + 비활성(이 게임 참여자) 합치기
+        const members = [...activeMembers, ...inactiveParticipants];
 
         // 기존 참여자 맵 생성 (member_id -> ranking)
         const partMap = {};
@@ -190,13 +211,15 @@ const ClubPage = {
         const memberChecks = members.map(m => {
             const isChecked = editGame ? (partMap[m.id] !== undefined) : false;
             const rankVal = editGame && partMap[m.id] !== undefined && partMap[m.id] !== null ? partMap[m.id] : '';
+            const isInactive = m.status !== 'active';
 
             return `
-                <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-color);">
+                <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-color);${isInactive ? 'opacity:0.65;' : ''}">
                     <input type="checkbox" id="gm-${m.id}" value="${m.id}" class="game-member-check" ${isChecked ? 'checked' : ''}>
                     <label for="gm-${m.id}" style="flex:1;cursor:pointer;font-weight:600;">
                         ${Utils.escapeHtml(m.name)} 
                         <span class="badge badge-${m.member_type}" style="margin-left:4px">${m.member_type === 'regular' ? '상시' : '출장'}</span>
+                        ${isInactive ? `<span style="font-size:0.72rem;color:#f59e0b;margin-left:4px;">(비활성 - 이전기록)</span>` : ''}
                     </label>
                     <div style="display:flex;align-items:center;gap:4px;">
                         <span style="font-size:0.8rem;color:var(--text-muted);">순위:</span>
