@@ -12,26 +12,43 @@ const GHandicapPage = {
 
     async render() {
         return `
-        <!-- 페이지 헤더 & 설명 -->
-        <div style="background:linear-gradient(135deg, rgba(30,41,59,0.85), rgba(15,23,42,0.95));border:1px solid rgba(99,102,241,0.3);border-radius:16px;padding:16px 20px;margin-bottom:16px;box-shadow:0 4px 20px rgba(0,0,0,0.25);">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+        <!-- 페이지 헤더 & 산출 조건 설명 카드 -->
+        <div style="background:linear-gradient(135deg, rgba(30,41,59,0.85), rgba(15,23,42,0.95));border:1px solid rgba(99,102,241,0.3);border-radius:16px;padding:18px 20px;margin-bottom:16px;box-shadow:0 4px 20px rgba(0,0,0,0.25);">
+            <!-- 상단 제목 & 일괄 저장 버튼 -->
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:12px;">
                 <div style="display:flex;align-items:center;gap:12px;">
                     <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:1.4rem;box-shadow:0 4px 12px rgba(99,102,241,0.4);flex-shrink:0;">
                         🏆
                     </div>
                     <div>
-                        <div style="font-weight:800;font-size:1.1rem;color:#f8fafc;letter-spacing:-0.01em;">멤버별 핸디 통합 관리</div>
-                        <div style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                            <span style="color:#c084fc;font-weight:700;background:rgba(192,132,252,0.12);padding:2px 8px;border-radius:6px;border:1px solid rgba(192,132,252,0.25);">⛳ NX4 핸드</span>
-                            <span style="color:#38bdf8;">+</span>
-                            <span style="color:#38bdf8;font-weight:700;background:rgba(56,189,248,0.12);padding:2px 8px;border-radius:6px;border:1px solid rgba(56,189,248,0.25);">🌐 글로벌핸디</span>
-                            <span style="color:#94a3b8;margin-left:4px;">➔ 평균 핸디 산출 (≤5 반올림·맥스5 / &gt;5 내림·상승방지)</span>
-                        </div>
+                        <div style="font-weight:800;font-size:1.15rem;color:#f8fafc;letter-spacing:-0.01em;">멤버별 핸디 통합 관리</div>
+                        <div style="font-size:0.78rem;color:#94a3b8;margin-top:2px;">NX4 핸드 + 글로벌핸디 통합 자동 보정 시스템</div>
                     </div>
                 </div>
                 <button class="btn btn-primary" id="btn-save-all-ghandicap" style="font-weight:700;padding:8px 18px;font-size:0.88rem;border-radius:10px;white-space:nowrap;box-shadow:0 4px 14px rgba(99,102,241,0.35);">
                     💾 전체 일괄 저장
                 </button>
+            </div>
+
+            <!-- 📋 최종핸디 산출 조건 & 운영 규정 나열 안내 -->
+            <div style="background:rgba(15,23,42,0.65);border:1px solid rgba(99,102,241,0.22);border-radius:12px;padding:12px 16px;">
+                <div style="font-size:0.82rem;font-weight:800;color:#a78bfa;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+                    ⚙️ 최종핸디 산출 및 운영 조건
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:10px;font-size:0.78rem;color:#e2e8f0;">
+                    <div style="background:rgba(30,41,59,0.55);padding:9px 12px;border-radius:8px;border-left:3px solid #c084fc;">
+                        <strong style="color:#c084fc;">1. 평균 산출:</strong><br>
+                        [NX4 핸드] + [글로벌핸디] 2개 항목 평균 산출 (1개 선택 시 해당 핸디 적용)
+                    </div>
+                    <div style="background:rgba(30,41,59,0.55);padding:9px 12px;border-radius:8px;border-left:3px solid #38bdf8;">
+                        <strong style="color:#38bdf8;">2. 핸디 ≤ 5 구간 (반올림 &amp; 맥스5):</strong><br>
+                        평균 ≤ 5는 <span style="color:#34d399;font-weight:700;">반올림</span> 반영 / 성적 저하 시 <span style="color:#f59e0b;font-weight:700;">최대 5까지만 가능</span> (5 초과 불가)
+                    </div>
+                    <div style="background:rgba(30,41,59,0.55);padding:9px 12px;border-radius:8px;border-left:3px solid #34d399;">
+                        <strong style="color:#34d399;">3. 핸디 &gt; 5 구간 (내림 &amp; 상승방지):</strong><br>
+                        평균 &gt; 5는 <span style="color:#34d399;font-weight:700;">내림</span> 반영 / 평균이 올라가도 <span style="color:#f59e0b;font-weight:700;">기존 최종핸디 유지</span> (예: 10 ➔ 평균 13 돼도 10 유지)
+                    </div>
+                </div>
             </div>
         </div>
 
