@@ -6,11 +6,7 @@ const AnalyticsPage = {
     async render() {
         return `
         <div class="analytics-grid">
-            <div class="card">
-                <div class="card-header"><span class="card-title">📈 월별 수입/지출 추이</span></div>
-                <div class="chart-container" style="height:300px"><canvas id="monthly-trend-chart"></canvas></div>
-            </div>
-            <div class="card">
+            <div class="card full-width">
                 <div class="card-header"><span class="card-title">🏆 멤버별 평균 순위</span></div>
                 <div class="chart-container" style="height:300px"><canvas id="member-avg-chart"></canvas></div>
             </div>
@@ -23,37 +19,9 @@ const AnalyticsPage = {
 
     async afterRender() {
         await Promise.all([
-            this.drawMonthlyTrend(),
             this.drawMemberAvgRank(),
             this.drawRankingLine()
         ]);
-    },
-
-    async drawMonthlyTrend() {
-        const canvas = document.getElementById('monthly-trend-chart');
-        if (!canvas) return;
-        const now = new Date();
-        const labels = [], incomeData = [], expenseData = [];
-        for (let i = 5; i >= 0; i--) {
-            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-            const start = d.toISOString().split('T')[0];
-            const end = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0];
-            labels.push(`${d.getMonth() + 1}월`);
-            const s = await Store.getTransactionSummary(start, end);
-            incomeData.push(s.income);
-            expenseData.push(s.expense);
-        }
-        new Chart(canvas, {
-            type: 'line',
-            data: {
-                labels,
-                datasets: [
-                    { label: '수입', data: incomeData, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.4 },
-                    { label: '지출', data: expenseData, borderColor: '#f43f5e', backgroundColor: 'rgba(244,63,94,0.1)', fill: true, tension: 0.4 }
-                ]
-            },
-            options: { ...Utils.chartDefaults(), plugins: { ...Utils.chartDefaults().plugins, tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${Utils.formatVND(ctx.raw)}` } } } }
-        });
     },
 
     async drawMemberAvgRank() {
