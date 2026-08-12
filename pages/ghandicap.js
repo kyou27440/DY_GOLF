@@ -1,6 +1,9 @@
 /* ============================================
-   GHANDICAP.JS — 멤버별 G-핸디 통합 관리 (컴팩트 & 고시인성 디자인)
-   NX4 핸디 (golfzon.com) + Global 핸디 (global.golfzon.com)
+   GHANDICAP.JS — 멤버별 핸디 통합 관리 (NX4 핸드 + 글로벌핸디 ➔ 최종핸디)
+   규칙:
+   1. NX4 핸드 + 글로벌핸디 2개 평균 기준
+   2. 평균 ≤ 5: 반올림(Math.round) 적용 / 성적 저하 시 맥스 5까지만 가능 (5 초과 불가)
+   3. 평균 > 5: 내림(Math.floor) 적용 / 기존 최종핸디에서 더 올라갈 수 없음 (기존 핸디 유지)
    ============================================ */
 
 const GHandicapPage = {
@@ -14,15 +17,15 @@ const GHandicapPage = {
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
                 <div style="display:flex;align-items:center;gap:12px;">
                     <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:1.4rem;box-shadow:0 4px 12px rgba(99,102,241,0.4);flex-shrink:0;">
-                        ⛳
+                        🏆
                     </div>
                     <div>
-                        <div style="font-weight:800;font-size:1.1rem;color:#f8fafc;letter-spacing:-0.01em;">멤버별 G-핸디 관리</div>
+                        <div style="font-weight:800;font-size:1.1rem;color:#f8fafc;letter-spacing:-0.01em;">멤버별 핸디 통합 관리</div>
                         <div style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                            <span style="color:#c084fc;font-weight:700;background:rgba(192,132,252,0.12);padding:2px 8px;border-radius:6px;border:1px solid rgba(192,132,252,0.25);">⛳ NX4 핸디</span>
+                            <span style="color:#c084fc;font-weight:700;background:rgba(192,132,252,0.12);padding:2px 8px;border-radius:6px;border:1px solid rgba(192,132,252,0.25);">⛳ NX4 핸드</span>
                             <span style="color:#38bdf8;">+</span>
-                            <span style="color:#38bdf8;font-weight:700;background:rgba(56,189,248,0.12);padding:2px 8px;border-radius:6px;border:1px solid rgba(56,189,248,0.25);">🌐 Global 핸디</span>
-                            <span style="color:#94a3b8;margin-left:4px;">➔ 평균 핸디 자동 산출 (≤5 반올림 / &gt;5 내림 / 하향방지)</span>
+                            <span style="color:#38bdf8;font-weight:700;background:rgba(56,189,248,0.12);padding:2px 8px;border-radius:6px;border:1px solid rgba(56,189,248,0.25);">🌐 글로벌핸디</span>
+                            <span style="color:#94a3b8;margin-left:4px;">➔ 평균 핸디 산출 (≤5 반올림·맥스5 / &gt;5 내림·상승방지)</span>
                         </div>
                     </div>
                 </div>
@@ -34,16 +37,16 @@ const GHandicapPage = {
 
         <!-- 멤버 핸디 관리 테이블 -->
         <div style="background:rgba(15,23,42,0.8);border:1px solid rgba(99,102,241,0.3);border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
-            <!-- 테이블 헤더 (일률적인 컬럼 폭 및 정렬) -->
-            <div style="display:grid;grid-template-columns:minmax(140px, 1.5fr) 1.2fr 1.2fr 100px 90px;
+            <!-- 테이블 헤더 (3개 항목 일률적 컬럼 폭 및 정렬) -->
+            <div style="display:grid;grid-template-columns:minmax(130px, 1.4fr) 1.2fr 1.2fr 1.2fr 80px;
                         padding:12px 18px;align-items:center;
                         background:linear-gradient(90deg, rgba(99,102,241,0.18), rgba(139,92,246,0.12));
                         border-bottom:1px solid rgba(99,102,241,0.3);
                         font-size:0.8rem;font-weight:800;letter-spacing:0.03em;">
                 <div style="color:#e2e8f0;">👥 멤버</div>
-                <div style="text-align:center;color:#c084fc;">⛳ NX4 핸디</div>
-                <div style="text-align:center;color:#38bdf8;">🌐 Global 핸디</div>
-                <div style="text-align:center;color:#34d399;">G-핸디</div>
+                <div style="text-align:center;color:#c084fc;">⛳ NX4 핸드</div>
+                <div style="text-align:center;color:#38bdf8;">🌐 글로벌핸디</div>
+                <div style="text-align:center;color:#34d399;">🏆 최종핸디</div>
                 <div style="text-align:center;color:#94a3b8;">관리</div>
             </div>
             <!-- 멤버 행 목록 -->
@@ -105,8 +108,8 @@ const GHandicapPage = {
 
             html += `
             <div id="ghrow-${m.id}"
-                 style="display:grid;grid-template-columns:minmax(140px, 1.5fr) 1.2fr 1.2fr 100px 90px;
-                        padding:12px 18px;min-height:64px;align-items:center;
+                 style="display:grid;grid-template-columns:minmax(130px, 1.4fr) 1.2fr 1.2fr 1.2fr 80px;
+                        padding:12px 18px;min-height:68px;align-items:center;
                         background:${rowBg};border-bottom:1px solid rgba(255,255,255,0.05);
                         transition:all 0.15s ease-in-out;"
                  onmouseover="this.style.background='rgba(99,102,241,0.12)'"
@@ -125,51 +128,50 @@ const GHandicapPage = {
                     </span>
                 </div>
 
-                <!-- NX4 핸디 키인 입력 칸 -->
-                <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+                <!-- 1. NX4 핸드 키인 입력 칸 -->
+                <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
                     <input type="checkbox" id="chk-normal-${m.id}" ${useNormal ? 'checked' : ''}
                            onchange="GHandicapPage.toggleInput(${m.id}, 'normal')"
-                           title="NX4 핸디 포함 여부"
+                           title="NX4 핸드 포함 여부"
                            style="cursor:pointer;accent-color:#c084fc;width:18px;height:18px;flex-shrink:0;">
-                    <div style="position:relative;display:inline-flex;align-items:center;">
-                        <input type="number" step="0.01" min="-30" max="50" inputmode="decimal" id="val-normal-${m.id}" value="${normalHandi}"
-                               placeholder="키인 입력" ${!useNormal ? 'disabled' : ''}
-                               oninput="GHandicapPage.recalc(${m.id})"
-                               onfocus="this.style.borderColor='#c084fc';this.style.boxShadow='0 0 10px rgba(192,132,252,0.45)';this.select();"
-                               onblur="this.style.borderColor='rgba(192,132,252,0.55)';this.style.boxShadow='none';"
-                               style="width:86px;height:36px;text-align:center;padding:0 8px;font-size:0.92rem;
-                                      font-weight:800;color:#ffffff;background:rgba(15,23,42,0.9);
-                                      border:1.5px solid rgba(192,132,252,0.55);border-radius:9px;box-sizing:border-box;
-                                      outline:none;transition:all 0.2s;${!useNormal ? 'opacity:0.35;cursor:not-allowed;' : 'cursor:text;'}">
-                    </div>
+                    <input type="number" step="0.01" min="-30" max="50" inputmode="decimal" id="val-normal-${m.id}" value="${normalHandi}"
+                           placeholder="키인 입력" ${!useNormal ? 'disabled' : ''}
+                           oninput="GHandicapPage.recalc(${m.id})"
+                           onfocus="this.style.borderColor='#c084fc';this.style.boxShadow='0 0 10px rgba(192,132,252,0.45)';this.select();"
+                           onblur="this.style.borderColor='rgba(192,132,252,0.55)';this.style.boxShadow='none';"
+                           style="width:86px;height:36px;text-align:center;padding:0 6px;font-size:0.92rem;
+                                  font-weight:800;color:#ffffff;background:rgba(15,23,42,0.9);
+                                  border:1.5px solid rgba(192,132,252,0.55);border-radius:99px;box-sizing:border-box;
+                                  outline:none;transition:all 0.2s;${!useNormal ? 'opacity:0.35;cursor:not-allowed;' : 'cursor:text;'}">
                 </div>
 
-                <!-- Global 핸디 키인 입력 칸 -->
-                <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+                <!-- 2. 글로벌핸디 키인 입력 칸 -->
+                <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
                     <input type="checkbox" id="chk-global-${m.id}" ${useGlobal ? 'checked' : ''}
                            onchange="GHandicapPage.toggleInput(${m.id}, 'global')"
-                           title="Global 핸디 포함 여부"
+                           title="글로벌핸디 포함 여부"
                            style="cursor:pointer;accent-color:#38bdf8;width:18px;height:18px;flex-shrink:0;">
-                    <div style="position:relative;display:inline-flex;align-items:center;">
-                        <input type="number" step="0.01" min="-30" max="50" inputmode="decimal" id="val-global-${m.id}" value="${globalHandi}"
-                               placeholder="키인 입력" ${!useGlobal ? 'disabled' : ''}
-                               oninput="GHandicapPage.recalc(${m.id})"
-                               onfocus="this.style.borderColor='#38bdf8';this.style.boxShadow='0 0 10px rgba(56,189,248,0.45)';this.select();"
-                               onblur="this.style.borderColor='rgba(56,189,248,0.55)';this.style.boxShadow='none';"
-                               style="width:86px;height:36px;text-align:center;padding:0 8px;font-size:0.92rem;
-                                      font-weight:800;color:#ffffff;background:rgba(15,23,42,0.9);
-                                      border:1.5px solid rgba(56,189,248,0.55);border-radius:9px;box-sizing:border-box;
-                                      outline:none;transition:all 0.2s;${!useGlobal ? 'opacity:0.35;cursor:not-allowed;' : 'cursor:text;'}">
-                    </div>
+                    <input type="number" step="0.01" min="-30" max="50" inputmode="decimal" id="val-global-${m.id}" value="${globalHandi}"
+                           placeholder="키인 입력" ${!useGlobal ? 'disabled' : ''}
+                           oninput="GHandicapPage.recalc(${m.id})"
+                           onfocus="this.style.borderColor='#38bdf8';this.style.boxShadow='0 0 10px rgba(56,189,248,0.45)';this.select();"
+                           onblur="this.style.borderColor='rgba(56,189,248,0.55)';this.style.boxShadow='none';"
+                           style="width:86px;height:36px;text-align:center;padding:0 6px;font-size:0.92rem;
+                                  font-weight:800;color:#ffffff;background:rgba(15,23,42,0.9);
+                                  border:1.5px solid rgba(56,189,248,0.55);border-radius:99px;box-sizing:border-box;
+                                  outline:none;transition:all 0.2s;${!useGlobal ? 'opacity:0.35;cursor:not-allowed;' : 'cursor:text;'}">
                 </div>
 
-                <!-- 최종 G-핸디 표시 -->
-                <div style="text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-                    <span id="disp-final-${m.id}"
-                          style="font-size:1.2rem;font-weight:800;color:#38bdf8;display:inline-block;line-height:1.2;">
-                        ${currentHandicap !== null ? currentHandicap : '—'}
-                    </span>
-                    <div id="disp-status-${m.id}" style="font-size:0.65rem;font-weight:700;margin-top:2px;min-height:14px;"></div>
+                <!-- 3. 최종핸디 표시 박스 (3개 항목 폭 86px & 높이 36px 일률적 일치화) -->
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;">
+                    <div style="width:86px;height:36px;display:flex;align-items:center;justify-content:center;
+                                background:rgba(15,23,42,0.9);border:1.5px solid rgba(52,211,153,0.55);
+                                border-radius:99px;box-sizing:border-box;">
+                        <span id="disp-final-${m.id}" style="font-size:1.1rem;font-weight:800;color:#34d399;">
+                            ${currentHandicap !== null ? currentHandicap : '—'}
+                        </span>
+                    </div>
+                    <div id="disp-status-${m.id}" style="font-size:0.65rem;font-weight:700;min-height:14px;white-space:nowrap;"></div>
                 </div>
 
                 <!-- 저장 버튼 -->
@@ -197,16 +199,23 @@ const GHandicapPage = {
         this.recalc(memberId);
     },
 
-    /** G-핸디 보정 공식 계산 로직 */
+    /** G-핸디 (최종핸디) 보정 및 산출 공식 로직
+     * 1. NX4 핸드 + 글로벌핸디 평균 산출
+     * 2. 평균 ≤ 5: 반올림(Math.round)
+     *    - 평균 > 5: 내림(Math.floor)
+     * 3. 상승 방지 규정:
+     *    - 기존 최종핸디 ≤ 5 멤버: 핸디가 상승하더라도 맥스 5까지만 가능 (5 초과 불가)
+     *    - 기존 최종핸디 > 5 멤버: 핸디가 기존 최종핸디보다 더 올라갈 수 없음 (기존 핸디 유지)
+     */
     computeGHandicap(memberId) {
         const m = this.members.find(item => item.id === memberId);
         if (!m) return null;
 
         const cfg = this.configs[memberId] || {};
         const currentHandicapVal =
-            cfg.finalHandicap !== undefined && cfg.finalHandicap !== '' && !isNaN(Number(cfg.finalHandicap))
+            cfg.finalHandicap !== undefined && cfg.finalHandicap !== '' && cfg.finalHandicap !== null && !isNaN(Number(cfg.finalHandicap))
                 ? Number(cfg.finalHandicap)
-                : (m.ghandicap !== undefined && m.ghandicap !== '' && !isNaN(Number(m.ghandicap))
+                : (m.ghandicap !== undefined && m.ghandicap !== '' && m.ghandicap !== null && !isNaN(Number(m.ghandicap))
                     ? Number(m.ghandicap) : null);
 
         const chkNormal   = document.getElementById(`chk-normal-${memberId}`);
@@ -227,25 +236,40 @@ const GHandicapPage = {
 
         if (validCount === 0) {
             return { validCount: 0, rawAvg: null, computed: null, finalHandicap: currentHandicapVal,
-                     status: 'no_input', normalVal, globalVal, useNormal, useGlobal };
+                     status: 'no_input', normalVal, globalVal, useNormal, useGlobal, currentHandicapVal };
         }
 
         const rawAvg = sum / validCount;
         const formattedAvg = Math.round(rawAvg * 10) / 10;
 
+        // ≤5 반올림, >5 내림
         let computed;
-        if (formattedAvg <= 5) { computed = Math.round(formattedAvg); }
-        else                    { computed = Math.floor(formattedAvg); }
-
-        let finalHandicap = computed;
-        let status = 'applied';
-
-        if (formattedAvg > 5 && currentHandicapVal !== null && computed > currentHandicapVal) {
-            finalHandicap = currentHandicapVal;
-            status = 'guarded';
+        if (formattedAvg <= 5) {
+            computed = Math.round(formattedAvg);
+        } else {
+            computed = Math.floor(formattedAvg);
         }
 
-        return { validCount, rawAvg: formattedAvg, computed, finalHandicap, status, normalVal, globalVal, useNormal, useGlobal };
+        let finalHandicap = computed;
+        let status = 'applied'; // 'applied' | 'guarded_max5' | 'guarded_stay'
+
+        if (currentHandicapVal !== null) {
+            if (currentHandicapVal <= 5) {
+                // 기존 5 이하 멤버: 핸디가 상승하더라도 맥스 5까지만 가능 (더 이상 못 올라감)
+                if (computed > 5) {
+                    finalHandicap = 5;
+                    status = 'guarded_max5';
+                }
+            } else {
+                // 기존 5 이상(>5) 멤버: 현재 최종핸디에서 더 올라갈 수 없음 (기존 핸디 유지)
+                if (computed > currentHandicapVal) {
+                    finalHandicap = currentHandicapVal;
+                    status = 'guarded_stay';
+                }
+            }
+        }
+
+        return { validCount, rawAvg: formattedAvg, computed, finalHandicap, status, normalVal, globalVal, useNormal, useGlobal, currentHandicapVal };
     },
 
     recalc(memberId) {
@@ -262,10 +286,25 @@ const GHandicapPage = {
         }
 
         dispFinal.textContent = res.finalHandicap !== null ? res.finalHandicap : '—';
-        dispFinal.style.color = res.status === 'guarded' ? '#f59e0b' : '#38bdf8';
-        if (dispStatus) {
-            dispStatus.textContent = res.status === 'guarded' ? '🛡️유지' : '✅갱신';
-            dispStatus.style.color = res.status === 'guarded' ? '#f59e0b' : '#34d399';
+
+        if (res.status === 'guarded_max5') {
+            dispFinal.style.color = '#f59e0b';
+            if (dispStatus) {
+                dispStatus.textContent = '🛡️ 맥스 5';
+                dispStatus.style.color = '#f59e0b';
+            }
+        } else if (res.status === 'guarded_stay') {
+            dispFinal.style.color = '#f59e0b';
+            if (dispStatus) {
+                dispStatus.textContent = `🛡️ ${res.currentHandicapVal} 유지`;
+                dispStatus.style.color = '#f59e0b';
+            }
+        } else {
+            dispFinal.style.color = '#34d399';
+            if (dispStatus) {
+                dispStatus.textContent = '✅ 갱신';
+                dispStatus.style.color = '#34d399';
+            }
         }
     },
 
@@ -306,7 +345,7 @@ const GHandicapPage = {
             setTimeout(() => { row.style.background = ''; }, 1200);
         }
 
-        Utils.toast(`[${m.name}] G-핸디 ${configData.finalHandicap} 저장 완료!`, 'success');
+        Utils.toast(`[${m.name}] 최종핸디 ${configData.finalHandicap} 저장 완료!`, 'success');
     },
 
     async saveAll() {
@@ -315,7 +354,7 @@ const GHandicapPage = {
         for (const m of this.members) {
             await this.saveSingle(m.id);
         }
-        Utils.toast('모든 멤버의 G-핸디가 저장되었습니다!', 'success');
+        Utils.toast('모든 멤버의 최종핸디가 저장되었습니다!', 'success');
     }
 };
 
