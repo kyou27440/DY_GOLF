@@ -556,64 +556,94 @@ const ClubPage = {
             }
         };
 
-        typeSelect.addEventListener('change', updateFormState);
-        updateFormState();
-
-        document.getElementById('btn-save-dues').addEventListener('click', async () => {
-            const typeVal = typeSelect.value;
-            const amount = Utils.parseAmount(document.getElementById('dues-amount').value);
-            const rawMemo = document.getElementById('dues-memo').value.trim();
-
-            if (!document.getElementById('dues-date').value || !amount || amount <= 0) {
-                Utils.toast('날짜와 금액을 올바르게 입력해주세요', 'error');
-                return;
-            }
-
-            let memberId, memo;
-            if (typeVal === 'deposit') {
-                memberId = Number(document.getElementById('dues-member').value);
-                memo = rawMemo;
-            } else {
-                const category = document.getElementById('dues-category').value;
-                memberId = members.length > 0 ? members[0].id : 1;
-                memo = rawMemo ? `[${category}] ${rawMemo}` : `[${category}]`;
-            }
-
-            const data = {
-                dues_date: document.getElementById('dues-date').value,
-                member_id: memberId,
-                type: typeVal,
-                amount: amount,
-                memo: memo
-            };
-
-            await Store.addDues(data);
-            Utils.toast(typeVal === 'deposit' ? '회비 입금이 기록되었습니다!' : '출금 지출이 기록되었습니다!', 'success');
-            Modal.close();
-            await this.renderTab();
-        });
-    },
-
-    async deleteDues(id) {
-        const ok = await Modal.confirm('회비 삭제', '이 회비 내역을 삭제하시겠습니까?');
-        if (ok) { await Store.deleteDues(id); Utils.toast('삭제되었습니다', 'success'); this.renderTab(); }
-    },
-
-    // ─── 순위/성적 탭 ───
+        typeSelect.a    // ─── 순위/성적 탭 ───
     async renderRanking(container) {
-        const [stats, trend] = await Promise.all([Store.getMemberStats(), Store.getRankingTrend(10)]);
+        const [stats, trend] = await Promise.all([Store.getMemberStats(), Store.getRankingTrend(20)]);
+
+        // ─ 1등 횟수 및 최하위 횟수 계산 ─
+        const memberFirstCount = {};
+        const memberLastCount = {};
+        trend.forEach(g => {
+            const parts = g.club_game_participants || [];
+            const ranked = parts.filter(p => p.ranking);
+            if (!ranked.length) return;
+            const maxRank = Math.max(...ranked.map(p => p.ranking));
+            ranked.forEach(p => {
+                const name = p.club_members?.name || '?';
+                if (p.ranking === 1) memberFirstCount[name] = (memberFirstCount[name] || 0) + 1;
+                if (p.ranking === maxRank) memberLastCount[name] = (memberLastCount[name] || 0) + 1;
+            });
+        });
 
         container.innerHTML = `
-            <div class="section-header"><span class="section-title">🏆 멤버별 성적 & 랭킹 통계</span></div>
+            <div class="section-header" style="margin-bottom:16px;">
+                <span class="section-title">🏆 멤버별 성적 현황</span>
+            </div>
             ${stats.length > 0 ? `
-            <div class="ranking-vertical-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(210px, 1fr));gap:14px;margin-bottom:20px;">
+            <div style="background:rgba(15,23,42,0.85);border:1px solid rgba(99,102,241,0.3);border-radius:16px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,0.28);margin-bottom:20px;">
+                <div style="display:grid;grid-template-columns:52px 1fr 80px 80px 80px 70px 70px;
+                            padding:10px 16px;align-items:center;
+                            background:linear-gradient(90deg,rgba(99,102,241,0.22),rgba(139,92,246,0.14));
+                            border-bottom:1px solid rgba(99,102,241,0.28);
+                            font-size:0.76rem;font-weight:800;letter-spacing:0.04em;color:#94a3b8;">
+                    <div style="text-align:center;">순위</div>
+                    <div>멤버</div>
+                    <div style="text-align:center;">게임수</div>
+                    <div style="text-align:center;">평균등수</div>
+                    <div style="text-align:center;">최고등수</div>
+                    <div style="text-align:center;">🥇 1등</div>
+                    <div style="text-align:center;">꼴찌</div>
+                </div>
                 ${stats.map((s, idx) => {
-                    const medal = idx === 0 ? '🥇 ' : (idx === 1 ? '🥈 ' : (idx === 2 ? '🥉 ' : ''));
-                    const rankGamesInfo = s.rankedGames !== undefined && s.rankedGames < s.games ? ` (순위 ${s.rankedGames}회)` : '';
-                    return `
-                    <div class="ranking-vertical-card" style="padding:16px;background:linear-gradient(135deg, rgba(30,41,59,0.9), rgba(15,23,42,0.95));border:1px solid rgba(99,102,241,0.28);border-radius:16px;box-shadow:0 4px 14px rgba(0,0,0,0.18);">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                            <span style="font-weight:700;font-size:1.08rem;color:#f8fafc;">${medal}${Utils.escapeHtml(s.name)}</span>
+                    const rank1 = idx + 1;
+                    const rowBg = idx % 2 === 0 ? 'rgba(30,41,59,0.45)' : 'rgba(15,23,42,0.3)';
+                    let rankBadge, rankColor;
+                    if (rank1 === 1)      { rankBadge = '🥇'; rankColor = '#fbbf24'; }
+                    else if (rank1 === 2) { rankBadge = '🥈'; rankColor = '#94a3b8'; }
+                    else if (rank1 === 3) { rankBadge = '🥉'; rankColor = '#cd7c2f'; }
+                    else                 { rankBadge = String(rank1); rankColor = '#64748b'; }
+                    const avgRankNum = s.avgRank !== '-' ? parseFloat(s.avgRank) : null;
+                    const avgColor = avgRankNum !== null
+                        ? (avgRankNum <= 2 ? '#34d399' : avgRankNum <= 3.5 ? '#38bdf8' : avgRankNum <= 5 ? '#f59e0b' : '#f43f5e')
+                        : '#64748b';
+                    const first1 = memberFirstCount[s.name] || 0;
+                    const last1  = memberLastCount[s.name] || 0;
+                    return `<div style="display:grid;grid-template-columns:52px 1fr 80px 80px 80px 70px 70px;
+                                padding:11px 16px;align-items:center;min-height:56px;
+                                background:${rowBg};border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s;"
+                         onmouseover="this.style.background='rgba(99,102,241,0.1)'"
+                         onmouseout="this.style.background='${rowBg}'">
+                        <div style="text-align:center;font-size:${rank1 <= 3 ? '1.4rem' : '0.95rem'};font-weight:800;color:${rankColor};">${rankBadge}</div>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;color:#fff;flex-shrink:0;">${Utils.escapeHtml(s.name).substring(0,2)}</div>
+                            <span style="font-weight:700;font-size:0.95rem;color:#f1f5f9;">${Utils.escapeHtml(s.name)}</span>
+                        </div>
+                        <div style="text-align:center;font-size:0.88rem;font-weight:700;color:#cbd5e1;">${s.games}<span style="font-size:0.72rem;color:#64748b;"> 회</span></div>
+                        <div style="text-align:center;font-size:1rem;font-weight:800;color:${avgColor};">${s.avgRank !== '-' ? s.avgRank + '등' : '—'}</div>
+                        <div style="text-align:center;font-size:0.9rem;font-weight:700;color:#34d399;">${s.best !== '-' ? s.best + '등' : '—'}</div>
+                        <div style="text-align:center;font-size:0.9rem;font-weight:700;color:#fbbf24;">${first1 > 0 ? first1 + '회' : '—'}</div>
+                        <div style="text-align:center;font-size:0.9rem;font-weight:700;color:#f43f5e;">${last1 > 0 ? last1 + '회' : '—'}</div>
+                    </div>`;
+                }).join('')}
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
+                ${stats.slice(0,3).map((s, idx) => {
+                    const labels = ['🥇 종합 1위', '🥈 종합 2위', '🥉 종합 3위'];
+                    const colors = ['rgba(251,191,36,0.18)', 'rgba(148,163,184,0.15)', 'rgba(205,124,47,0.15)'];
+                    const borders = ['rgba(251,191,36,0.5)', 'rgba(148,163,184,0.4)', 'rgba(205,124,47,0.4)'];
+                    return `<div style="padding:14px 16px;background:${colors[idx]};border:1px solid ${borders[idx]};border-radius:14px;">
+                        <div style="font-size:0.72rem;font-weight:700;color:#94a3b8;margin-bottom:4px;">${labels[idx]}</div>
+                        <div style="font-size:1.1rem;font-weight:800;color:#f8fafc;">${Utils.escapeHtml(s.name)}</div>
+                        <div style="font-size:0.78rem;color:#94a3b8;margin-top:4px;">평균 ${s.avgRank !== '-' ? s.avgRank + '등' : '-'} · 최고 ${s.best !== '-' ? s.best + '등' : '-'}</div>
+                    </div>`;
+                }).join('')}
+            </div>
+            ` : '<div class="empty-state"><div class="empty-icon">🏆</div><p class="empty-text">성적 데이터가 없습니다</p></div>'}
+        `;
+    },
+
+    ratioPresets:
+r:#f8fafc;">${medal}${Utils.escapeHtml(s.name)}</span>
                             <span class="badge badge-income" style="font-size:0.8rem;font-weight:700;">🎮 ${s.games}회 참여${rankGamesInfo}</span>
                         </div>
                         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:10px;background:rgba(15,23,42,0.6);border-radius:10px;text-align:center;font-size:0.82rem;">
