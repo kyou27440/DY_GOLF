@@ -195,6 +195,7 @@ const GHandicapPage = {
                             ${currentHandicap !== null ? currentHandicap : '—'}
                         </span>
                     </div>
+                    <div id="disp-avg-${m.id}" style="font-size:0.62rem;color:#64748b;font-weight:600;min-height:13px;white-space:nowrap;"></div>
                     <div id="disp-status-${m.id}" style="font-size:0.65rem;font-weight:700;min-height:14px;white-space:nowrap;"></div>
                 </div>
 
@@ -316,14 +317,18 @@ const GHandicapPage = {
 
         dispFinal.textContent = res.finalHandicap !== null ? res.finalHandicap : '—';
 
+        const dispAvg = document.getElementById(`disp-avg-${memberId}`);
+
         if (res.status === 'guarded_max5') {
             dispFinal.style.color = '#f59e0b';
+            if (dispAvg) { dispAvg.textContent = `평균 ${res.rawAvg}`; dispAvg.style.color = '#94a3b8'; }
             if (dispStatus) {
                 dispStatus.textContent = '🛡️ 맥스 5';
                 dispStatus.style.color = '#f59e0b';
             }
         } else if (res.status === 'guarded_stay') {
             dispFinal.style.color = '#f59e0b';
+            if (dispAvg) { dispAvg.textContent = `평균 ${res.rawAvg}`; dispAvg.style.color = '#94a3b8'; }
             if (dispStatus) {
                 dispStatus.textContent = `🛡️ ${res.currentHandicapVal} 유지`;
                 dispStatus.style.color = '#f59e0b';
@@ -331,6 +336,7 @@ const GHandicapPage = {
         } else {
             // 'applied': 평균≤5 상승반영 or 평균>5 내림반영
             dispFinal.style.color = '#34d399';
+            if (dispAvg) { dispAvg.textContent = `평균 ${res.rawAvg}`; dispAvg.style.color = '#94a3b8'; }
             if (dispStatus) {
                 dispStatus.textContent = res.currentHandicapVal !== null
                     ? `✅ ${res.currentHandicapVal} → ${res.finalHandicap}`
