@@ -46,13 +46,8 @@ const GHandicapPage = {
                         [NX4 핸드] + [글로벌핸디] 평균 산출 (1개 선택 시 해당 핸디 적용)
                     </div>
                     <div style="background:rgba(30,41,59,0.55);padding:9px 12px;border-radius:8px;border-left:3px solid #38bdf8;">
-                        <strong style="color:#38bdf8;">2. 평균 ≤ 5 (반올림 · 상승 가능 · 맥스5):</strong><br>
-                        <span style="color:#34d399;font-weight:700;">반올림</span> 적용 / 기존 핸디보다 <span style="color:#34d399;font-weight:700;">올라갈 수 있음</span> (최대 5)
-                        <span style="color:#94a3b8;"> 예) 3.3→3, 4.6→5</span>
-                    </div>
-                    <div style="background:rgba(30,41,59,0.55);padding:9px 12px;border-radius:8px;border-left:3px solid #34d399;">
                         <strong style="color:#34d399;">3. 평균 &gt; 5 (내림 · 상승 불가):</strong><br>
-                        <span style="color:#34d399;font-weight:700;">내림</span> 적용 / 기존 핸디보다 <span style="color:#f59e0b;font-weight:700;">올라갈 수 없음</span> (내림만 반영)
+                        <span style="color:#34d399;font-weight:700;">내림</span> 적용 / 기존핸디칸 값보다 <span style="color:#f59e0b;font-weight:700;">올라갈 수 없음</span> (내림만 반영)
                         <span style="color:#94a3b8;"> 예) 6.5→6, 6.8→6</span>
                     </div>
                 </div>
@@ -61,8 +56,8 @@ const GHandicapPage = {
 
         <!-- 멤버 핸디 관리 테이블 -->
         <div style="background:rgba(15,23,42,0.8);border:1px solid rgba(99,102,241,0.3);border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
-            <!-- 테이블 헤더 (3개 항목 일률적 컬럼 폭 및 정렬) -->
-            <div style="display:grid;grid-template-columns:minmax(130px, 1.4fr) 1.2fr 1.2fr 1.2fr 80px;
+            <!-- 테이블 헤더 -->
+            <div style="display:grid;grid-template-columns:minmax(130px, 1.4fr) 1.2fr 1.2fr 1.2fr 1.2fr 80px;
                         padding:12px 18px;align-items:center;
                         background:linear-gradient(90deg, rgba(99,102,241,0.18), rgba(139,92,246,0.12));
                         border-bottom:1px solid rgba(99,102,241,0.3);
@@ -70,6 +65,7 @@ const GHandicapPage = {
                 <div style="color:#e2e8f0;">👥 멤버</div>
                 <div style="text-align:center;color:#c084fc;">⛳ NX4 핸드</div>
                 <div style="text-align:center;color:#38bdf8;">🌐 글로벌핸디</div>
+                <div style="text-align:center;color:#f59e0b;">🔒 기존핸디</div>
                 <div style="text-align:center;color:#34d399;">🏆 최종핸디</div>
                 <div style="text-align:center;color:#94a3b8;">관리</div>
             </div>
@@ -121,6 +117,7 @@ const GHandicapPage = {
 
             const normalHandi = cfg.golfzonHandi !== undefined && cfg.golfzonHandi !== '' && cfg.golfzonHandi !== null ? cfg.golfzonHandi : '';
             const globalHandi = cfg.globalHandi  !== undefined && cfg.globalHandi  !== '' && cfg.globalHandi  !== null ? cfg.globalHandi  : '';
+            const baseHandi   = cfg.baseHandicap  !== undefined && cfg.baseHandicap  !== '' && cfg.baseHandicap  !== null ? cfg.baseHandicap  : '';
             const useNormal   = cfg.useGolfzon !== undefined ? cfg.useGolfzon : true;
             const useGlobal   = cfg.useGlobal  !== undefined ? cfg.useGlobal  : true;
 
@@ -132,7 +129,7 @@ const GHandicapPage = {
 
             html += `
             <div id="ghrow-${m.id}"
-                 style="display:grid;grid-template-columns:minmax(130px, 1.4fr) 1.2fr 1.2fr 1.2fr 80px;
+                 style="display:grid;grid-template-columns:minmax(130px, 1.4fr) 1.2fr 1.2fr 1.2fr 1.2fr 80px;
                         padding:12px 18px;min-height:68px;align-items:center;
                         background:${rowBg};border-bottom:1px solid rgba(255,255,255,0.05);
                         transition:all 0.15s ease-in-out;"
@@ -186,7 +183,21 @@ const GHandicapPage = {
                                   outline:none;transition:all 0.2s;${!useGlobal ? 'opacity:0.35;cursor:not-allowed;' : 'cursor:text;'}">
                 </div>
 
-                <!-- 3. 최종핸디 표시 박스 (3개 항목 폭 86px & 높이 36px 일률적 일치화) -->
+                <!-- 3. 기존핸디 입력 칸 (하한 기준값 직접 입력) -->
+                <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
+                    <input type="number" step="1" min="0" max="50" inputmode="numeric" id="val-base-${m.id}" value="${baseHandi}"
+                           placeholder="미입력"
+                           oninput="GHandicapPage.recalc(${m.id})"
+                           onfocus="this.style.borderColor='#f59e0b';this.style.boxShadow='0 0 10px rgba(245,158,11,0.45)';this.select();"
+                           onblur="this.style.borderColor='rgba(245,158,11,0.45)';this.style.boxShadow='none';"
+                           title="기존 최저핸디 (하한 기준값, 평균이 이 값보다 높으면 유지)"
+                           style="width:86px;height:36px;text-align:center;padding:0 6px;font-size:0.92rem;
+                                  font-weight:800;color:#f59e0b;background:rgba(15,23,42,0.9);
+                                  border:1.5px solid rgba(245,158,11,0.45);border-radius:9px;box-sizing:border-box;
+                                  outline:none;transition:all 0.2s;cursor:text;">
+                </div>
+
+                <!-- 4. 최종핸디 표시 박스 -->
                 <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;">
                     <div style="width:86px;height:36px;display:flex;align-items:center;justify-content:center;
                                 background:rgba(15,23,42,0.9);border:1.5px solid rgba(52,211,153,0.55);
@@ -239,16 +250,12 @@ const GHandicapPage = {
 
         const cfg = this.configs[memberId] || {};
 
-        // ── 기존 최종핸디 로딩: cfg.finalHandicap 우선, 없으면 m.ghandicap ──
+        // ── 기존핸디 (하한 기준값): val-base 인풋 우선, 없으면 cfg.baseHandicap ──
         let currentHandicapVal = null;
-        const cfgFinal = cfg.finalHandicap;
-        if (cfgFinal !== undefined && cfgFinal !== '' && cfgFinal !== null && !isNaN(Number(cfgFinal))) {
-            currentHandicapVal = Number(cfgFinal);
-        } else {
-            const mGh = m.ghandicap;
-            if (mGh !== undefined && mGh !== '' && mGh !== null && !isNaN(Number(mGh))) {
-                currentHandicapVal = Number(mGh);
-            }
+        const baseEl = document.getElementById(`val-base-${memberId}`);
+        const baseStr = baseEl ? baseEl.value.trim() : (cfg.baseHandicap !== undefined && cfg.baseHandicap !== null ? String(cfg.baseHandicap) : '');
+        if (baseStr !== '' && !isNaN(Number(baseStr))) {
+            currentHandicapVal = Number(baseStr);
         }
 
         const chkNormal   = document.getElementById(`chk-normal-${memberId}`);
@@ -355,6 +362,7 @@ const GHandicapPage = {
         const useGlobal      = document.getElementById(`chk-global-${memberId}`)?.checked ?? true;
         const normalHandiVal = document.getElementById(`val-normal-${memberId}`)?.value.trim() || '';
         const globalHandiVal = document.getElementById(`val-global-${memberId}`)?.value.trim() || '';
+        const baseHandiVal   = document.getElementById(`val-base-${memberId}`)?.value.trim() || '';
 
         const configData = {
             useGolfzon:    useNormal,
@@ -363,6 +371,7 @@ const GHandicapPage = {
             globalId:      '',
             golfzonHandi:  normalHandiVal !== '' && !isNaN(Number(normalHandiVal)) ? Number(normalHandiVal) : '',
             globalHandi:   globalHandiVal !== '' && !isNaN(Number(globalHandiVal)) ? Number(globalHandiVal) : '',
+            baseHandicap:  baseHandiVal   !== '' && !isNaN(Number(baseHandiVal))   ? Number(baseHandiVal)   : '',
             finalHandicap: res ? res.finalHandicap : m.ghandicap
         };
 
