@@ -50,20 +50,21 @@ const GHandicapPage = {
                         <span style="color:#34d399;font-weight:700;">반올림</span> 적용 / 기존 핸디보다 <span style="color:#34d399;font-weight:700;">올라갈 수 있음</span> (최대 5)
                         <span style="color:#94a3b8;"> 예) 3.3→3, 4.6→5</span>
                     </div>
-                    <div style="background:rgba(30,41,59,0.55);padding:9px 12px;border-radius:8px;border-left:3px solid #34d399;">
-                        <strong style="color:#34d399;">3. 평균 &gt; 5 (내림 · 상승 불가):</strong><br>
-                        <span style="color:#34d399;font-weight:700;">내림</span> 적용 / 기존 핸디보다 <span style="color:#f59e0b;font-weight:700;">올라갈 수 없음</span> (내림만 반영)
-                        <span style="color:#94a3b8;"> 예) 6.5→6, 6.8→6</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 멤버 핸디 관리 테이블 -->
+                       <!-- 멤버 핸디 관리 테이블 -->
         <div style="background:rgba(15,23,42,0.8);border:1px solid rgba(99,102,241,0.3);border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
-            <!-- 테이블 헤더 (3개 항목 일률적 컬럼 폭 및 정렬) -->
-            <div style="display:grid;grid-template-columns:minmax(130px, 1.4fr) 1.2fr 1.2fr 1.2fr 80px;
+            <!-- 테이블 헤더 -->
+            <div style="display:grid;grid-template-columns:minmax(130px, 1.4fr) 1.2fr 1.2fr 1.2fr 1.2fr 80px;
                         padding:12px 18px;align-items:center;
+                        background:linear-gradient(90deg, rgba(99,102,241,0.18), rgba(139,92,246,0.12));
+                        border-bottom:1px solid rgba(99,102,241,0.3);
+                        font-size:0.8rem;font-weight:800;letter-spacing:0.03em;">
+                <div style="color:#e2e8f0;">👥 멤버</div>
+                <div style="text-align:center;color:#c084fc;">⛳ NX4 핸드</div>
+                <div style="text-align:center;color:#38bdf8;">🌐 글로벌핸디</div>
+                <div style="text-align:center;color:#f59e0b;">🔒 기존핸디</div>
+                <div style="text-align:center;color:#34d399;">🏆 최종핸디</div>
+                <div style="text-align:center;color:#94a3b8;">관리</div>
+            </div>px;align-items:center;
                         background:linear-gradient(90deg, rgba(99,102,241,0.18), rgba(139,92,246,0.12));
                         border-bottom:1px solid rgba(99,102,241,0.3);
                         font-size:0.8rem;font-weight:800;letter-spacing:0.03em;">
