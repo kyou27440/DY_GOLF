@@ -2,8 +2,13 @@
    GHANDICAP.JS — 멤버별 핸디 통합 관리 (NX4 핸드 + 글로벌핸디 ➔ 최종핸디)
    규칙:
    1. NX4 핸드 + 글로벌핸디 2개 평균 기준
-   2. 평균 ≤ 5: 반올림(Math.round) 적용 / 성적 저하 시 맥스 5까지만 가능 (5 초과 불가)
-   3. 평균 > 5: 내림(Math.floor) 적용 / 기존 최종핸디에서 더 올라갈 수 없음 (기존 핸디 유지)
+   ─── 평균 ≤ 5 구간 ───
+   2. 반올림(Math.round) 적용  예) 3.3→3, 4.6→5
+   3. 상승 가능 (맥스 5, 5 초과 불가)
+   ─── 평균 > 5 구간 ───
+   4. 내림(Math.floor) 적용  예) 6.5→6, 6.8→6
+   5. 상승 불가 — 기존 최종핸디에서 더 올라갈 수 없음 (내림만 반영)
+   6. 기존 최종핸디 기준: cfg.finalHandicap 우선, 없으면 m.ghandicap
    ============================================ */
 
 const GHandicapPage = {
@@ -38,15 +43,17 @@ const GHandicapPage = {
                 <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:10px;font-size:0.78rem;color:#e2e8f0;">
                     <div style="background:rgba(30,41,59,0.55);padding:9px 12px;border-radius:8px;border-left:3px solid #c084fc;">
                         <strong style="color:#c084fc;">1. 평균 산출:</strong><br>
-                        [NX4 핸드] + [글로벌핸디] 2개 항목 평균 산출 (1개 선택 시 해당 핸디 적용)
+                        [NX4 핸드] + [글로벌핸디] 평균 산출 (1개 선택 시 해당 핸디 적용)
                     </div>
                     <div style="background:rgba(30,41,59,0.55);padding:9px 12px;border-radius:8px;border-left:3px solid #38bdf8;">
-                        <strong style="color:#38bdf8;">2. 핸디 ≤ 5 구간 (반올림 &amp; 맥스5):</strong><br>
-                        평균 ≤ 5는 <span style="color:#34d399;font-weight:700;">반올림</span> 반영 / 성적 저하 시 <span style="color:#f59e0b;font-weight:700;">최대 5까지만 가능</span> (5 초과 불가)
+                        <strong style="color:#38bdf8;">2. 평균 ≤ 5 (반올림 · 상승 가능 · 맥스5):</strong><br>
+                        <span style="color:#34d399;font-weight:700;">반올림</span> 적용 / 기존 핸디보다 <span style="color:#34d399;font-weight:700;">올라갈 수 있음</span> (최대 5)
+                        <span style="color:#94a3b8;"> 예) 3.3→3, 4.6→5</span>
                     </div>
                     <div style="background:rgba(30,41,59,0.55);padding:9px 12px;border-radius:8px;border-left:3px solid #34d399;">
-                        <strong style="color:#34d399;">3. 핸디 &gt; 5 구간 (내림 &amp; 상승방지):</strong><br>
-                        평균 &gt; 5는 <span style="color:#34d399;font-weight:700;">내림</span> 반영 / 평균이 올라가도 <span style="color:#f59e0b;font-weight:700;">기존 최종핸디 유지</span> (예: 10 ➔ 평균 13 돼도 10 유지)
+                        <strong style="color:#34d399;">3. 평균 &gt; 5 (내림 · 상승 불가):</strong><br>
+                        <span style="color:#34d399;font-weight:700;">내림</span> 적용 / 기존 핸디보다 <span style="color:#f59e0b;font-weight:700;">올라갈 수 없음</span> (내림만 반영)
+                        <span style="color:#94a3b8;"> 예) 6.5→6, 6.8→6</span>
                     </div>
                 </div>
             </div>
@@ -217,23 +224,31 @@ const GHandicapPage = {
     },
 
     /** G-핸디 (최종핸디) 보정 및 산출 공식 로직
-     * 1. NX4 핸드 + 글로벌핸디 평균 산출
-     * 2. 평균 ≤ 5: 반올림(Math.round)
-     *    - 평균 > 5: 내림(Math.floor)
-     * 3. 상승 방지 규정:
-     *    - 기존 최종핸디 ≤ 5 멤버: 핸디가 상승하더라도 맥스 5까지만 가능 (5 초과 불가)
-     *    - 기존 최종핸디 > 5 멤버: 핸디가 기존 최종핸디보다 더 올라갈 수 없음 (기존 핸디 유지)
+     * ─── 평균 ≤ 5 구간 ───
+     * 1. Math.round(평균) 적용  예) 3.3→3, 4.6→5
+     * 2. 상승 가능 (맥스 5, 5 초과 불가)
+     * ─── 평균 > 5 구간 ───
+     * 3. Math.floor(평균) 적용  예) 6.5→6, 6.8→6
+     * 4. 상승 불가 — computed ≥ 기존핸디면 기존핸디 유지 (내림만 반영)
+     * 기존 최종핸디 기준: cfg.finalHandicap 우선, 없으면 m.ghandicap
      */
     computeGHandicap(memberId) {
         const m = this.members.find(item => item.id === memberId);
         if (!m) return null;
 
         const cfg = this.configs[memberId] || {};
-        const currentHandicapVal =
-            cfg.finalHandicap !== undefined && cfg.finalHandicap !== '' && cfg.finalHandicap !== null && !isNaN(Number(cfg.finalHandicap))
-                ? Number(cfg.finalHandicap)
-                : (m.ghandicap !== undefined && m.ghandicap !== '' && m.ghandicap !== null && !isNaN(Number(m.ghandicap))
-                    ? Number(m.ghandicap) : null);
+
+        // ── 기존 최종핸디 로딩: cfg.finalHandicap 우선, 없으면 m.ghandicap ──
+        let currentHandicapVal = null;
+        const cfgFinal = cfg.finalHandicap;
+        if (cfgFinal !== undefined && cfgFinal !== '' && cfgFinal !== null && !isNaN(Number(cfgFinal))) {
+            currentHandicapVal = Number(cfgFinal);
+        } else {
+            const mGh = m.ghandicap;
+            if (mGh !== undefined && mGh !== '' && mGh !== null && !isNaN(Number(mGh))) {
+                currentHandicapVal = Number(mGh);
+            }
+        }
 
         const chkNormal   = document.getElementById(`chk-normal-${memberId}`);
         const valNormalEl = document.getElementById(`val-normal-${memberId}`);
@@ -259,30 +274,25 @@ const GHandicapPage = {
         const rawAvg = sum / validCount;
         const formattedAvg = Math.round(rawAvg * 10) / 10;
 
-        // ≤5 반올림, >5 내림
         let computed;
-        if (formattedAvg <= 5) {
-            computed = Math.round(formattedAvg);
-        } else {
-            computed = Math.floor(formattedAvg);
-        }
-
-        let finalHandicap = computed;
+        let finalHandicap;
         let status = 'applied'; // 'applied' | 'guarded_max5' | 'guarded_stay'
 
-        if (currentHandicapVal !== null) {
-            if (currentHandicapVal <= 5) {
-                // 기존 5 이하 멤버: 핸디가 상승하더라도 맥스 5까지만 가능 (더 이상 못 올라감)
-                if (computed > 5) {
-                    finalHandicap = 5;
-                    status = 'guarded_max5';
-                }
-            } else {
-                // 기존 5 이상(>5) 멤버: 현재 최종핸디에서 더 올라갈 수 없음 (기존 핸디 유지)
-                if (computed > currentHandicapVal) {
-                    finalHandicap = currentHandicapVal;
-                    status = 'guarded_stay';
-                }
+        if (formattedAvg <= 5) {
+            // ─ 평균 ≤ 5: 반올림, 상승 가능, 맥스 5 ─
+            computed = Math.round(formattedAvg);
+            if (computed > 5) computed = 5;
+            finalHandicap = computed;
+            if (computed === 5 && currentHandicapVal !== null && currentHandicapVal < computed) {
+                status = 'guarded_max5';
+            }
+        } else {
+            // ─ 평균 > 5: 내림, 상승 불가 (기존 핸디 유지) ─
+            computed = Math.floor(formattedAvg);
+            finalHandicap = computed;
+            if (currentHandicapVal !== null && computed >= currentHandicapVal) {
+                finalHandicap = currentHandicapVal;
+                status = 'guarded_stay';
             }
         }
 
@@ -317,9 +327,12 @@ const GHandicapPage = {
                 dispStatus.style.color = '#f59e0b';
             }
         } else {
+            // 'applied': 평균≤5 상승반영 or 평균>5 내림반영
             dispFinal.style.color = '#34d399';
             if (dispStatus) {
-                dispStatus.textContent = '✅ 갱신';
+                dispStatus.textContent = res.currentHandicapVal !== null
+                    ? `✅ ${res.currentHandicapVal} → ${res.finalHandicap}`
+                    : '✅ 갱신';
                 dispStatus.style.color = '#34d399';
             }
         }
