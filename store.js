@@ -56,13 +56,6 @@ const Store = {
         return data;
     },
 
-    async updateCategory(id, updates) {
-        updates.updated_at = new Date().toISOString();
-        const { data, error } = await this.from('personal_categories').update(updates).eq('id', id).select().single();
-        if (error) { console.error('updateCategory:', error); return null; }
-        return data;
-    },
-
     async deleteCategory(id) {
         const { error } = await this.from('personal_categories').update({ is_active: false, updated_at: new Date().toISOString() }).eq('id', id);
         if (error) { console.error('deleteCategory:', error); return false; }
@@ -649,102 +642,15 @@ const Store = {
         return true;
     },
 
-    // ─── 모임: 회비 ───
-
-    _getLocalDues() {
-        try {
-            const raw = localStorage.getItem('club_local_dues_v1');
-            return raw ? JSON.parse(raw) : [];
-        } catch(e) { return []; }
-    },
-
-    _saveLocalDues(list) {
-        try {
-            localStorage.setItem('club_local_dues_v1', JSON.stringify(list));
-        } catch(e) {}
-    },
-
-    async getDues(filters = {}) {
-        let dbList = [];
-        try {
-            let q = this.from('club_dues').select('*, club_members(name)').order('dues_date', { ascending: false });
-            if (filters.member_id) q = q.eq('member_id', filters.member_id);
-            if (filters.startDate) q = q.gte('dues_date', filters.startDate);
-            if (filters.endDate) q = q.lte('dues_date', filters.endDate);
-            const { data, error } = await q;
-            if (!error && data && data.length > 0) dbList = data;
-        } catch(e) {}
-
-        const localList = this._getLocalDues();
-        const combinedMap = {};
-        dbList.forEach(d => combinedMap[d.id] = d);
-        localList.forEach(d => {
-            if (filters.member_id && String(d.member_id) !== String(filters.member_id)) return;
-            combinedMap[d.id] = d;
-        });
-
-        return Object.values(combinedMap).sort((a, b) => new Date(b.dues_date) - new Date(a.dues_date));
-    },
-
-    async addDues(dues) {
-        let dbDues = null;
-        try {
-            const { data, error } = await this.from('club_dues').insert(dues).select('*, club_members(name)').single();
-            if (!error && data) dbDues = data;
-        } catch(e) {}
-
-        const members = await this.getMembers();
-        const memObj = members.find(m => String(m.id) === String(dues.member_id));
-        const savedDues = dbDues || { ...dues, id: Date.now(), club_members: { name: memObj ? memObj.name : '기타' } };
-
-        const localList = this._getLocalDues();
-        localList.unshift(savedDues);
-        this._saveLocalDues(localList);
-
-        return savedDues;
-    },
-
-    async deleteDues(id) {
-        try {
-            await this.from('club_dues').delete().eq('id', id);
-        } catch(e) {}
-        let localList = this._getLocalDues();
-        localList = localList.filter(d => String(d.id) !== String(id));
-        this._saveLocalDues(localList);
-        return true;
-    },
-
-    async getDuesBalance() {
-        const { data, error } = await this.from('club_dues').select('member_id, type, amount, club_members(name, status)');
-        if (error) { console.error('getDuesBalance:', error); return []; }
-        const map = {};
-        (data || []).forEach(d => {
-            const mid = d.member_id;
-            if (!map[mid]) map[mid] = { member_id: mid, name: d.club_members?.name || '?', status: d.club_members?.status, balance: 0 };
-            if (d.type === 'deposit') {
-                map[mid].balance += Number(d.amount);
-            }
-        });
-        return Object.values(map).sort((a, b) => a.name.localeCompare(b.name));
-    },
-
-    async getClubTotalBalance() {
-        const { data, error } = await this.from('club_dues').select('type, amount');
-        if (error) return 0;
-        let bal = 0;
-        (data || []).forEach(d => { bal += d.type === 'deposit' ? Number(d.amount) : -Number(d.amount); });
-        return bal;
-    },
-
     // ─── 모임: 순위 추이 ───
 
     async getGamesCount() {
         try {
-            const games = await this.getGames();
-            return games.length;
-        } catch(e) {
-            return 0;
-        }
+            const { count, error } = await this.from('club_games').select('*', { count: 'exact', head: true });
+            if (!error && count !== null) return count;
+            // fallback: local cache
+            return this._getLocalGames().length;
+        } catch(e) { return 0; }
     },
 
     async getRankingTrend(limit = 10) {
