@@ -46,8 +46,13 @@ const GHandicapPage = {
                         [NX4 핸드] + [글로벌핸디] 평균 산출 (1개 선택 시 해당 핸디 적용)
                     </div>
                     <div style="background:rgba(30,41,59,0.55);padding:9px 12px;border-radius:8px;border-left:3px solid #38bdf8;">
+                        <strong style="color:#38bdf8;">2. 평균 ≤ 5 (반올림 · 상승 가능 · 맥스5):</strong><br>
+                        <span style="color:#34d399;font-weight:700;">반올림</span> 적용 / 기존핸디보다 <span style="color:#34d399;font-weight:700;">올라갈 수 있음</span> (최대 5)
+                        <span style="color:#94a3b8;"> 예) 3.3→3, 4.6→5</span>
+                    </div>
+                    <div style="background:rgba(30,41,59,0.55);padding:9px 12px;border-radius:8px;border-left:3px solid #34d399;">
                         <strong style="color:#34d399;">3. 평균 &gt; 5 (내림 · 상승 불가):</strong><br>
-                        <span style="color:#34d399;font-weight:700;">내림</span> 적용 / 기존핸디칸 값보다 <span style="color:#f59e0b;font-weight:700;">올라갈 수 없음</span> (내림만 반영)
+                        <span style="color:#34d399;font-weight:700;">내림</span> 적용 / 🔒기존핸디 값보다 <span style="color:#f59e0b;font-weight:700;">올라갈 수 없음</span> (내림만 반영)
                         <span style="color:#94a3b8;"> 예) 6.5→6, 6.8→6</span>
                     </div>
                 </div>
