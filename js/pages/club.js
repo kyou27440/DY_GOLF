@@ -578,24 +578,8 @@ const ClubPage = {
             <div class="section-header" style="margin-bottom:14px;">
                 <span class="section-title">🏆 멤버별 성적 현황</span>
             </div>
-            </div>
-
-            <!-- 성적 요약 콴멘트 -->
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
-                ${stats.slice(0,3).map((s, idx) => {
-                    const labels = ['🥇 종합 1위', '🥈 종합 2위', '🥉 종합 3위'];
-                    const colors = ['rgba(251,191,36,0.18)', 'rgba(148,163,184,0.15)', 'rgba(205,124,47,0.15)'];
-                    const borders = ['rgba(251,191,36,0.5)', 'rgba(148,163,184,0.4)', 'rgba(205,124,47,0.4)'];
-                    return `
-                    <div style="padding:14px 16px;background:${colors[idx]};border:1px solid ${borders[idx]};border-radius:14px;">
-                        <div style="font-size:0.72rem;font-weight:700;color:#94a3b8;margin-bottom:4px;">${labels[idx]}</div>
-                        <div style="font-size:1.1rem;font-weight:800;color:#f8fafc;">${Utils.escapeHtml(s.name)}</div>
-                        <div style="font-size:0.78rem;color:#94a3b8;margin-top:4px;">평균 ${s.avgRank !== '-' ? s.avgRank + '등' : '-'} · 최고 ${s.best !== '-' ? s.best + '등' : '-'}</div>
-                    </div>`;
-                }).join('')}
-            </div>
-
-            ` : '<div class="empty-state"><div class="empty-icon">🏆</div><p class="empty-text">성적 데이터가 없습니다</p></div>'}
+            ${podiumHtml}
+            ${tableHtml}
         `;
     },
 
