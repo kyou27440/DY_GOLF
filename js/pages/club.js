@@ -733,37 +733,6 @@ const ClubPage = {
             ` : '<div class="empty-state"><div class="empty-icon">🏆</div><p class="empty-text">성적 데이터가 없습니다</p></div>'}
         `;
     },
-));border:1px solid rgba(99,102,241,0.28);border-radius:16px;box-shadow:0 4px 14px rgba(0,0,0,0.18);">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                            <span style="font-weight:700;font-size:1.08rem;color:#f8fafc;">${medal}${Utils.escapeHtml(s.name)}</span>
-                            <span class="badge badge-income" style="font-size:0.8rem;font-weight:700;">🎮 ${s.games}회 참여${rankGamesInfo}</span>
-                        </div>
-                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:10px;background:rgba(15,23,42,0.6);border-radius:10px;text-align:center;font-size:0.82rem;">
-                            <div>
-                                <div style="color:var(--text-muted);">평균순위</div>
-                                <div style="font-weight:700;color:#38bdf8;font-size:1rem;margin-top:2px;">${s.avgRank === '-' ? '-' : s.avgRank + '등'}</div>
-                            </div>
-                            <div>
-                                <div style="color:var(--text-muted);">최고순위</div>
-                                <div style="font-weight:700;color:#34d399;font-size:1rem;margin-top:2px;">${s.best === '-' ? '-' : s.best + '등'}</div>
-                            </div>
-                            <div>
-                                <div style="color:var(--text-muted);">최저순위</div>
-                                <div style="font-weight:700;color:#f43f5e;font-size:1rem;margin-top:2px;">${s.worst === '-' ? '-' : s.worst + '등'}</div>
-                            </div>
-                        </div>
-                    </div>
-                    `;
-                }).join('')}
-            </div>` : '<div class="empty-state"><div class="empty-icon">🏆</div><p class="empty-text">게임 기록이 없습니다</p></div>'}
-
-            <div class="card">
-                <div class="card-header"><span class="card-title">📈 등수 변동 추이</span></div>
-                <div class="chart-container" style="height:300px"><canvas id="ranking-trend-chart"></canvas></div>
-            </div>`;
-
-        if (trend.length > 0) this.drawRankingChart(trend);
-    },
 
     ratioPresets: {
         3: {
