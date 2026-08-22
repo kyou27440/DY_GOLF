@@ -647,8 +647,8 @@ const Store = {
     async getGamesCount() {
         try {
             const { count, error } = await this.from('club_games').select('*', { count: 'exact', head: true });
-            if (!error && count !== null) return count;
-            // fallback: local cache
+            if (!error && count != null && count >= 0) return count;
+            // fallback: local cache length
             return this._getLocalGames().length;
         } catch(e) { return 0; }
     },
