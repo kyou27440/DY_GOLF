@@ -25,8 +25,8 @@ const DashboardPage = {
                 </div>
             </div>
             <div style="text-align:right;flex-shrink:0;">
-                <span class="badge badge-income" style="font-size:0.85rem;padding:4px 10px;font-weight:700;">${window.APP_VERSION || 'v1.2.4'} (DY_GOLF)</span>
-                <div style="font-size:0.8rem;color:#38bdf8;font-weight:700;margin-top:4px;">🕒 ${nowStr} ${window.APP_VERSION || 'v1.2.4'} 최신화 완료 (모바일 게임기록 복구)</div>
+                <span class="badge badge-income" style="font-size:0.85rem;padding:4px 10px;font-weight:700;">${window.APP_VERSION || 'v1.3.1'} (DY_GOLF)</span>
+                <div style="font-size:0.8rem;color:#38bdf8;font-weight:700;margin-top:4px;">🕒 리비젼: ${window.APP_BUILD_TIME || '—'}</div>
             </div>
         </div>
 
