@@ -290,44 +290,31 @@ const GHandicapPage = {
 
     recalc(memberId) {
         const res = this.computeGHandicap(memberId);
-        const dispFinal  = document.getElementById(`disp-final-${memberId}`);
-        const dispStatus = document.getElementById(`disp-status-${memberId}`);
+        const dispFinal = document.getElementById(`disp-final-${memberId}`);
+        const dispInfo  = document.getElementById(`disp-info-${memberId}`);
         if (!res || !dispFinal) return;
 
         if (res.status === 'no_input') {
             dispFinal.textContent = res.finalHandicap !== null ? res.finalHandicap : '—';
             dispFinal.style.color = '#64748b';
-            if (dispStatus) dispStatus.textContent = '';
+            if (dispInfo) dispInfo.textContent = '';
             return;
         }
 
         dispFinal.textContent = res.finalHandicap !== null ? res.finalHandicap : '—';
 
-        const dispAvg = document.getElementById(`disp-avg-${memberId}`);
-
         if (res.status === 'guarded_max5') {
             dispFinal.style.color = '#f59e0b';
-            if (dispAvg) { dispAvg.textContent = `평균 ${res.rawAvg}`; dispAvg.style.color = '#94a3b8'; }
-            if (dispStatus) {
-                dispStatus.textContent = '🛡️ 맥스 5';
-                dispStatus.style.color = '#f59e0b';
-            }
+            if (dispInfo) { dispInfo.textContent = `avg${res.rawAvg} 🛡️5`; dispInfo.style.color = '#f59e0b'; }
         } else if (res.status === 'guarded_stay') {
             dispFinal.style.color = '#f59e0b';
-            if (dispAvg) { dispAvg.textContent = `평균 ${res.rawAvg}`; dispAvg.style.color = '#94a3b8'; }
-            if (dispStatus) {
-                dispStatus.textContent = `🛡️ ${res.currentHandicapVal} 유지`;
-                dispStatus.style.color = '#f59e0b';
-            }
+            if (dispInfo) { dispInfo.textContent = `avg${res.rawAvg} 🛡️유지`; dispInfo.style.color = '#f59e0b'; }
         } else {
-            // 'applied': 평균≤5 상승반영 or 평균>5 내림반영
             dispFinal.style.color = '#34d399';
-            if (dispAvg) { dispAvg.textContent = `평균 ${res.rawAvg}`; dispAvg.style.color = '#94a3b8'; }
-            if (dispStatus) {
-                dispStatus.textContent = res.currentHandicapVal !== null
-                    ? `✅ ${res.currentHandicapVal} → ${res.finalHandicap}`
-                    : '✅ 갱신';
-                dispStatus.style.color = '#34d399';
+            if (dispInfo) {
+                const arrow = res.currentHandicapVal !== null ? `${res.currentHandicapVal}→${res.finalHandicap}` : '갱신';
+                dispInfo.textContent = `avg${res.rawAvg} ✅${arrow}`;
+                dispInfo.style.color = '#34d399';
             }
         }
     },
