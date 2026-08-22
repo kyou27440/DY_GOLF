@@ -4,8 +4,7 @@
 
 const DashboardPage = {
     async render() {
-        const [exchangeTotal, games, totalGamesCount, members, calcHistories] = await Promise.all([
-            Store.getExchangeTotal().catch(() => 0),
+        const [games, totalGamesCount, members, calcHistories] = await Promise.all([
             Store.getGames({ limit: 5 }).catch(() => []),
             Store.getGamesCount().catch(() => 0),
             Store.getMembers('active').catch(() => []),
