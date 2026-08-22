@@ -646,39 +646,6 @@ const ClubPage = {
         Utils.toast(`[${preset.name}] 비율 적용 완료! (${preset.desc})`, 'success');
     },
 
-    drawRankingChart(trendData) {
-        const canvas = document.getElementById('ranking-trend-chart');
-        if (!canvas) return;
-
-        const labels = trendData.map(g => Utils.formatDateKR(g.game_date));
-        const memberMap = {};
-        trendData.forEach(g => {
-            (g.club_game_participants || []).forEach(p => {
-                const name = p.club_members?.name || '?';
-                if (!memberMap[name]) memberMap[name] = new Array(trendData.length).fill(null);
-                const idx = trendData.indexOf(g);
-                memberMap[name][idx] = p.ranking;
-            });
-        });
-
-        const datasets = Object.entries(memberMap).map(([name, data], i) => ({
-            label: name, data, borderColor: Utils.chartColors[i % Utils.chartColors.length],
-            backgroundColor: Utils.chartColors[i % Utils.chartColors.length] + '33',
-            tension: 0.3, fill: false, spanGaps: true, pointRadius: 5
-        }));
-
-        new Chart(canvas, {
-            type: 'line',
-            data: { labels, datasets },
-            options: {
-                ...Utils.chartDefaults(),
-                scales: {
-                    ...Utils.chartDefaults().scales,
-                    y: { ...Utils.chartDefaults().scales.y, reverse: true, min: 1, ticks: { ...Utils.chartDefaults().scales.y.ticks, stepSize: 1 } }
-                }
-            }
-        });
-    },
 
     // ─── 회비 산출 시트 탭 ───
     calcState: {
