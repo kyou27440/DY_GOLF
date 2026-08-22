@@ -4,8 +4,7 @@
 
 const DashboardPage = {
     async render() {
-        const [clubBal, exchangeTotal, games, totalGamesCount, members, calcHistories] = await Promise.all([
-            Store.getClubTotalBalance().catch(() => 0),
+        const [exchangeTotal, games, totalGamesCount, members, calcHistories] = await Promise.all([
             Store.getExchangeTotal().catch(() => 0),
             Store.getGames({ limit: 5 }).catch(() => []),
             Store.getGamesCount().catch(() => 0),
@@ -33,12 +32,6 @@ const DashboardPage = {
         </div>
 
         <div class="summary-grid">
-            <div class="summary-card emerald">
-                <div class="card-icon">⛳</div>
-                <div class="card-label">모임 회비 잔액</div>
-                <div class="card-value">${Utils.formatVND(clubBal)}</div>
-                <div class="card-sub">회비 입금 - 총 지출</div>
-            </div>
             <div class="summary-card amber">
                 <div class="card-icon">📊</div>
                 <div class="card-label">저장된 산출 이력</div>
