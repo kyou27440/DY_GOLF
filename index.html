@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="개인 자산 및 회사 모임(총무) 통합 대시보드 - VND 기반 재무 관리">
+    <meta name="description" content="媛쒖씤 ?먯궛 諛??뚯궗 紐⑥엫(珥앸Т) ?듯빀 ??쒕낫??- VND 湲곕컲 ?щТ 愿由?>
     <!-- Cache Control -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
@@ -15,7 +15,7 @@
     <meta name="x5-orientation" content="portrait">
     <meta name="orientation" content="portrait">
     
-    <!-- 🚀 버전 강제 갱신 & 브라우저/서비스워커 강력 캐시 초기화 (Cache Busting Engine) -->
+    <!-- ?? 踰꾩쟾 媛뺤젣 媛깆떊 & 釉뚮씪?곗?/?쒕퉬?ㅼ썙而?媛뺣젰 罹먯떆 珥덇린??(Cache Busting Engine) -->
     <script>
         (function() {
             const CURRENT_APP_VERSION = '1.3.0_20260812_163000';
@@ -35,7 +35,7 @@
             if (savedVer !== CURRENT_APP_VERSION) {
                 localStorage.setItem('app_installed_version_v1', CURRENT_APP_VERSION);
                 if (savedVer) {
-                    console.log('🔄 New version detected. Purging cache and reloading...');
+                    console.log('?봽 New version detected. Purging cache and reloading...');
                     setTimeout(() => window.location.reload(true), 100);
                 }
             }
@@ -45,7 +45,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="icons/app-icon.svg">
     <link rel="apple-touch-icon" href="icons/app-icon.svg">
-    <title>⛳ 04_DY_GOLF - 모임 &amp; 골프 관리</title>
+    <title>??04_DY_GOLF - 紐⑥엫 &amp; 怨⑦봽 愿由?/title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -68,7 +68,7 @@
         <aside id="sidebar" class="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
-                    <span class="logo-icon">⛳</span>
+                    <span class="logo-icon">??/span>
                     <span class="logo-text">DY_GOLF</span>
                 </div>
                 <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle sidebar">
@@ -77,28 +77,28 @@
             </div>
             <nav class="sidebar-nav">
                 <a href="#" class="nav-item active" data-page="dashboard">
-                    <span class="nav-icon">📊</span>
-                    <span class="nav-text">대시보드</span>
+                    <span class="nav-icon">?뱤</span>
+                    <span class="nav-text">??쒕낫??/span>
                 </a>
                 <a href="#" class="nav-item" data-page="club">
-                    <span class="nav-icon">⛳</span>
-                    <span class="nav-text">모임 &amp; 골프 관리</span>
+                    <span class="nav-icon">??/span>
+                    <span class="nav-text">紐⑥엫 &amp; 怨⑦봽 愿由?/span>
                 </a>
                 <a href="#" class="nav-item" data-page="analytics">
-                    <span class="nav-icon">🏆</span>
-                    <span class="nav-text">성적통계</span>
+                    <span class="nav-icon">?룇</span>
+                    <span class="nav-text">?깆쟻?듦퀎</span>
                 </a>
                 <a href="#" class="nav-item" data-page="ghandicap">
-                    <span class="nav-icon">⛳</span>
-                    <span class="nav-text">G-핸디 관리</span>
+                    <span class="nav-icon">??/span>
+                    <span class="nav-text">G-?몃뵒 愿由?/span>
                 </a>
                 <a href="#" class="nav-item" data-page="settings">
-                    <span class="nav-icon">⚙️</span>
-                    <span class="nav-text">설정</span>
+                    <span class="nav-icon">?숋툘</span>
+                    <span class="nav-text">?ㅼ젙</span>
                 </a>
             </nav>
             <div class="sidebar-footer">
-                <div class="sidebar-version">v1.2.5 • DY_GOLF (2026-07-28)</div>
+                <div class="sidebar-version">v1.2.5 ??DY_GOLF (2026-07-28)</div>
             </div>
         </aside>
 
@@ -110,7 +110,7 @@
                     <button id="mobile-menu-toggle" class="mobile-menu-toggle" aria-label="Menu">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
                     </button>
-                    <h1 id="page-title" class="page-title">📊 대시보드</h1>
+                    <h1 id="page-title" class="page-title">?뱤 ??쒕낫??/h1>
                 </div>
                 <div class="header-right">
                     <span id="current-date" class="current-date"></span>
@@ -124,27 +124,27 @@
         </main>
     </div>
 
-    <!-- FAB: 모바일 빠른 입력 버튼 -->
-    <button id="fab-quick-add" class="fab" aria-label="빠른 입력">＋</button>
+    <!-- FAB: 紐⑤컮??鍮좊Ⅸ ?낅젰 踰꾪듉 -->
+    <button id="fab-quick-add" class="fab" aria-label="鍮좊Ⅸ ?낅젰">竊?/button>
 
-    <!-- Bottom Navigation: 모바일 앱 3대 심플 핵심 탭 -->
+    <!-- Bottom Navigation: 紐⑤컮????3? ?ы뵆 ?듭떖 ??-->
     <nav class="bottom-nav">
         <div class="bottom-nav-inner">
             <a href="#" class="bottom-nav-item" data-page="club" data-tab="games">
-                <span class="bnav-icon">🎮</span>
-                <span class="bnav-text">게임기록</span>
+                <span class="bnav-icon">?렜</span>
+                <span class="bnav-text">寃뚯엫湲곕줉</span>
             </a>
             <a href="#" class="bottom-nav-item" data-page="club" data-tab="calculator">
-                <span class="bnav-icon">🧮</span>
-                <span class="bnav-text">회비산출</span>
+                <span class="bnav-icon">?㎜</span>
+                <span class="bnav-text">?뚮퉬?곗텧</span>
             </a>
             <a href="#" class="bottom-nav-item" data-page="club" data-tab="ranking">
-                <span class="bnav-icon">🏆</span>
-                <span class="bnav-text">순위/성적</span>
+                <span class="bnav-icon">?룇</span>
+                <span class="bnav-text">?쒖쐞/?깆쟻</span>
             </a>
             <a href="#" class="bottom-nav-item active" data-page="dashboard">
-                <span class="bnav-icon">📊</span>
-                <span class="bnav-text">대시보드</span>
+                <span class="bnav-icon">?뱤</span>
+                <span class="bnav-text">??쒕낫??/span>
             </a>
         </div>
     </nav>
@@ -166,7 +166,7 @@
 
     <!-- JS Modules -->
     <script src="js/config.js?v=1.2.6_20260812_124400"></script>
-    <script src="js/store.js?v=1.2.6_20260812_124400"></script>
+    <script src="js/store.js?v=1.3.1_20260822"></script>
     <script src="js/utils.js?v=1.2.6_20260812_124400"></script>
     <script src="js/modal.js?v=1.2.6_20260812_124400"></script>
     <script src="js/router.js?v=1.2.6_20260812_124400"></script>
@@ -179,7 +179,7 @@
     <script src="js/pages/settings.js?v=1.2.6_20260812_124400"></script>
     <script src="js/app.js?v=1.2.6_20260812_124400"></script>
 
-    <!-- Service Worker 해제 및 브라우저 강제 캐시 초기화 -->
+    <!-- Service Worker ?댁젣 諛?釉뚮씪?곗? 媛뺤젣 罹먯떆 珥덇린??-->
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(registrations => {
@@ -194,3 +194,4 @@
     </script>
 </body>
 </html>
+
