@@ -11,7 +11,6 @@ const ClubPage = {
         <div class="tabs">
             <button class="tab-btn ${tab === 'games' ? 'active' : ''}" data-tab="games">🎮 게임 기록</button>
             <button class="tab-btn ${tab === 'members' ? 'active' : ''}" data-tab="members">👥 멤버 관리</button>
-            <button class="tab-btn ${tab === 'dues' ? 'active' : ''}" data-tab="dues">💵 회비 관리</button>
             <button class="tab-btn ${tab === 'ranking' ? 'active' : ''}" data-tab="ranking">🏆 순위/성적</button>
             <button class="tab-btn ${tab === 'calculator' ? 'active' : ''}" data-tab="calculator">🧮 회비 산출 시트</button>
         </div>
@@ -49,13 +48,12 @@ const ClubPage = {
         if (!container) return;
         container.innerHTML = '<div class="text-center text-muted" style="padding:40px">⏳ 로딩 중...</div>';
         try {
-            if (!this.currentTab || !['games', 'members', 'dues', 'ranking', 'calculator'].includes(this.currentTab)) {
+            if (!this.currentTab || !['games', 'members', 'ranking', 'calculator'].includes(this.currentTab)) {
                 this.currentTab = 'games';
             }
             switch (this.currentTab) {
                 case 'games': await this.renderGames(container); break;
                 case 'members': await this.renderMembers(container); break;
-                case 'dues': await this.renderDues(container); break;
                 case 'ranking': await this.renderRanking(container); break;
                 case 'calculator': await this.renderCalculator(container); break;
                 default: await this.renderGames(container); break;
@@ -70,7 +68,7 @@ const ClubPage = {
 
     // ─── 게임 기록 탭 ───
     async renderGames(container) {
-        const games = await Store.getGames({ limit: 20 });
+        const games = await Store.getGames({ limit: 50 });
         const calcHistories = await Store.getCalcHistoryList();
         const calcMap = {};
         (calcHistories || []).forEach(c => {
@@ -80,6 +78,13 @@ const ClubPage = {
             }
         });
 
+        // 비활성 멤버 포함 전체 멤버 이름 맵 (이전 기록 표시 보장)
+        let allMembersMap = {};
+        try {
+            const allMembers = await Store.getMembers(); // status 필터 없음 → 전체
+            (allMembers || []).forEach(m => { if (m && m.id) allMembersMap[m.id] = m.name; });
+        } catch(e) {}
+
         this.gamesMap = {};
         games.forEach(g => this.gamesMap[g.id] = g);
 
@@ -87,57 +92,61 @@ const ClubPage = {
             <div class="section-header">
                 <span class="section-title">게임 기록</span>
                 <div style="display:flex;gap:8px;">
-                    <button class="btn btn-ghost btn-sm" id="btn-sync-games" style="color:#38bdf8;border:1px solid rgba(56,189,248,0.3);" title="PC 로컬 기록을 클라우드 DB로 동기화">🔄 클라우드 DB 동기화</button>
-                    <button class="btn btn-primary" id="btn-add-game">+ 게임 추가</button>
+                    <button class="btn btn-ghost btn-sm" id="btn-sync-games" style="color:#38bdf8;border:1px solid rgba(56,189,248,0.3);" title="PC 로컬 기록을 클라우드 DB로 동기화">🔄 동기화</button>
+                    <button class="btn btn-primary btn-sm" id="btn-add-game">+ 게임 추가</button>
                 </div>
             </div>
             ${games.length === 0 ? '<div class="empty-state"><div class="empty-icon">⛳</div><p class="empty-text">아직 게임 기록이 없습니다</p></div>' : `
-            <div class="games-vertical-list" style="display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;flex-direction:column;gap:6px;">
                 ${games.map(g => {
                     const gDateKey = String(g.game_date || '').slice(0, 10);
                     const calc = calcMap[gDateKey];
                     const parts = (g.club_game_participants || []).sort((a, b) => (a.ranking || 99) - (b.ranking || 99));
                     const hasUnranked = parts.some(p => !p.ranking);
 
+                    // 참여자 인라인 배지 — 비활성 멤버도 allMembersMap으로 이름 보정
+                    const rankEmojis = ['🥇','🥈','🥉'];
+                    const partBadges = parts.map(p => {
+                        // club_members.name 우선, 없으면 전체멤버맵에서 보정
+                        const name = (p.club_members?.name) || allMembersMap[p.member_id] || '?';
+                        const r = p.ranking;
+                        const colors = ['#f59e0b','#94a3b8','#c084fc'];
+                        const rc = r >= 1 && r <= 3 ? colors[r-1] : '#64748b';
+                        const emoji = r >= 1 && r <= 3 ? rankEmojis[r-1] : '';
+                        const rankTxt = r ? `${emoji}${r}위` : '?위';
+                        let feeHint = '';
+                        if (calc && r && calc.rank_amounts && calc.rank_amounts[r-1] !== undefined) {
+                            feeHint = `<span style="color:#10b981;font-size:0.7rem;">(${Utils.formatVND(calc.rank_amounts[r-1])})</span>`;
+                        }
+                        return `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);font-size:0.79rem;white-space:nowrap;">
+                            <span style="color:${rc};font-weight:700;font-size:0.74rem;">${rankTxt}</span>
+                            <span style="color:#e2e8f0;font-weight:600;">${Utils.escapeHtml(name)}</span>${feeHint}
+                        </span>`;
+                    }).join('');
+
                     return `
-                    <div class="game-vertical-card" style="padding:14px;background:linear-gradient(135deg, rgba(30,41,59,0.9), rgba(15,23,42,0.95));border:1px solid rgba(99,102,241,0.28);border-radius:16px;box-shadow:0 4px 14px rgba(0,0,0,0.18);box-sizing:border-box;width:100%;max-width:100%;overflow:hidden;">
-                        <div class="game-header-row">
-                            <div class="game-header-info">
-                                <span style="font-weight:700;font-size:1rem;color:#f8fafc;">📅 ${Utils.formatDateKR(g.game_date)}</span>
-                                <span style="font-size:0.85rem;color:#38bdf8;font-weight:500;">📍 ${Utils.escapeHtml(g.location)}</span>
-                                ${calc ? `<span class="badge badge-income" style="font-size:0.75rem;padding:2px 8px;">📊 산출금 연동</span>` : ''}
+                    <div style="padding:9px 13px;background:linear-gradient(135deg, rgba(30,41,59,0.92), rgba(15,23,42,0.97));border:1px solid rgba(99,102,241,0.2);border-radius:11px;box-sizing:border-box;width:100%;">
+                        <!-- 1줄: 날짜/장소/비용/버튼 -->
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;flex:1;">
+                                <span style="font-weight:700;font-size:0.87rem;color:#f8fafc;white-space:nowrap;">📅 ${Utils.formatDateKR(g.game_date)}</span>
+                                <span style="font-size:0.8rem;color:#38bdf8;white-space:nowrap;">📍 ${Utils.escapeHtml(g.location)}</span>
+                                <span style="font-size:0.78rem;color:#94a3b8;white-space:nowrap;">💰 ${calc ? Utils.formatVND(calc.total_cost) : Utils.formatVND(g.total_cost)}</span>
+                                ${calc ? `<span style="font-size:0.7rem;color:#34d399;background:rgba(16,185,129,0.11);border:1px solid rgba(16,185,129,0.28);padding:1px 5px;border-radius:4px;white-space:nowrap;">📊연동</span>` : ''}
+                                ${g.memo ? `<span style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px;">${Utils.escapeHtml(g.memo)}</span>` : ''}
                             </div>
-                            <div class="game-action-buttons">
-                                <button class="btn ${hasUnranked ? 'btn-emerald' : 'btn-primary'} btn-sm" onclick="ClubPage.openGameModal(${g.id})">
-                                    ${hasUnranked ? '🏆 순위 입력' : '✏️ 기록 수정'}
+                            <div style="display:flex;gap:5px;flex-shrink:0;">
+                                <button class="btn ${hasUnranked ? 'btn-emerald' : 'btn-ghost'} btn-sm" onclick="ClubPage.openGameModal(${g.id})" style="font-size:0.76rem;padding:3px 9px;">
+                                    ${hasUnranked ? '🏆 순위' : '✏️ 수정'}
                                 </button>
-                                <button class="btn btn-danger btn-sm" onclick="ClubPage.deleteGame(${g.id})" title="삭제">🗑️ 삭제</button>
+                                <button class="btn btn-danger btn-sm" onclick="ClubPage.deleteGame(${g.id})" style="font-size:0.76rem;padding:3px 7px;" title="삭제">🗑️</button>
                             </div>
                         </div>
-
-                        <div style="display:flex;flex-direction:column;gap:8px;padding:10px 12px;background:rgba(15,23,42,0.6);border-radius:12px;border:1px solid rgba(255,255,255,0.05);width:100%;box-sizing:border-box;">
-                            ${parts.map(p => {
-                                const rc = p.ranking <= 3 && p.ranking > 0 ? `rank-${p.ranking}` : 'rank-other';
-                                let feeStr = '';
-                                if (calc && p.ranking && calc.rank_amounts && calc.rank_amounts[p.ranking - 1] !== undefined) {
-                                    feeStr = `<span style="font-size:0.82rem;color:#10b981;font-weight:700;flex-shrink:0;white-space:nowrap;">${Utils.formatVND(calc.rank_amounts[p.ranking - 1])}</span>`;
-                                }
-                                return `
-                                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:0.88rem;width:100%;box-sizing:border-box;">
-                                    <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;">
-                                        <span class="ranking-badge ${rc}" style="font-weight:700;flex-shrink:0;">${p.ranking || '-'}</span>
-                                        <span style="font-weight:600;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${Utils.escapeHtml(p.club_members?.name || '?')}</span>
-                                    </div>
-                                    ${feeStr}
-                                </div>
-                                `;
-                            }).join('')}
-                        </div>
-
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.08);font-size:0.85rem;color:var(--text-muted);flex-wrap:wrap;gap:6px;">
-                            <span>총 게임 비용: <strong style="color:#38bdf8;">${calc ? Utils.formatVND(calc.total_cost) : Utils.formatVND(g.total_cost)}</strong></span>
-                            ${g.memo ? `<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;">메모: ${Utils.escapeHtml(g.memo)}</span>` : ''}
-                        </div>
+                        <!-- 2줄: 참여자 배지 -->
+                        ${parts.length > 0 ? `
+                        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.055);">
+                            ${partBadges}
+                        </div>` : ''}
                     </div>
                     `;
                 }).join('')}
@@ -166,7 +175,28 @@ const ClubPage = {
 
     async openGameModal(gameId = null) {
         const editGame = (gameId && this.gamesMap) ? this.gamesMap[gameId] : null;
-        const members = await Store.getMembers('active');
+
+        // 새 게임: 활성 멤버만 / 수정: 활성 멤버 + 이 게임에 참여했던 비활성 멤버도 포함
+        const activeMembers = await Store.getMembers('active');
+
+        // 수정 모드일 때, 기존 참여자 중 비활성 멤버도 가져오기 (이전 기록 보호)
+        let inactiveParticipants = [];
+        if (editGame && editGame.club_game_participants) {
+            const allMembers = await Store.getMembers(); // status 무관 전체
+            const allMembersMap = {};
+            (allMembers || []).forEach(m => { if (m && m.id) allMembersMap[m.id] = m; });
+            const activeMemberIds = new Set((activeMembers || []).map(m => m.id));
+
+            editGame.club_game_participants.forEach(p => {
+                if (!activeMemberIds.has(p.member_id)) {
+                    const m = allMembersMap[p.member_id];
+                    if (m) inactiveParticipants.push(m);
+                }
+            });
+        }
+
+        // 활성 멤버 + 비활성(이 게임 참여자) 합치기
+        const members = [...activeMembers, ...inactiveParticipants];
 
         // 기존 참여자 맵 생성 (member_id -> ranking)
         const partMap = {};
@@ -179,13 +209,15 @@ const ClubPage = {
         const memberChecks = members.map(m => {
             const isChecked = editGame ? (partMap[m.id] !== undefined) : false;
             const rankVal = editGame && partMap[m.id] !== undefined && partMap[m.id] !== null ? partMap[m.id] : '';
+            const isInactive = m.status !== 'active';
 
             return `
-                <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-color);">
+                <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-color);${isInactive ? 'opacity:0.65;' : ''}">
                     <input type="checkbox" id="gm-${m.id}" value="${m.id}" class="game-member-check" ${isChecked ? 'checked' : ''}>
                     <label for="gm-${m.id}" style="flex:1;cursor:pointer;font-weight:600;">
                         ${Utils.escapeHtml(m.name)} 
                         <span class="badge badge-${m.member_type}" style="margin-left:4px">${m.member_type === 'regular' ? '상시' : '출장'}</span>
+                        ${isInactive ? `<span style="font-size:0.72rem;color:#f59e0b;margin-left:4px;">(비활성 - 이전기록)</span>` : ''}
                     </label>
                     <div style="display:flex;align-items:center;gap:4px;">
                         <span style="font-size:0.8rem;color:var(--text-muted);">순위:</span>
@@ -438,125 +470,8 @@ const ClubPage = {
         }
     },
 
-    // ─── 회비 관리 탭 ───
-    async renderDues(container) {
-        const [balances, dues] = await Promise.all([Store.getDuesBalance(), Store.getDues({})]);
-        const totalBal = await Store.getClubTotalBalance();
+    // ─── 순위/성적 탭 ───
 
-        container.innerHTML = `
-            <div class="section-header">
-                <span class="section-title">회비 현황 (총 잔액: <span class="${totalBal >= 0 ? 'text-emerald' : 'text-rose'}">${Utils.formatVND(totalBal)}</span>)</span>
-                <button class="btn btn-primary" id="btn-add-dues">+ 회비 입출금</button>
-            </div>
-            ${balances.length > 0 ? `<div class="summary-grid mb-lg">${balances.filter(b => b.status === 'active').map(b => `
-                <div class="summary-card ${b.balance >= 0 ? 'emerald' : 'rose'}">
-                    <div class="card-label">${Utils.escapeHtml(b.name)} (납부총액)</div>
-                    <div class="card-value">${Utils.formatVND(b.balance)}</div>
-                </div>
-            `).join('')}</div>` : ''}
-
-            <div class="dues-vertical-list" style="display:flex;flex-direction:column;gap:10px;">
-                ${dues.length > 0 ? dues.map(d => {
-                    const isDeposit = d.type === 'deposit';
-                    const hasCategoryHeader = !isDeposit && d.memo && d.memo.startsWith('[');
-                    const titleText = isDeposit
-                        ? Utils.escapeHtml(d.club_members?.name || '?')
-                        : (hasCategoryHeader ? d.memo.split(']')[0] + ']' : '📤 출금 사용');
-                    const memoSubText = isDeposit
-                        ? (d.memo ? '• ' + Utils.escapeHtml(d.memo) : '')
-                        : (hasCategoryHeader ? (d.memo.split(']').slice(1).join(']').trim() ? '• ' + Utils.escapeHtml(d.memo.split(']').slice(1).join(']').trim()) : '') : (d.memo ? '• ' + Utils.escapeHtml(d.memo) : ''));
-
-                    return `
-                    <div class="dues-vertical-item" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:linear-gradient(135deg, rgba(30,41,59,0.9), rgba(15,23,42,0.95));border:1px solid rgba(99,102,241,0.25);border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,0.15);width:100%;box-sizing:border-box;">
-                        <div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1;">
-                            <span style="font-size:1.4rem;flex-shrink:0;">${isDeposit ? '📥' : '📤'}</span>
-                            <div style="min-width:0;flex:1;">
-                                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                                    <strong style="font-size:0.95rem;color:#f8fafc;white-space:nowrap;">${titleText}</strong>
-                                    <span class="badge badge-${isDeposit ? 'income' : 'expense'}" style="font-size:0.75rem;padding:2px 8px;">
-                                        ${isDeposit ? '입금' : '출금 (사용)'}
-                                    </span>
-                                </div>
-                                <div style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                                    ${Utils.formatDateKR(d.dues_date)} ${memoSubText}
-                                </div>
-                            </div>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
-                            <span class="${isDeposit ? 'text-emerald' : 'text-rose'}" style="font-weight:700;font-size:1.05rem;">
-                                ${isDeposit ? '+' : '-'}${Utils.formatVND(d.amount)}
-                            </span>
-                            <button class="btn btn-danger btn-sm" onclick="ClubPage.deleteDues(${d.id})" title="삭제">🗑️</button>
-                        </div>
-                    </div>
-                    `;
-                }).join('') : '<div class="empty-state"><div class="empty-icon">💵</div><p class="empty-text">회비 내역이 없습니다</p></div>'}
-            </div>`;
-
-        const btnAddDues = document.getElementById('btn-add-dues');
-        if (btnAddDues) {
-            btnAddDues.addEventListener('click', () => this.openDuesModal());
-        }
-    },
-
-    async openDuesModal() {
-        const members = await Store.getMembers('active');
-        Modal.open('회비 입출금 등록', `
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>날짜</label>
-                    <input type="date" id="dues-date" value="${Utils.today()}">
-                </div>
-                <div class="form-group">
-                    <label>구분</label>
-                    <select id="dues-type">
-                        <option value="deposit">📥 입금 (멤버 회비 납부)</option>
-                        <option value="withdrawal">📤 출금 (팀 지출/사용)</option>
-                    </select>
-                </div>
-                <div class="form-group" id="group-dues-member">
-                    <label>납부 멤버</label>
-                    <select id="dues-member">
-                        ${members.map(m => `<option value="${m.id}">${Utils.escapeHtml(m.name)}</option>`).join('')}
-                    </select>
-                </div>
-                <div class="form-group" id="group-dues-category" style="display:none;">
-                    <label>출금 항목 (사용 용도)</label>
-                    <select id="dues-category">
-                        <option value="⛳ 골프비">⛳ 골프비 (스크린/라운딩 비용)</option>
-                        <option value="🍲 식사비">🍲 식사비 (회식/식대 비용)</option>
-                        <option value="📦 기타">📦 기타 (소모품/행사 비용)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>금액 (VND)</label>
-                    <input type="text" id="dues-amount" placeholder="예: 200000" inputmode="numeric">
-                </div>
-            </div>
-            <div class="form-group mt-md">
-                <label>상세 메모</label>
-                <input type="text" id="dues-memo" placeholder="예: 에코파크 결제 / 점심 회식">
-            </div>
-        `, `
-            <button class="btn btn-ghost" onclick="Modal.close()">취소</button>
-            <button class="btn btn-primary" id="btn-save-dues">저장</button>
-        `);
-
-        const typeSelect = document.getElementById('dues-type');
-        const memberGroup = document.getElementById('group-dues-member');
-        const categoryGroup = document.getElementById('group-dues-category');
-
-        const updateFormState = () => {
-            if (typeSelect.value === 'withdrawal') {
-                memberGroup.style.display = 'none';
-                categoryGroup.style.display = 'block';
-            } else {
-                memberGroup.style.display = 'block';
-                categoryGroup.style.display = 'none';
-            }
-        };
-
-        typeSelect.a    // ─── 순위/성적 탭 ───
     async renderRanking(container) {
         const [stats, trend] = await Promise.all([Store.getMemberStats(), Store.getRankingTrend(20)]);
 
@@ -580,7 +495,11 @@ const ClubPage = {
                 <span class="section-title">🏆 멤버별 성적 현황</span>
             </div>
             ${stats.length > 0 ? `
+
+            <!-- 리더보드 테이블 -->
             <div style="background:rgba(15,23,42,0.85);border:1px solid rgba(99,102,241,0.3);border-radius:16px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,0.28);margin-bottom:20px;">
+
+                <!-- 테이블 헤더 -->
                 <div style="display:grid;grid-template-columns:52px 1fr 80px 80px 80px 70px 70px;
                             padding:10px 16px;align-items:center;
                             background:linear-gradient(90deg,rgba(99,102,241,0.22),rgba(139,92,246,0.14));
@@ -594,6 +513,8 @@ const ClubPage = {
                     <div style="text-align:center;">🥇 1등</div>
                     <div style="text-align:center;">꼴찌</div>
                 </div>
+
+                <!-- 멤버 행 -->
                 ${stats.map((s, idx) => {
                     const rank1 = idx + 1;
                     const rowBg = idx % 2 === 0 ? 'rgba(30,41,59,0.45)' : 'rgba(15,23,42,0.3)';
@@ -602,21 +523,26 @@ const ClubPage = {
                     else if (rank1 === 2) { rankBadge = '🥈'; rankColor = '#94a3b8'; }
                     else if (rank1 === 3) { rankBadge = '🥉'; rankColor = '#cd7c2f'; }
                     else                 { rankBadge = String(rank1); rankColor = '#64748b'; }
+
                     const avgRankNum = s.avgRank !== '-' ? parseFloat(s.avgRank) : null;
                     const avgColor = avgRankNum !== null
                         ? (avgRankNum <= 2 ? '#34d399' : avgRankNum <= 3.5 ? '#38bdf8' : avgRankNum <= 5 ? '#f59e0b' : '#f43f5e')
                         : '#64748b';
+
                     const first1 = memberFirstCount[s.name] || 0;
                     const last1  = memberLastCount[s.name] || 0;
+
                     return `<div style="display:grid;grid-template-columns:52px 1fr 80px 80px 80px 70px 70px;
                                 padding:11px 16px;align-items:center;min-height:56px;
-                                background:${rowBg};border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s;"
+                                background:${rowBg};border-bottom:1px solid rgba(255,255,255,0.04);
+                                transition:background 0.15s;"
                          onmouseover="this.style.background='rgba(99,102,241,0.1)'"
                          onmouseout="this.style.background='${rowBg}'">
                         <div style="text-align:center;font-size:${rank1 <= 3 ? '1.4rem' : '0.95rem'};font-weight:800;color:${rankColor};">${rankBadge}</div>
                         <div style="display:flex;align-items:center;gap:8px;">
                             <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;color:#fff;flex-shrink:0;">${Utils.escapeHtml(s.name).substring(0,2)}</div>
                             <span style="font-weight:700;font-size:0.95rem;color:#f1f5f9;">${Utils.escapeHtml(s.name)}</span>
+                        </div>
                         </div>
                         <div style="text-align:center;font-size:0.88rem;font-weight:700;color:#cbd5e1;">${s.games}<span style="font-size:0.72rem;color:#64748b;"> 회</span></div>
                         <div style="text-align:center;font-size:1rem;font-weight:800;color:${avgColor};">${s.avgRank !== '-' ? s.avgRank + '등' : '—'}</div>
@@ -626,51 +552,24 @@ const ClubPage = {
                     </div>`;
                 }).join('')}
             </div>
+
+            <!-- 성적 요약 콴멘트 -->
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
                 ${stats.slice(0,3).map((s, idx) => {
                     const labels = ['🥇 종합 1위', '🥈 종합 2위', '🥉 종합 3위'];
                     const colors = ['rgba(251,191,36,0.18)', 'rgba(148,163,184,0.15)', 'rgba(205,124,47,0.15)'];
                     const borders = ['rgba(251,191,36,0.5)', 'rgba(148,163,184,0.4)', 'rgba(205,124,47,0.4)'];
-                    return `<div style="padding:14px 16px;background:${colors[idx]};border:1px solid ${borders[idx]};border-radius:14px;">
+                    return `
+                    <div style="padding:14px 16px;background:${colors[idx]};border:1px solid ${borders[idx]};border-radius:14px;">
                         <div style="font-size:0.72rem;font-weight:700;color:#94a3b8;margin-bottom:4px;">${labels[idx]}</div>
                         <div style="font-size:1.1rem;font-weight:800;color:#f8fafc;">${Utils.escapeHtml(s.name)}</div>
                         <div style="font-size:0.78rem;color:#94a3b8;margin-top:4px;">평균 ${s.avgRank !== '-' ? s.avgRank + '등' : '-'} · 최고 ${s.best !== '-' ? s.best + '등' : '-'}</div>
                     </div>`;
                 }).join('')}
             </div>
+
             ` : '<div class="empty-state"><div class="empty-icon">🏆</div><p class="empty-text">성적 데이터가 없습니다</p></div>'}
         `;
-    },
-
-    ratioPresets:
-r:#f8fafc;">${medal}${Utils.escapeHtml(s.name)}</span>
-                            <span class="badge badge-income" style="font-size:0.8rem;font-weight:700;">🎮 ${s.games}회 참여${rankGamesInfo}</span>
-                        </div>
-                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:10px;background:rgba(15,23,42,0.6);border-radius:10px;text-align:center;font-size:0.82rem;">
-                            <div>
-                                <div style="color:var(--text-muted);">평균순위</div>
-                                <div style="font-weight:700;color:#38bdf8;font-size:1rem;margin-top:2px;">${s.avgRank === '-' ? '-' : s.avgRank + '등'}</div>
-                            </div>
-                            <div>
-                                <div style="color:var(--text-muted);">최고순위</div>
-                                <div style="font-weight:700;color:#34d399;font-size:1rem;margin-top:2px;">${s.best === '-' ? '-' : s.best + '등'}</div>
-                            </div>
-                            <div>
-                                <div style="color:var(--text-muted);">최저순위</div>
-                                <div style="font-weight:700;color:#f43f5e;font-size:1rem;margin-top:2px;">${s.worst === '-' ? '-' : s.worst + '등'}</div>
-                            </div>
-                        </div>
-                    </div>
-                    `;
-                }).join('')}
-            </div>` : '<div class="empty-state"><div class="empty-icon">🏆</div><p class="empty-text">게임 기록이 없습니다</p></div>'}
-
-            <div class="card">
-                <div class="card-header"><span class="card-title">📈 등수 변동 추이</span></div>
-                <div class="chart-container" style="height:300px"><canvas id="ranking-trend-chart"></canvas></div>
-            </div>`;
-
-        if (trend.length > 0) this.drawRankingChart(trend);
     },
 
     ratioPresets: {
