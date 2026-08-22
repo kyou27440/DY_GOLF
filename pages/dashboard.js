@@ -154,67 +154,8 @@ const DashboardPage = {
         return html;
     },
 
-    renderRecentActivity(txList) {
-        let html = '<ul class="activity-list">';
-        txList.forEach(tx => {
-            const icon = tx.type === 'income' ? '📥' : '📤';
-            const colorClass = tx.type === 'income' ? 'text-emerald' : 'text-rose';
-            const sign = tx.type === 'income' ? '+' : '-';
-            html += `<li class="activity-item">
-                <div class="activity-icon">${icon}</div>
-                <div class="activity-info">
-                    <div class="activity-title">${tx.personal_categories?.icon || ''} ${Utils.escapeHtml(tx.personal_categories?.name || '')} ${tx.memo ? '- ' + Utils.escapeHtml(tx.memo) : ''}</div>
-                    <div class="activity-meta">${Utils.formatDateKR(tx.tx_date)}</div>
-                </div>
-                <div class="${colorClass}" style="font-weight:600;white-space:nowrap">${sign}${Utils.formatVND(tx.amount)}</div>
-            </li>`;
-        });
-        html += '</ul>';
-        return html;
-    },
-
-    async afterRender() {
-        await this.renderMonthChart();
-    },
-
-    async renderMonthChart() {
-        const canvas = document.getElementById('dash-month-chart');
-        if (!canvas) return;
-
-        const now = new Date();
-        const labels = [];
-        const incomeData = [];
-        const expenseData = [];
-
-        for (let i = 5; i >= 0; i--) {
-            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-            const start = d.toISOString().split('T')[0];
-            const end = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0];
-            labels.push(`${d.getMonth() + 1}월`);
-            const s = await Store.getTransactionSummary(start, end);
-            incomeData.push(s.income);
-            expenseData.push(s.expense);
-        }
-
-        new Chart(canvas, {
-            type: 'bar',
-            data: {
-                labels,
-                datasets: [
-                    { label: '수입', data: incomeData, backgroundColor: 'rgba(16,185,129,0.7)', borderRadius: 6 },
-                    { label: '지출', data: expenseData, backgroundColor: 'rgba(244,63,94,0.7)', borderRadius: 6 }
-                ]
-            },
-            options: {
-                ...Utils.chartDefaults(),
-                plugins: {
-                    ...Utils.chartDefaults().plugins,
-                    tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${Utils.formatVND(ctx.raw)}` } }
-                }
-            }
-        });
-    }
 };
+
 
 Router.register('dashboard', DashboardPage);
 window.DashboardPage = DashboardPage;
