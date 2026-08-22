@@ -14,6 +14,7 @@
 const GHandicapPage = {
     configs: {},
     members: [],
+    sortMode: 'handicap_asc',  // 'handicap_asc' | 'handicap_desc' | 'name'
 
     async render() {
         return `
@@ -31,7 +32,16 @@ const GHandicapPage = {
                         </div>
                     </div>
                 </div>
-                <button class="btn btn-primary" id="btn-save-all-ghandicap" style="font-weight:700;padding:6px 16px;font-size:0.82rem;border-radius:9px;white-space:nowrap;">💾 전체 저장</button>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                    <span style="font-size:0.7rem;color:#64748b;font-weight:600;">정렬:</span>
+                    <button id="sort-handicap-asc" onclick="GHandicapPage.setSort('handicap_asc')"
+                            style="font-size:0.7rem;padding:3px 10px;border-radius:20px;border:1px solid rgba(52,211,153,0.5);background:rgba(52,211,153,0.15);color:#34d399;font-weight:700;cursor:pointer;transition:all 0.15s;">🏆 낮음↑</button>
+                    <button id="sort-handicap-desc" onclick="GHandicapPage.setSort('handicap_desc')"
+                            style="font-size:0.7rem;padding:3px 10px;border-radius:20px;border:1px solid rgba(99,102,241,0.35);background:rgba(99,102,241,0.1);color:#a78bfa;font-weight:700;cursor:pointer;transition:all 0.15s;">🏆 높음↓</button>
+                    <button id="sort-name" onclick="GHandicapPage.setSort('name')"
+                            style="font-size:0.7rem;padding:3px 10px;border-radius:20px;border:1px solid rgba(148,163,184,0.3);background:rgba(148,163,184,0.08);color:#94a3b8;font-weight:700;cursor:pointer;transition:all 0.15s;">👤 이름순</button>
+                    <button class="btn btn-primary" id="btn-save-all-ghandicap" style="font-weight:700;padding:6px 16px;font-size:0.82rem;border-radius:9px;white-space:nowrap;">💾 전체 저장</button>
+                </div>
             </div>
         </div>
 
@@ -90,8 +100,25 @@ const GHandicapPage = {
             return;
         }
 
+        // ── 정렬 ──
+        const getHandicapVal = (m) => {
+            const cfg = this.configs[m.id] || {};
+            const v = cfg.finalHandicap !== undefined && cfg.finalHandicap !== null && cfg.finalHandicap !== ''
+                ? cfg.finalHandicap
+                : (m.ghandicap !== undefined && m.ghandicap !== null && m.ghandicap !== '' ? m.ghandicap : null);
+            return v !== null ? Number(v) : Infinity;
+        };
+        const sorted = [...this.members].sort((a, b) => {
+            if (this.sortMode === 'handicap_asc')  return getHandicapVal(a) - getHandicapVal(b);
+            if (this.sortMode === 'handicap_desc') return getHandicapVal(b) - getHandicapVal(a);
+            return a.name.localeCompare(b.name, 'ko');
+        });
+
+        // ── 정렬 버튼 활성 스타일 ──
+        this._updateSortButtons();
+
         let html = '';
-        this.members.forEach((m, idx) => {
+        sorted.forEach((m, idx) => {
             const cfg = this.configs[m.id] || {};
             const avatarText = m.nickname
                 ? Utils.escapeHtml(m.nickname)
@@ -209,7 +236,35 @@ const GHandicapPage = {
         });
 
         container.innerHTML = html;
-        this.members.forEach(m => this.recalc(m.id));
+        sorted.forEach(m => this.recalc(m.id));
+    },
+
+    /** 정렬 모드 변경 */
+    setSort(mode) {
+        this.sortMode = mode;
+        this.renderMemberList();
+    },
+
+    /** 정렬 버튼 활성 스타일 업데이트 */
+    _updateSortButtons() {
+        const styles = {
+            'handicap_asc':  { id: 'sort-handicap-asc',  active: 'rgba(52,211,153,0.35)',  border: 'rgba(52,211,153,0.8)',  color: '#34d399' },
+            'handicap_desc': { id: 'sort-handicap-desc', active: 'rgba(99,102,241,0.3)',   border: 'rgba(139,92,246,0.8)',  color: '#c084fc' },
+            'name':          { id: 'sort-name',          active: 'rgba(148,163,184,0.25)', border: 'rgba(148,163,184,0.7)', color: '#e2e8f0' }
+        };
+        Object.entries(styles).forEach(([mode, s]) => {
+            const btn = document.getElementById(s.id);
+            if (!btn) return;
+            if (mode === this.sortMode) {
+                btn.style.background = s.active;
+                btn.style.borderColor = s.border;
+                btn.style.color = s.color;
+                btn.style.boxShadow = `0 0 8px ${s.active}`;
+            } else {
+                btn.style.background = '';
+                btn.style.boxShadow = '';
+            }
+        });
     },
 
     /** 체크박스 변경 시 입력란 활성화/비활성화 제어 */
