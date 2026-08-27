@@ -176,16 +176,22 @@ const ClubPage = {
     async openGameModal(gameId = null) {
         const editGame = (gameId && this.gamesMap) ? this.gamesMap[gameId] : null;
 
-        // 새 게임: 활성 멤버만 / 수정: 활성 멤버 + 이 게임에 참여했던 비활성 멤버도 포함
+        // 활성 멤버 + 전체 비활성 멤버 모두 포함 (새 게임 추가 시에도 비활성 멤버 선택 가능)
         const activeMembers = await Store.getMembers('active');
+        const allMembers = await Store.getMembers(); // status 무관 전체
+        const activeMemberIds = new Set((activeMembers || []).map(m => m.id));
 
-        // 수정 모드일 때, 기존 참여자 중 비활성 멤버도 가져오기 (이전 기록 보호)
+        // 비활성 멤버 전체 추출
+        const inactiveMembers = (allMembers || []).filter(m => m && m.id && !activeMemberIds.has(m.id));
+
+        // 수정 모드: 이 게임에 참여했던 비활성 멤버를 맨 앞에 배치 (기존 기록 보호)
+        // 새 게임 모드: 비활성 멤버 전체를 활성 멤버 뒤에 배치
         let inactiveParticipants = [];
+        let otherInactiveMembers = [];
         if (editGame && editGame.club_game_participants) {
-            const allMembers = await Store.getMembers(); // status 무관 전체
             const allMembersMap = {};
             (allMembers || []).forEach(m => { if (m && m.id) allMembersMap[m.id] = m; });
-            const activeMemberIds = new Set((activeMembers || []).map(m => m.id));
+            const participantIds = new Set(editGame.club_game_participants.map(p => p.member_id));
 
             editGame.club_game_participants.forEach(p => {
                 if (!activeMemberIds.has(p.member_id)) {
@@ -193,10 +199,15 @@ const ClubPage = {
                     if (m) inactiveParticipants.push(m);
                 }
             });
+            // 나머지 비활성 멤버 (이 게임에 참여 안 했던 멤버)
+            otherInactiveMembers = inactiveMembers.filter(m => !participantIds.has(m.id));
+        } else {
+            // 새 게임: 비활성 멤버 전체를 뒤에 배치
+            otherInactiveMembers = inactiveMembers;
         }
 
-        // 활성 멤버 + 비활성(이 게임 참여자) 합치기
-        const members = [...activeMembers, ...inactiveParticipants];
+        // 활성 멤버 + 비활성(이 게임 참여자) + 나머지 비활성 멤버
+        const members = [...activeMembers, ...inactiveParticipants, ...otherInactiveMembers];
 
         // 기존 참여자 맵 생성 (member_id -> ranking)
         const partMap = {};
