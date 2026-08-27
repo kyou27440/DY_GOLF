@@ -1,5 +1,5 @@
-var APP_VERSION = 'v1.3.1';
-var APP_BUILD_TIME = '2026-08-22 11:36 (ICT)'; // GitHub push 시 이 값 업데이트
+var APP_VERSION = 'v1.3.3';
+var APP_BUILD_TIME = '2026-08-27 07:50 (ICT)'; // GitHub push 시 이 값 업데이트
 var SUPABASE_URL = 'https://qkkcugjuopjeuiyczjzf.supabase.co';
 var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFra2N1Z2p1b3BqZXVpeWN6anpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2NjE2NjQsImV4cCI6MjEwMDIzNzY2NH0.qPYwvuSBp_SEvi1vG4qoCIpbsBU1eTIYz43q-Df00DY';
 
