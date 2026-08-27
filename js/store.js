@@ -324,13 +324,16 @@ const Store = {
 
         const localList = this._getLocalGames();
         const combinedMap = {};
-        // 1. DB 클라우드 데이터 우선 추가
+        // 1. DB 클라우드 데이터 우선 추가 (클라우드가 진실의 원천)
         dbList.forEach(g => { if (g && g.id) combinedMap[String(g.id)] = g; });
 
-        // 2. DB에 존재하지 않는 로컬 전용 신규 항목만 보완 (DB 완전성 보장)
+        // 2. DB에 존재하지 않는 로컬 전용 신규 임시 항목만 보완 (기존 삭제/수정된 항목 부활 방지)
         localList.forEach(g => {
             if (g && g.id && !combinedMap[String(g.id)]) {
-                combinedMap[String(g.id)] = g;
+                const isLocalTemp = (typeof g.id === 'string' && isNaN(Number(g.id))) || Number(g.id) > 1000000000000;
+                if (isLocalTemp || dbList.length === 0) {
+                    combinedMap[String(g.id)] = g;
+                }
             }
         });
 
@@ -357,8 +360,14 @@ const Store = {
             });
         } catch(e) {}
 
-        // 로컬 데이터가 DB에 없는 경우 백그라운드 자동 동기화 시도
-        if (localList.length > 0 && dbList.length < localList.length) {
+        // DB 조회가 성공했으면 최신 DB 데이터를 로컬 캐시에 동기화
+        if (dbList.length > 0) {
+            this._saveLocalGames(list);
+        }
+
+        // 로컬 임시 데이터가 DB에 없는 경우 백그라운드 자동 동기화 시도
+        const hasUnsyncedTemp = localList.some(g => (typeof g.id === 'string' && isNaN(Number(g.id))) || Number(g.id) > 1000000000000);
+        if (hasUnsyncedTemp) {
             setTimeout(() => this.syncAllLocalDataToSupabase(), 300);
         }
 
@@ -370,9 +379,13 @@ const Store = {
         return games ? games.length : 0;
     },
 
-    /** PC 로컬스토리지에만 저장되어 있는 게임기록/멤버/산출시트를 Supabase 클라우드 DB로 완전 동기화 */
+    /** PC/모바일 로컬스토리지에만 저장되어 있는 게임기록/멤버/산출시트를 Supabase 클라우드 DB로 완전 동기화 */
     async syncAllLocalDataToSupabase() {
-        if (typeof supabase === 'undefined' || !supabase || typeof supabase.from !== 'function') {
+        const client = (typeof supabaseClient !== 'undefined' && supabaseClient && typeof supabaseClient.from === 'function') 
+            ? supabaseClient 
+            : ((typeof supabase !== 'undefined' && supabase && supabase.createClient) ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null);
+        
+        if (!client || typeof client.from !== 'function') {
             return { success: false, reason: 'Supabase client unavailable' };
         }
 
@@ -459,13 +472,26 @@ const Store = {
                 }
             }
 
-            // 3. 산출 시트 이력 동기화
+            // 3. 산출 시트 이력 클라우드 동기화 (app_settings & club_calc_history)
             const localCalcs = this._getLocalCalcHistory();
-            for (const lc of localCalcs) {
-                if (lc && lc.calc_date) {
-                    await this.from('club_calc_history').upsert(lc);
-                    syncedCalcCount++;
-                }
+            if (localCalcs.length > 0) {
+                const cloudCalcs = await this.getCalcHistoryList();
+                const calcMap = {};
+                cloudCalcs.forEach(item => {
+                    if (item && item.calc_date) calcMap[String(item.calc_date).slice(0, 10)] = item;
+                });
+                localCalcs.forEach(item => {
+                    if (item && item.calc_date) {
+                        const dKey = String(item.calc_date).slice(0, 10);
+                        if (!calcMap[dKey]) {
+                            calcMap[dKey] = item;
+                            syncedCalcCount++;
+                        }
+                    }
+                });
+                const mergedCalcs = Object.values(calcMap).sort((a, b) => new Date(b.calc_date) - new Date(a.calc_date));
+                await this.setSetting('club_calc_history', JSON.stringify(mergedCalcs));
+                this._saveLocalCalcHistory(mergedCalcs);
             }
 
         } catch(e) {
@@ -813,36 +839,86 @@ const Store = {
         }
         calcItem.id = calcItem.id || 'calc_' + Date.now();
 
-        let localList = this._getLocalCalcHistory();
-        localList = localList.filter(item => item && item.calc_date && String(item.calc_date).slice(0, 10) !== calcItem.calc_date);
-        localList.unshift(calcItem);
-        this._saveLocalCalcHistory(localList);
+        // 1. 최신 리스트 구성
+        const currentList = await this.getCalcHistoryList();
+        let updatedList = currentList.filter(item => item && item.calc_date && String(item.calc_date).slice(0, 10) !== calcItem.calc_date);
+        updatedList.unshift(calcItem);
+        
+        // 2. 로컬 스토리지 저장
+        this._saveLocalCalcHistory(updatedList);
 
+        // 3. Supabase app_settings에 영구 클라우드 동기화 (기기 간 100% 실시간 공유)
         try {
-            const { data, error } = await this.from('club_calc_history').upsert(calcItem).select().single();
-            if (!error && data) return data;
+            await this.setSetting('club_calc_history', JSON.stringify(updatedList));
+        } catch(e) {
+            console.error('saveCalcHistory to app_settings error:', e);
+        }
+
+        // 4. Supabase club_calc_history 전용 테이블이 존재할 경우 대비하여 upsert 시도
+        try {
+            await this.from('club_calc_history').upsert(calcItem);
         } catch(e) {}
 
         return calcItem;
     },
 
     async getCalcHistoryList() {
-        let dbList = [];
+        let cloudList = [];
+
+        // 1. Supabase app_settings에서 산출 이력 조회 (클라우드 최우선)
+        try {
+            const settingVal = await this.getSetting('club_calc_history');
+            if (settingVal) {
+                const parsed = typeof settingVal === 'string' ? JSON.parse(settingVal) : settingVal;
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    cloudList = parsed;
+                }
+            }
+        } catch(e) {
+            console.warn('getCalcHistoryList app_settings check:', e);
+        }
+
+        // 2. 만약 club_calc_history 전용 테이블이 있다면 조회하여 병합
         try {
             const { data, error } = await this.from('club_calc_history').select('*').order('calc_date', { ascending: false });
-            if (!error && data && data.length > 0) dbList = data;
+            if (!error && data && data.length > 0) {
+                const map = {};
+                cloudList.forEach(item => { if (item && item.calc_date) map[String(item.calc_date).slice(0, 10)] = item; });
+                data.forEach(item => { if (item && item.calc_date) map[String(item.calc_date).slice(0, 10)] = item; });
+                cloudList = Object.values(map);
+            }
         } catch(e) {}
 
+        // 3. 로컬 캐시와 병합 (클라우드 데이터 우선)
         const localList = this._getLocalCalcHistory();
-        const map = {};
-        dbList.forEach(item => {
-            if (item && item.calc_date) map[String(item.calc_date).slice(0, 10)] = item;
-        });
-        localList.forEach(item => {
-            if (item && item.calc_date) map[String(item.calc_date).slice(0, 10)] = item;
+        const finalMap = {};
+
+        // 클라우드 데이터 우선 등록
+        cloudList.forEach(item => {
+            if (item && item.calc_date) finalMap[String(item.calc_date).slice(0, 10)] = item;
         });
 
-        return Object.values(map).sort((a, b) => new Date(b.calc_date) - new Date(a.calc_date));
+        // 로컬에만 있는 항목 보완
+        localList.forEach(item => {
+            if (item && item.calc_date) {
+                const dateKey = String(item.calc_date).slice(0, 10);
+                if (!finalMap[dateKey]) {
+                    finalMap[dateKey] = item;
+                }
+            }
+        });
+
+        const sortedList = Object.values(finalMap).sort((a, b) => new Date(b.calc_date) - new Date(a.calc_date));
+        
+        // 최신 리스트로 로컬 캐시 갱신
+        this._saveLocalCalcHistory(sortedList);
+
+        // 만약 클라우드에 아직 안 올라간 로컬 데이터가 있었다면 백그라운드에서 app_settings 동기화
+        if (localList.length > cloudList.length) {
+            this.setSetting('club_calc_history', JSON.stringify(sortedList)).catch(() => {});
+        }
+
+        return sortedList;
     },
 
     async getCalcHistoryByDate(dateStr) {
@@ -853,13 +929,23 @@ const Store = {
     },
 
     async deleteCalcHistory(id) {
+        // 1. 로컬에서 삭제
         let localList = this._getLocalCalcHistory();
         localList = localList.filter(item => item.id !== id);
         this._saveLocalCalcHistory(localList);
 
+        // 2. app_settings 클라우드에서도 삭제 반영
+        try {
+            const currentCloud = await this.getCalcHistoryList();
+            const filteredCloud = currentCloud.filter(item => item.id !== id);
+            await this.setSetting('club_calc_history', JSON.stringify(filteredCloud));
+        } catch(e) {}
+
+        // 3. club_calc_history 전용 테이블에서도 삭제 시도
         try {
             await this.from('club_calc_history').delete().eq('id', id);
         } catch(e) {}
+
         return true;
     }
 };
