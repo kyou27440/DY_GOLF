@@ -60,11 +60,11 @@ const GHandicapPage = {
                 </div>
 
                 <!-- 테이블 헤더 -->
-                <div style="display:grid;grid-template-columns:minmax(90px,1.2fr) 56px 56px 42px 48px 52px 34px;
-                            padding:6px 10px;align-items:center;
+                <div style="display:grid;grid-template-columns:minmax(72px,1fr) 66px 66px 44px 46px 48px 30px;
+                            padding:6px 8px;align-items:center;
                             background:linear-gradient(90deg,rgba(99,102,241,0.22),rgba(139,92,246,0.15));
                             border-bottom:1px solid rgba(99,102,241,0.3);
-                            font-size:0.68rem;font-weight:800;letter-spacing:0.02em;">
+                            font-size:0.68rem;font-weight:800;letter-spacing:0.01em;">
                     <div style="color:#e2e8f0;">👥 멤버</div>
                     <div style="text-align:center;color:#c084fc;">⛳ NX4</div>
                     <div style="text-align:center;color:#38bdf8;">🌐 글로벌</div>
@@ -204,9 +204,8 @@ const GHandicapPage = {
         let html = '';
         sorted.forEach((m, idx) => {
             const cfg = this.configs[m.id] || {};
-            const avatarText = m.nickname
-                ? Utils.escapeHtml(m.nickname)
-                : (m.name.length >= 3 ? m.name.slice(-2) : m.name);
+            // 아바타 텍스트: 2글자로 컴팩트하게 통일
+            const avatarText = m.name.length >= 2 ? m.name.slice(-2) : m.name;
 
             const normalHandi = cfg.golfzonHandi !== undefined && cfg.golfzonHandi !== '' && cfg.golfzonHandi !== null ? cfg.golfzonHandi : '';
             const globalHandi = cfg.globalHandi !== undefined && cfg.globalHandi !== '' && cfg.globalHandi !== null ? cfg.globalHandi : '';
@@ -222,61 +221,61 @@ const GHandicapPage = {
 
             html += `
             <div id="ghrow-${m.id}"
-                 style="display:grid;grid-template-columns:minmax(90px,1.2fr) 56px 56px 42px 48px 52px 34px;
-                        padding:4px 10px;min-height:38px;align-items:center;
+                 style="display:grid;grid-template-columns:minmax(72px,1fr) 66px 66px 44px 46px 48px 30px;
+                        padding:4px 8px;min-height:38px;align-items:center;
                         background:${rowBg};border-bottom:1px solid rgba(255,255,255,0.04);
                         transition:background 0.12s;"
                  onmouseover="this.style.background='rgba(99,102,241,0.1)'"
                  onmouseout="this.style.background='${rowBg}'">
 
-                <!-- 멤버 프로필 (컴팩트) -->
-                <div style="display:flex;align-items:center;gap:6px;min-width:0;">
-                    <div style="height:22px;min-width:28px;padding:0 5px;font-size:0.62rem;font-weight:800;border-radius:10px;
+                <!-- 멤버 프로필 (컴팩트: 2글자 아바타 + 이름) -->
+                <div style="display:flex;align-items:center;gap:5px;min-width:0;" title="${Utils.escapeHtml(m.nickname ? `${m.name} (${m.nickname})` : m.name)}">
+                    <div style="height:20px;width:20px;font-size:0.58rem;font-weight:800;border-radius:6px;
                                 background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;
                                 display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;flex-shrink:0;">
                         ${avatarText}
                     </div>
-                    <span style="font-weight:700;font-size:0.78rem;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${Utils.escapeHtml(m.name)}">
+                    <span style="font-weight:700;font-size:0.8rem;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                         ${Utils.escapeHtml(m.name)}
                     </span>
                 </div>
 
                 <!-- 1. NX4 핸드 -->
-                <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                <div style="display:flex;align-items:center;justify-content:center;gap:3px;">
                     <input type="checkbox" id="chk-normal-${m.id}" ${useNormal ? 'checked' : ''}
                            onchange="GHandicapPage.toggleInput(${m.id}, 'normal')"
                            title="NX4 핸드 포함"
-                           style="cursor:pointer;accent-color:#c084fc;width:12px;height:12px;flex-shrink:0;">
+                           style="cursor:pointer;accent-color:#c084fc;width:12px;height:12px;flex-shrink:0;margin:0;">
                     <input type="number" step="0.01" min="-30" max="50" inputmode="decimal" id="val-normal-${m.id}" value="${normalHandi}"
                            placeholder="-" ${!useNormal ? 'disabled' : ''}
                            oninput="GHandicapPage.recalc(${m.id})"
-                           style="width:38px;height:24px;text-align:center;padding:0 2px;font-size:0.78rem;
+                           style="width:46px;height:25px;text-align:center;padding:0;font-size:0.82rem;
                                   font-weight:800;color:#fff;background:rgba(15,23,42,0.9);
-                                  border:1px solid rgba(192,132,252,0.4);border-radius:5px;box-sizing:border-box;
-                                  outline:none;${!useNormal ? 'opacity:0.3;cursor:not-allowed;' : 'cursor:text;'}">
+                                  border:1px solid rgba(192,132,252,0.45);border-radius:5px;box-sizing:border-box;
+                                  outline:none;-moz-appearance:textfield;${!useNormal ? 'opacity:0.3;cursor:not-allowed;' : 'cursor:text;'}">
                 </div>
 
                 <!-- 2. 글로벌핸디 -->
-                <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+                <div style="display:flex;align-items:center;justify-content:center;gap:3px;">
                     <input type="checkbox" id="chk-global-${m.id}" ${useGlobal ? 'checked' : ''}
                            onchange="GHandicapPage.toggleInput(${m.id}, 'global')"
                            title="글로벌핸디 포함"
-                           style="cursor:pointer;accent-color:#38bdf8;width:12px;height:12px;flex-shrink:0;">
+                           style="cursor:pointer;accent-color:#38bdf8;width:12px;height:12px;flex-shrink:0;margin:0;">
                     <input type="number" step="0.01" min="-30" max="50" inputmode="decimal" id="val-global-${m.id}" value="${globalHandi}"
                            placeholder="-" ${!useGlobal ? 'disabled' : ''}
                            oninput="GHandicapPage.recalc(${m.id})"
-                           style="width:38px;height:24px;text-align:center;padding:0 2px;font-size:0.78rem;
+                           style="width:46px;height:25px;text-align:center;padding:0;font-size:0.82rem;
                                   font-weight:800;color:#fff;background:rgba(15,23,42,0.9);
-                                  border:1px solid rgba(56,189,248,0.4);border-radius:5px;box-sizing:border-box;
-                                  outline:none;${!useGlobal ? 'opacity:0.3;cursor:not-allowed;' : 'cursor:text;'}">
+                                  border:1px solid rgba(56,189,248,0.45);border-radius:5px;box-sizing:border-box;
+                                  outline:none;-moz-appearance:textfield;${!useGlobal ? 'opacity:0.3;cursor:not-allowed;' : 'cursor:text;'}">
                 </div>
 
                 <!-- 3. 평균 표시 -->
                 <div style="display:flex;align-items:center;justify-content:center;">
                     <div id="disp-avg-${m.id}"
-                         style="width:36px;height:24px;display:flex;align-items:center;justify-content:center;
+                         style="width:40px;height:25px;display:flex;align-items:center;justify-content:center;
                                 background:rgba(15,23,42,0.7);border:1px solid rgba(167,139,250,0.3);
-                                border-radius:5px;font-size:0.75rem;font-weight:800;color:#a78bfa;">—</div>
+                                border-radius:5px;font-size:0.8rem;font-weight:800;color:#a78bfa;">—</div>
                 </div>
 
                 <!-- 4. 최저핸디 입력 -->
@@ -285,18 +284,18 @@ const GHandicapPage = {
                            placeholder="-"
                            oninput="GHandicapPage.recalc(${m.id})"
                            title="최저핸디 (하한 기준값)"
-                           style="width:40px;height:24px;text-align:center;padding:0 2px;font-size:0.78rem;
+                           style="width:40px;height:25px;text-align:center;padding:0;font-size:0.82rem;
                                   font-weight:800;color:#f59e0b;background:rgba(15,23,42,0.9);
-                                  border:1px solid rgba(245,158,11,0.4);border-radius:5px;box-sizing:border-box;
-                                  outline:none;cursor:text;">
+                                  border:1px solid rgba(245,158,11,0.45);border-radius:5px;box-sizing:border-box;
+                                  outline:none;-moz-appearance:textfield;cursor:text;">
                 </div>
 
                 <!-- 5. 최종핸디 표시 -->
                 <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
-                    <div style="width:46px;height:24px;display:flex;align-items:center;justify-content:center;
+                    <div style="width:44px;height:25px;display:flex;align-items:center;justify-content:center;
                                 background:rgba(15,23,42,0.9);border:1px solid rgba(52,211,153,0.5);
                                 border-radius:5px;box-sizing:border-box;">
-                        <span id="disp-final-${m.id}" style="font-size:0.85rem;font-weight:800;color:#34d399;">
+                        <span id="disp-final-${m.id}" style="font-size:0.88rem;font-weight:800;color:#34d399;">
                             ${currentHandicap !== null ? currentHandicap : '—'}
                         </span>
                     </div>
@@ -306,7 +305,7 @@ const GHandicapPage = {
                 <!-- 저장 버튼 -->
                 <div style="text-align:center;display:flex;align-items:center;justify-content:center;">
                     <button class="btn btn-emerald btn-sm" onclick="GHandicapPage.saveSingle(${m.id})"
-                            style="font-size:0.65rem;height:22px;padding:0 6px;white-space:nowrap;font-weight:700;border-radius:5px;">💾</button>
+                            style="font-size:0.65rem;height:22px;padding:0 5px;white-space:nowrap;font-weight:700;border-radius:5px;">💾</button>
                 </div>
             </div>
             `;
