@@ -796,15 +796,33 @@ const Store = {
     // ─── 설정 ───
 
     async getSetting(key) {
-        const { data, error } = await this.from('app_settings').select('value').eq('key', key).single();
-        if (error) return null;
-        return data?.value;
+        try {
+            const { data, error } = await this.from('app_settings').select('value').eq('key', key).single();
+            if (error || !data) return null;
+            return data.value;
+        } catch(e) {
+            console.warn('getSetting error:', e);
+            return null;
+        }
     },
 
     async setSetting(key, value) {
-        const { error } = await this.from('app_settings').upsert({ key, value, updated_at: new Date().toISOString() });
-        if (error) { console.error('setSetting:', error); return false; }
-        return true;
+        try {
+            const payload = {
+                key: key,
+                value: typeof value === 'string' ? value : JSON.stringify(value),
+                updated_at: new Date().toISOString()
+            };
+            const { error } = await this.from('app_settings').upsert(payload, { onConflict: 'key' });
+            if (error) {
+                console.error('setSetting error:', error);
+                return false;
+            }
+            return true;
+        } catch(e) {
+            console.error('setSetting exception:', e);
+            return false;
+        }
     },
 
     async getAllSettings() {
