@@ -753,7 +753,7 @@ const ClubPage = {
 
         const tableHtml = `
         <div style="background:rgba(13,20,38,0.9);border:1px solid rgba(99,102,241,0.28);
-                    border-radius:14px;overflow:hidden;">
+                    border-radius:14px;overflow:hidden;max-width:520px;">
             <div style="display:grid;grid-template-columns:${COLS};
                         padding:8px 14px;align-items:center;
                         background:linear-gradient(90deg,rgba(99,102,241,0.2),rgba(139,92,246,0.12));
