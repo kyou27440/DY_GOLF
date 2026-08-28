@@ -19,51 +19,128 @@ const GHandicapPage = {
     async render() {
         return `
         <!-- 페이지 헤더 -->
-        <div style="background:linear-gradient(135deg,rgba(30,41,59,0.85),rgba(15,23,42,0.95));border:1px solid rgba(99,102,241,0.3);border-radius:14px;padding:12px 16px;margin-bottom:12px;box-shadow:0 4px 20px rgba(0,0,0,0.25);">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+        <div style="background:linear-gradient(135deg,rgba(30,41,59,0.85),rgba(15,23,42,0.95));border:1px solid rgba(99,102,241,0.3);border-radius:14px;padding:10px 14px;margin-bottom:12px;box-shadow:0 4px 20px rgba(0,0,0,0.25);">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
                 <div style="display:flex;align-items:center;gap:10px;">
-                    <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0;">🏆</div>
+                    <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">🏆</div>
                     <div>
-                        <div style="font-weight:800;font-size:1rem;color:#f8fafc;">멤버별 핸디 통합 관리</div>
-                        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">
-                            <span style="font-size:0.7rem;padding:2px 8px;border-radius:20px;background:rgba(192,132,252,0.15);border:1px solid rgba(192,132,252,0.35);color:#c084fc;font-weight:700;">평균산출</span>
-                            <span style="font-size:0.7rem;padding:2px 8px;border-radius:20px;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);color:#38bdf8;font-weight:700;">≤15 반올림·상승</span>
-                            <span style="font-size:0.7rem;padding:2px 8px;border-radius:20px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);color:#34d399;font-weight:700;">&gt;15 내림·최저유지</span>
+                        <div style="font-weight:800;font-size:0.95rem;color:#f8fafc;">멤버별 핸디 통합 관리</div>
+                        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:3px;">
+                            <span style="font-size:0.67rem;padding:1px 7px;border-radius:20px;background:rgba(192,132,252,0.15);border:1px solid rgba(192,132,252,0.35);color:#c084fc;font-weight:700;">평균산출</span>
+                            <span style="font-size:0.67rem;padding:1px 7px;border-radius:20px;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);color:#38bdf8;font-weight:700;">≤15 반올림·상승</span>
+                            <span style="font-size:0.67rem;padding:1px 7px;border-radius:20px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);color:#34d399;font-weight:700;">&gt;15 내림·최저유지</span>
                         </div>
                     </div>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
                     <span style="font-size:0.7rem;color:#64748b;font-weight:600;">정렬:</span>
                     <button id="sort-handicap-asc" onclick="GHandicapPage.setSort('handicap_asc')"
-                            style="font-size:0.7rem;padding:3px 10px;border-radius:20px;border:1px solid rgba(52,211,153,0.5);background:rgba(52,211,153,0.15);color:#34d399;font-weight:700;cursor:pointer;transition:all 0.15s;">🏆 낮음↑</button>
+                            style="font-size:0.7rem;padding:3px 8px;border-radius:16px;border:1px solid rgba(52,211,153,0.5);background:rgba(52,211,153,0.15);color:#34d399;font-weight:700;cursor:pointer;">🏆 낮음↑</button>
                     <button id="sort-handicap-desc" onclick="GHandicapPage.setSort('handicap_desc')"
-                            style="font-size:0.7rem;padding:3px 10px;border-radius:20px;border:1px solid rgba(99,102,241,0.35);background:rgba(99,102,241,0.1);color:#a78bfa;font-weight:700;cursor:pointer;transition:all 0.15s;">🏆 높음↓</button>
+                            style="font-size:0.7rem;padding:3px 8px;border-radius:16px;border:1px solid rgba(99,102,241,0.35);background:rgba(99,102,241,0.1);color:#a78bfa;font-weight:700;cursor:pointer;">🏆 높음↓</button>
                     <button id="sort-name" onclick="GHandicapPage.setSort('name')"
-                            style="font-size:0.7rem;padding:3px 10px;border-radius:20px;border:1px solid rgba(148,163,184,0.3);background:rgba(148,163,184,0.08);color:#94a3b8;font-weight:700;cursor:pointer;transition:all 0.15s;">👤 이름순</button>
-                    <button class="btn btn-primary" id="btn-save-all-ghandicap" style="font-weight:700;padding:6px 16px;font-size:0.82rem;border-radius:9px;white-space:nowrap;">💾 전체 저장</button>
+                            style="font-size:0.7rem;padding:3px 8px;border-radius:16px;border:1px solid rgba(148,163,184,0.3);background:rgba(148,163,184,0.08);color:#94a3b8;font-weight:700;cursor:pointer;">👤 이름순</button>
+                    <button class="btn btn-primary" id="btn-save-all-ghandicap" style="font-weight:700;padding:5px 14px;font-size:0.8rem;border-radius:8px;white-space:nowrap;">💾 전체 저장</button>
                 </div>
             </div>
         </div>
 
-        <!-- 멤버 핸디 관리 테이블 -->
-        <div style="background:rgba(15,23,42,0.8);border:1px solid rgba(99,102,241,0.3);border-radius:14px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,0.28);">
-            <!-- 테이블 헤더 -->
-            <div style="display:grid;grid-template-columns:minmax(120px,1.4fr) 1fr 1fr 0.8fr 1fr 1fr 64px;
-                        padding:8px 14px;align-items:center;
-                        background:linear-gradient(90deg,rgba(99,102,241,0.18),rgba(139,92,246,0.12));
-                        border-bottom:1px solid rgba(99,102,241,0.3);
-                        font-size:0.73rem;font-weight:800;letter-spacing:0.03em;">
-                <div style="color:#e2e8f0;">👥 멤버</div>
-                <div style="text-align:center;color:#c084fc;">⛳ NX4</div>
-                <div style="text-align:center;color:#38bdf8;">🌐 글로벌</div>
-                <div style="text-align:center;color:#a78bfa;">📊 평균</div>
-                <div style="text-align:center;color:#f59e0b;">🔒 최저핸디</div>
-                <div style="text-align:center;color:#34d399;">🏆 최종핸디</div>
-                <div style="text-align:center;color:#94a3b8;">저장</div>
+        <!-- 메인 2단 레이아웃 (좌: 컴팩트 핸디 테이블 / 우: 통계 & 카톡공지 & 규정 패널) -->
+        <div style="display:grid;grid-template-columns:minmax(320px, 520px) minmax(300px, 1fr);gap:14px;align-items:start;">
+            
+            <!-- [좌측] 카톡 캡처 최적화 컴팩트 테이블 카드 -->
+            <div id="ghandicap-capture-card" style="background:rgba(15,23,42,0.85);border:1px solid rgba(99,102,241,0.3);border-radius:14px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,0.28);width:100%;max-width:520px;">
+                <!-- 캡처 상단 타이틀 바 -->
+                <div style="padding:6px 12px;background:rgba(30,41,59,0.7);border-bottom:1px solid rgba(255,255,255,0.08);display:flex;justify-content:space-between;align-items:center;">
+                    <div style="font-size:0.75rem;font-weight:800;color:#cbd5e1;display:flex;align-items:center;gap:6px;">
+                        <span>⛳ DY GOLF 핸디표</span>
+                        <span id="ghandicap-current-date" style="font-size:0.65rem;color:#64748b;font-weight:600;"></span>
+                    </div>
+                    <span style="font-size:0.65rem;color:#38bdf8;font-weight:700;background:rgba(56,189,248,0.12);padding:1px 6px;border-radius:4px;">📱 캡처 최적화</span>
+                </div>
+
+                <!-- 테이블 헤더 -->
+                <div style="display:grid;grid-template-columns:minmax(90px,1.2fr) 56px 56px 42px 48px 52px 34px;
+                            padding:6px 10px;align-items:center;
+                            background:linear-gradient(90deg,rgba(99,102,241,0.22),rgba(139,92,246,0.15));
+                            border-bottom:1px solid rgba(99,102,241,0.3);
+                            font-size:0.68rem;font-weight:800;letter-spacing:0.02em;">
+                    <div style="color:#e2e8f0;">👥 멤버</div>
+                    <div style="text-align:center;color:#c084fc;">⛳ NX4</div>
+                    <div style="text-align:center;color:#38bdf8;">🌐 글로벌</div>
+                    <div style="text-align:center;color:#a78bfa;">📊 평균</div>
+                    <div style="text-align:center;color:#f59e0b;">🔒 최저</div>
+                    <div style="text-align:center;color:#34d399;">🏆 최종</div>
+                    <div style="text-align:center;color:#94a3b8;">저장</div>
+                </div>
+                <!-- 멤버 행 목록 -->
+                <div id="ghandicap-members-container">
+                    <div class="text-center text-muted" style="padding:24px;">⏳ 핸디 정보 불러오는 중...</div>
+                </div>
             </div>
-            <!-- 멤버 행 목록 -->
-            <div id="ghandicap-members-container">
-                <div class="text-center text-muted" style="padding:30px;">⏳ 핸디 정보 불러오는 중...</div>
+
+            <!-- [우측] 모임 핸디 요약 & 카톡 공유 & 규정 가이드 패널 -->
+            <div style="display:flex;flex-direction:column;gap:12px;">
+                
+                <!-- 1. 카톡 공지용 텍스트 원클릭 복사 카드 -->
+                <div style="background:linear-gradient(135deg,rgba(30,41,59,0.7),rgba(15,23,42,0.85));border:1px solid rgba(56,189,248,0.3);border-radius:14px;padding:14px;box-shadow:0 4px 18px rgba(0,0,0,0.2);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <div style="font-weight:800;font-size:0.85rem;color:#38bdf8;display:flex;align-items:center;gap:6px;">
+                            <span>📋 카톡 공지용 텍스트</span>
+                            <span style="font-size:0.68rem;color:#94a3b8;font-weight:normal;">(원클릭 복사)</span>
+                        </div>
+                        <button onclick="GHandicapPage.copyKakaoText()" class="btn btn-sm"
+                                style="font-size:0.72rem;padding:4px 12px;border-radius:7px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-weight:800;border:none;box-shadow:0 2px 8px rgba(245,158,11,0.3);cursor:pointer;">
+                            💬 카톡 텍스트 복사
+                        </button>
+                    </div>
+                    <textarea id="ghandicap-kakao-preview" readonly
+                              style="width:100%;height:100px;background:rgba(15,23,42,0.9);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e2e8f0;font-size:0.75rem;font-family:monospace;padding:8px;resize:none;outline:none;box-sizing:border-box;line-height:1.4;"></textarea>
+                </div>
+
+                <!-- 2. 클럽 핸디 요약 통계 카드 -->
+                <div style="background:rgba(15,23,42,0.75);border:1px solid rgba(139,92,246,0.3);border-radius:14px;padding:14px;box-shadow:0 4px 18px rgba(0,0,0,0.2);">
+                    <div style="font-weight:800;font-size:0.85rem;color:#c084fc;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+                        <span>📊 클럽 핸디 통계 및 분포</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:10px;">
+                        <div style="background:rgba(30,41,59,0.6);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:8px 10px;text-align:center;">
+                            <div style="font-size:0.68rem;color:#94a3b8;font-weight:600;">등록 멤버</div>
+                            <div id="stat-total-count" style="font-size:1.05rem;font-weight:800;color:#f8fafc;margin-top:2px;">-</div>
+                        </div>
+                        <div style="background:rgba(30,41,59,0.6);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:8px 10px;text-align:center;">
+                            <div style="font-size:0.68rem;color:#94a3b8;font-weight:600;">클럽 평균 핸디</div>
+                            <div id="stat-avg-handicap" style="font-size:1.05rem;font-weight:800;color:#38bdf8;margin-top:2px;">-</div>
+                        </div>
+                        <div style="background:rgba(30,41,59,0.6);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:8px 10px;text-align:center;">
+                            <div style="font-size:0.68rem;color:#94a3b8;font-weight:600;">👑 최저 핸디</div>
+                            <div id="stat-min-handicap" style="font-size:1.05rem;font-weight:800;color:#34d399;margin-top:2px;">-</div>
+                        </div>
+                    </div>
+                    <!-- 등급별 분포 바 -->
+                    <div style="background:rgba(30,41,59,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:8px 10px;">
+                        <div style="font-size:0.68rem;color:#94a3b8;font-weight:700;margin-bottom:6px;">핸디 등급 분포</div>
+                        <div style="display:flex;justify-content:space-between;font-size:0.72rem;font-weight:700;">
+                            <span style="color:#34d399;">싱글 (≤9): <b id="stat-single-count">0명</b></span>
+                            <span style="color:#38bdf8;">미드 (10~15): <b id="stat-mid-count">0명</b></span>
+                            <span style="color:#f59e0b;">하이 (≥16): <b id="stat-high-count">0명</b></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. 핸디 산출 규정 안내 가이드 카드 -->
+                <div style="background:rgba(15,23,42,0.7);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:12px 14px;">
+                    <div style="font-weight:800;font-size:0.8rem;color:#94a3b8;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+                        <span>📜 핸디 산출 규정 (2026 개정)</span>
+                    </div>
+                    <ul style="margin:0;padding-left:16px;font-size:0.72rem;color:#cbd5e1;line-height:1.5;">
+                        <li><b>기본 산출</b>: 선택된 NX4 핸디와 글로벌 핸디의 평균 기준</li>
+                        <li><b style="color:#38bdf8;">평균 15 이하</b>: 반올림(Math.round) 적용 & <b>최대 15까지 상승 가능</b></li>
+                        <li><b style="color:#f59e0b;">평균 15 초과</b>: 내림(Math.floor) 적용 & <b>상승 불가 (최저핸디 하한 유지)</b></li>
+                        <li><b style="color:#34d399;">최저핸디 갱신</b>: 평균이 최저핸디보다 낮아지면(개선 시) 최종핸디 자동 하향</li>
+                    </ul>
+                </div>
+
             </div>
         </div>
         `;
@@ -83,6 +160,13 @@ const GHandicapPage = {
             this.configs = {};
         }
 
+        // 오늘 날짜 표시
+        const dateEl = document.getElementById('ghandicap-current-date');
+        if (dateEl) {
+            const now = new Date();
+            dateEl.textContent = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+        }
+
         this.renderMemberList();
 
         const btnSaveAll = document.getElementById('btn-save-all-ghandicap');
@@ -96,7 +180,7 @@ const GHandicapPage = {
         if (!container) return;
 
         if (this.members.length === 0) {
-            container.innerHTML = `<div class="empty-state" style="padding:40px 20px;"><div class="empty-icon">👥</div><p class="empty-text">등록된 활동 멤버가 없습니다</p></div>`;
+            container.innerHTML = `<div class="empty-state" style="padding:30px 15px;"><div class="empty-icon">👥</div><p class="empty-text">등록된 활동 멤버가 없습니다</p></div>`;
             return;
         }
 
@@ -134,70 +218,65 @@ const GHandicapPage = {
                 ? cfg.finalHandicap
                 : (m.ghandicap !== undefined && m.ghandicap !== null && m.ghandicap !== '' ? m.ghandicap : null);
 
-            const rowBg = idx % 2 === 0 ? 'rgba(30,41,59,0.4)' : 'rgba(15,23,42,0.3)';
+            const rowBg = idx % 2 === 0 ? 'rgba(30,41,59,0.45)' : 'rgba(15,23,42,0.35)';
 
             html += `
             <div id="ghrow-${m.id}"
-                 style="display:grid;grid-template-columns:minmax(120px,1.4fr) 1fr 1fr 0.8fr 1fr 1fr 64px;
-                        padding:5px 14px;min-height:44px;align-items:center;
-                        background:${rowBg};border-bottom:1px solid rgba(255,255,255,0.05);
+                 style="display:grid;grid-template-columns:minmax(90px,1.2fr) 56px 56px 42px 48px 52px 34px;
+                        padding:4px 10px;min-height:38px;align-items:center;
+                        background:${rowBg};border-bottom:1px solid rgba(255,255,255,0.04);
                         transition:background 0.12s;"
                  onmouseover="this.style.background='rgba(99,102,241,0.1)'"
                  onmouseout="this.style.background='${rowBg}'">
 
-                <!-- 멤버 프로필 -->
-                <div style="display:flex;align-items:center;gap:8px;min-width:0;">
-                    <div style="height:28px;min-width:36px;padding:0 8px;font-size:0.72rem;font-weight:800;border-radius:14px;
+                <!-- 멤버 프로필 (컴팩트) -->
+                <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+                    <div style="height:22px;min-width:28px;padding:0 5px;font-size:0.62rem;font-weight:800;border-radius:10px;
                                 background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;
                                 display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;flex-shrink:0;">
                         ${avatarText}
                     </div>
-                    <span style="font-weight:700;font-size:0.85rem;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                    <span style="font-weight:700;font-size:0.78rem;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${Utils.escapeHtml(m.name)}">
                         ${Utils.escapeHtml(m.name)}
                     </span>
                 </div>
 
                 <!-- 1. NX4 핸드 -->
-                <div style="display:flex;align-items:center;justify-content:center;gap:4px;">
+                <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
                     <input type="checkbox" id="chk-normal-${m.id}" ${useNormal ? 'checked' : ''}
                            onchange="GHandicapPage.toggleInput(${m.id}, 'normal')"
-                           title="NX4 핸드 포함 여부"
-                           style="cursor:pointer;accent-color:#c084fc;width:14px;height:14px;flex-shrink:0;">
+                           title="NX4 핸드 포함"
+                           style="cursor:pointer;accent-color:#c084fc;width:12px;height:12px;flex-shrink:0;">
                     <input type="number" step="0.01" min="-30" max="50" inputmode="decimal" id="val-normal-${m.id}" value="${normalHandi}"
                            placeholder="-" ${!useNormal ? 'disabled' : ''}
                            oninput="GHandicapPage.recalc(${m.id})"
-                           onfocus="this.style.borderColor='#c084fc';this.style.boxShadow='0 0 8px rgba(192,132,252,0.4)';this.select();"
-                           onblur="this.style.borderColor='rgba(192,132,252,0.5)';this.style.boxShadow='none';"
-                           style="width:72px;height:28px;text-align:center;padding:0 4px;font-size:0.85rem;
+                           style="width:38px;height:24px;text-align:center;padding:0 2px;font-size:0.78rem;
                                   font-weight:800;color:#fff;background:rgba(15,23,42,0.9);
-                                  border:1.5px solid rgba(192,132,252,0.5);border-radius:7px;box-sizing:border-box;
-                                  outline:none;transition:all 0.18s;${!useNormal ? 'opacity:0.35;cursor:not-allowed;' : 'cursor:text;'}">
+                                  border:1px solid rgba(192,132,252,0.4);border-radius:5px;box-sizing:border-box;
+                                  outline:none;${!useNormal ? 'opacity:0.3;cursor:not-allowed;' : 'cursor:text;'}">
                 </div>
 
                 <!-- 2. 글로벌핸디 -->
-                <div style="display:flex;align-items:center;justify-content:center;gap:4px;">
+                <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
                     <input type="checkbox" id="chk-global-${m.id}" ${useGlobal ? 'checked' : ''}
                            onchange="GHandicapPage.toggleInput(${m.id}, 'global')"
-                           title="글로벌핸디 포함 여부"
-                           style="cursor:pointer;accent-color:#38bdf8;width:14px;height:14px;flex-shrink:0;">
+                           title="글로벌핸디 포함"
+                           style="cursor:pointer;accent-color:#38bdf8;width:12px;height:12px;flex-shrink:0;">
                     <input type="number" step="0.01" min="-30" max="50" inputmode="decimal" id="val-global-${m.id}" value="${globalHandi}"
                            placeholder="-" ${!useGlobal ? 'disabled' : ''}
                            oninput="GHandicapPage.recalc(${m.id})"
-                           onfocus="this.style.borderColor='#38bdf8';this.style.boxShadow='0 0 8px rgba(56,189,248,0.4)';this.select();"
-                           onblur="this.style.borderColor='rgba(56,189,248,0.5)';this.style.boxShadow='none';"
-                           style="width:72px;height:28px;text-align:center;padding:0 4px;font-size:0.85rem;
+                           style="width:38px;height:24px;text-align:center;padding:0 2px;font-size:0.78rem;
                                   font-weight:800;color:#fff;background:rgba(15,23,42,0.9);
-                                  border:1.5px solid rgba(56,189,248,0.5);border-radius:7px;box-sizing:border-box;
-                                  outline:none;transition:all 0.18s;${!useGlobal ? 'opacity:0.35;cursor:not-allowed;' : 'cursor:text;'}">
+                                  border:1px solid rgba(56,189,248,0.4);border-radius:5px;box-sizing:border-box;
+                                  outline:none;${!useGlobal ? 'opacity:0.3;cursor:not-allowed;' : 'cursor:text;'}">
                 </div>
 
                 <!-- 3. 평균 표시 -->
                 <div style="display:flex;align-items:center;justify-content:center;">
                     <div id="disp-avg-${m.id}"
-                         style="width:64px;height:28px;display:flex;align-items:center;justify-content:center;
-                                background:rgba(15,23,42,0.7);border:1.5px solid rgba(167,139,250,0.35);
-                                border-radius:7px;font-size:0.82rem;font-weight:800;color:#a78bfa;
-                                letter-spacing:-0.02em;">—</div>
+                         style="width:36px;height:24px;display:flex;align-items:center;justify-content:center;
+                                background:rgba(15,23,42,0.7);border:1px solid rgba(167,139,250,0.3);
+                                border-radius:5px;font-size:0.75rem;font-weight:800;color:#a78bfa;">—</div>
                 </div>
 
                 <!-- 4. 최저핸디 입력 -->
@@ -205,38 +284,37 @@ const GHandicapPage = {
                     <input type="number" step="1" min="0" max="50" inputmode="numeric" id="val-base-${m.id}" value="${baseHandi}"
                            placeholder="-"
                            oninput="GHandicapPage.recalc(${m.id})"
-                           onfocus="this.style.borderColor='#f59e0b';this.style.boxShadow='0 0 8px rgba(245,158,11,0.4)';this.select();"
-                           onblur="this.style.borderColor='rgba(245,158,11,0.4)';this.style.boxShadow='none';"
                            title="최저핸디 (하한 기준값)"
-                           style="width:64px;height:28px;text-align:center;padding:0 4px;font-size:0.85rem;
+                           style="width:40px;height:24px;text-align:center;padding:0 2px;font-size:0.78rem;
                                   font-weight:800;color:#f59e0b;background:rgba(15,23,42,0.9);
-                                  border:1.5px solid rgba(245,158,11,0.4);border-radius:7px;box-sizing:border-box;
-                                  outline:none;transition:all 0.18s;cursor:text;">
+                                  border:1px solid rgba(245,158,11,0.4);border-radius:5px;box-sizing:border-box;
+                                  outline:none;cursor:text;">
                 </div>
 
                 <!-- 5. 최종핸디 표시 -->
-                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;">
-                    <div style="width:64px;height:28px;display:flex;align-items:center;justify-content:center;
-                                background:rgba(15,23,42,0.9);border:1.5px solid rgba(52,211,153,0.5);
-                                border-radius:7px;box-sizing:border-box;">
-                        <span id="disp-final-${m.id}" style="font-size:1rem;font-weight:800;color:#34d399;">
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                    <div style="width:46px;height:24px;display:flex;align-items:center;justify-content:center;
+                                background:rgba(15,23,42,0.9);border:1px solid rgba(52,211,153,0.5);
+                                border-radius:5px;box-sizing:border-box;">
+                        <span id="disp-final-${m.id}" style="font-size:0.85rem;font-weight:800;color:#34d399;">
                             ${currentHandicap !== null ? currentHandicap : '—'}
                         </span>
                     </div>
-                    <div id="disp-info-${m.id}" style="font-size:0.58rem;font-weight:600;min-height:11px;white-space:nowrap;color:#64748b;"></div>
+                    <div id="disp-info-${m.id}" style="font-size:0.52rem;font-weight:700;line-height:1;margin-top:1px;white-space:nowrap;color:#64748b;"></div>
                 </div>
 
                 <!-- 저장 버튼 -->
                 <div style="text-align:center;display:flex;align-items:center;justify-content:center;">
                     <button class="btn btn-emerald btn-sm" onclick="GHandicapPage.saveSingle(${m.id})"
-                            style="font-size:0.7rem;height:26px;padding:0 10px;white-space:nowrap;font-weight:700;border-radius:6px;">💾</button>
+                            style="font-size:0.65rem;height:22px;padding:0 6px;white-space:nowrap;font-weight:700;border-radius:5px;">💾</button>
                 </div>
             </div>
             `;
         });
 
         container.innerHTML = html;
-        sorted.forEach(m => this.recalc(m.id));
+        sorted.forEach(m => this.recalc(m.id, false));
+        this.updateSidePanel();
     },
 
     /** 정렬 모드 변경 */
@@ -355,7 +433,7 @@ const GHandicapPage = {
         return { validCount, rawAvg: formattedAvg, computed, finalHandicap, status, normalVal, globalVal, useNormal, useGlobal, currentHandicapVal };
     },
 
-    recalc(memberId) {
+    recalc(memberId, updatePanel = true) {
         const res = this.computeGHandicap(memberId);
         const dispFinal = document.getElementById(`disp-final-${memberId}`);
         const dispAvg = document.getElementById(`disp-avg-${memberId}`);
@@ -377,6 +455,7 @@ const GHandicapPage = {
             dispFinal.textContent = res.finalHandicap !== null ? res.finalHandicap : '—';
             dispFinal.style.color = '#64748b';
             if (dispInfo) dispInfo.textContent = '';
+            if (updatePanel) this.updateSidePanel();
             return;
         }
 
@@ -396,6 +475,122 @@ const GHandicapPage = {
                 dispInfo.style.color = '#34d399';
             }
         }
+
+        if (updatePanel) {
+            this.updateSidePanel();
+        }
+    },
+
+    /** 우측 통계 및 카톡 공유 텍스트 실시간 갱신 */
+    updateSidePanel() {
+        if (!this.members || this.members.length === 0) return;
+
+        let totalHandi = 0;
+        let validHandiCount = 0;
+        let minHandi = Infinity;
+        let minHandiMember = '-';
+
+        let singleCount = 0; // <= 9
+        let midCount = 0;    // 10 ~ 15
+        let highCount = 0;   // >= 16
+
+        const lines = [];
+        const now = new Date();
+        const dateStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+
+        lines.push(`⛳ [DY GOLF] 멤버별 핸디표`);
+        lines.push(`📅 기준일: ${dateStr}`);
+        lines.push(`━━━━━━━━━━━━━━━━`);
+
+        // 현재 정렬 순서대로 목록 생성
+        const getFinalVal = (m) => {
+            const dispElem = document.getElementById(`disp-final-${m.id}`);
+            if (dispElem && dispElem.textContent.trim() !== '—') {
+                const num = Number(dispElem.textContent.trim());
+                if (!isNaN(num)) return num;
+            }
+            const cfg = this.configs[m.id] || {};
+            const v = cfg.finalHandicap !== undefined && cfg.finalHandicap !== null && cfg.finalHandicap !== ''
+                ? cfg.finalHandicap
+                : (m.ghandicap !== undefined && m.ghandicap !== null && m.ghandicap !== '' ? m.ghandicap : null);
+            return v !== null ? Number(v) : null;
+        };
+
+        const sorted = [...this.members].sort((a, b) => {
+            const vA = getFinalVal(a) ?? 999;
+            const vB = getFinalVal(b) ?? 999;
+            if (this.sortMode === 'handicap_asc') return vA - vB;
+            if (this.sortMode === 'handicap_desc') return vB - vA;
+            return a.name.localeCompare(b.name, 'ko');
+        });
+
+        sorted.forEach((m, idx) => {
+            const hVal = getFinalVal(m);
+            const rank = idx + 1;
+            const rankEmoji = rank === 1 ? '🥇' : (rank === 2 ? '🥈' : (rank === 3 ? '🥉' : '▪️'));
+
+            if (hVal !== null) {
+                totalHandi += hVal;
+                validHandiCount++;
+
+                if (hVal < minHandi) {
+                    minHandi = hVal;
+                    minHandiMember = m.name;
+                }
+
+                if (hVal <= 9) singleCount++;
+                else if (hVal <= 15) midCount++;
+                else highCount++;
+
+                lines.push(`${rankEmoji} ${m.name} : ${hVal}`);
+            } else {
+                lines.push(`${rankEmoji} ${m.name} : 미정`);
+            }
+        });
+
+        const avgHandi = validHandiCount > 0 ? (totalHandi / validHandiCount).toFixed(1) : '-';
+
+        lines.push(`━━━━━━━━━━━━━━━━`);
+        lines.push(`📊 인원: ${this.members.length}명 / 평균: ${avgHandi}`);
+
+        // DOM 통계 업데이트
+        const elTotal = document.getElementById('stat-total-count');
+        const elAvg = document.getElementById('stat-avg-handicap');
+        const elMin = document.getElementById('stat-min-handicap');
+        const elSingle = document.getElementById('stat-single-count');
+        const elMid = document.getElementById('stat-mid-count');
+        const elHigh = document.getElementById('stat-high-count');
+        const elPreview = document.getElementById('ghandicap-kakao-preview');
+
+        if (elTotal) elTotal.textContent = `${this.members.length}명`;
+        if (elAvg) elAvg.textContent = `${avgHandi}`;
+        if (elMin) elMin.textContent = minHandi !== Infinity ? `${minHandiMember} (${minHandi})` : '-';
+        if (elSingle) elSingle.textContent = `${singleCount}명`;
+        if (elMid) elMid.textContent = `${midCount}명`;
+        if (elHigh) elHigh.textContent = `${highCount}명`;
+
+        if (elPreview) {
+            elPreview.value = lines.join('\n');
+        }
+    },
+
+    /** 카톡 공지용 텍스트 클립보드 복사 */
+    copyKakaoText() {
+        const elPreview = document.getElementById('ghandicap-kakao-preview');
+        if (!elPreview || !elPreview.value) {
+            Utils.toast('복사할 핸디 정보가 없습니다.', 'warning');
+            return;
+        }
+        navigator.clipboard.writeText(elPreview.value)
+            .then(() => {
+                Utils.toast('📋 카톡 공지용 텍스트가 복사되었습니다!', 'success');
+            })
+            .catch(() => {
+                // fallback
+                elPreview.select();
+                document.execCommand('copy');
+                Utils.toast('📋 카톡 공지용 텍스트가 복사되었습니다!', 'success');
+            });
     },
 
     async saveSingle(memberId) {
@@ -437,6 +632,7 @@ const GHandicapPage = {
             setTimeout(() => { row.style.background = ''; }, 1200);
         }
 
+        this.updateSidePanel();
         Utils.toast(`[${m.name}] 최종핸디 ${configData.finalHandicap} 저장 완료!`, 'success');
     },
 
@@ -446,6 +642,7 @@ const GHandicapPage = {
         for (const m of this.members) {
             await this.saveSingle(m.id);
         }
+        this.updateSidePanel();
         Utils.toast('모든 멤버의 최종핸디가 저장되었습니다!', 'success');
     }
 };
