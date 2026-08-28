@@ -1,13 +1,21 @@
-var APP_VERSION = 'v1.3.6';
-var APP_BUILD_TIME = '2026-08-28 11:40 (ICT)'; // 수정 작업 완료 시 자동 갱신
+var APP_VERSION = 'v1.3.7';
+var APP_BUILD_TIME = '2026-08-28 11:45 (ICT)'; // 수정 작업 완료 시 자동 갱신
 
 var APP_CHANGELOG = [
+    {
+        version: 'v1.3.7',
+        date: '2026-08-28 11:45',
+        items: [
+            '핸디 산출 공식 조건 세분화: 평균 ≤ 5 반올림(Math.round), 평균 6~15 내림(Math.floor), 평균 > 15 내림 & 최저핸디 유지',
+            '핸디 관리 상단 배지 및 산출 규정 안내 카드 문구 업데이트 (≤5 반올림, 6~15 내림, >15 최저유지)'
+        ]
+    },
     {
         version: 'v1.3.6',
         date: '2026-08-28 11:40',
         items: [
-            '핸디 관리 최저핸디 명칭 수정 및 15 기준 핸디 공식 개정 (15 이하 반올림/상승, 15 초과 내림/최저유지)',
-            '핸디표 가로 폭 50% 압축 (카톡 캡처 최적화) 및 카톡 공지 텍스트 1초 복사기/클럽 통계 추가',
+            '핸디 관리 최저핸디 명칭 수정 및 핸디표 가로 폭 50% 압축 (카톡 캡처 최적화)',
+            '카톡 공지 텍스트 1초 복사기 및 클럽 통계/분포 패널 추가',
             '소수점 핸디 입력창 확장(잘림 방지) 및 멤버 컬럼 컴팩트화',
             '게임 기록 입력 팝업 전면 개편 (원터치 참여자 칩 토글, 상시/최근 퀵 선택, 1등~N등 원클릭 순위 배정)'
         ]
@@ -32,7 +40,7 @@ var supabaseClient = null;
     try {
         if (typeof supabase !== 'undefined' && supabase && supabase.createClient) {
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            console.log('✅ Supabase Client initialized (v1.3.6)');
+            console.log('✅ Supabase Client initialized (v1.3.7)');
         } else {
             console.warn('⚠️ supabase CDN not loaded yet');
         }
