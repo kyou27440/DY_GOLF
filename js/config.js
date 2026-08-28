@@ -1,7 +1,16 @@
-var APP_VERSION = 'v1.3.8';
-var APP_BUILD_TIME = '2026-08-28 11:48 (ICT)'; // 수정 작업 완료 시 자동 갱신
+var APP_VERSION = 'v1.3.9';
+var APP_BUILD_TIME = '2026-08-28 11:55 (ICT)'; // 수정 작업 완료 시 자동 갱신
 
 var APP_CHANGELOG = [
+    {
+        version: 'v1.3.9',
+        date: '2026-08-28 11:55',
+        items: [
+            '성적통계 페이지(Analytics) 가로 폭 50% 압축(520px) 및 카톡 캡처 최적화 레이아웃 적용',
+            '카톡 공지용 성적 랭킹 1초 복사기 및 TOP 3 리더보드 시상대 카드 신설',
+            '모임 성적 탭 테이블 가로 폭 최적화'
+        ]
+    },
     {
         version: 'v1.3.8',
         date: '2026-08-28 11:48',
@@ -27,14 +36,6 @@ var APP_CHANGELOG = [
             '소수점 핸디 입력창 확장(잘림 방지) 및 멤버 컬럼 컴팩트화',
             '게임 기록 입력 팝업 전면 개편 (원터치 참여자 칩 토글, 상시/최근 퀵 선택, 1등~N등 원클릭 순위 배정)'
         ]
-    },
-    {
-        version: 'v1.3.5',
-        date: '2026-08-27 08:00',
-        items: [
-            '회비 산출 시트 등수별 지불금 연동',
-            '참여자 기록 및 순위 관리 최적화'
-        ]
     }
 ];
 
@@ -48,7 +49,7 @@ var supabaseClient = null;
     try {
         if (typeof supabase !== 'undefined' && supabase && supabase.createClient) {
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            console.log('✅ Supabase Client initialized (v1.3.8)');
+            console.log('✅ Supabase Client initialized (v1.3.9)');
         } else {
             console.warn('⚠️ supabase CDN not loaded yet');
         }
