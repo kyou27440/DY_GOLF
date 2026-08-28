@@ -12,8 +12,9 @@ const DashboardPage = {
         ]);
 
         const recentGames = (games || []).slice(0, 3);
-        const curVer = typeof APP_VERSION !== 'undefined' ? APP_VERSION : (window.APP_VERSION || 'v1.3.6');
-        const curBuildTime = typeof APP_BUILD_TIME !== 'undefined' ? APP_BUILD_TIME : (window.APP_BUILD_TIME || '2026-08-28 11:40 (ICT)');
+        const totalCountDisplay = totalGamesCount || (games || []).length;
+        const curVer = typeof APP_VERSION !== 'undefined' ? APP_VERSION : (window.APP_VERSION || 'v1.3.7');
+        const curBuildTime = typeof APP_BUILD_TIME !== 'undefined' ? APP_BUILD_TIME : (window.APP_BUILD_TIME || '2026-08-28 11:45 (ICT)');
         const changelog = typeof APP_CHANGELOG !== 'undefined' ? APP_CHANGELOG : (window.APP_CHANGELOG || []);
 
         return `
