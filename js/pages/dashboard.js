@@ -80,7 +80,7 @@ const DashboardPage = {
         let html = '<div class="recent-games-container" style="display:flex;flex-direction:column;gap:10px;">';
         games.forEach(g => {
             const parts = (g.club_game_participants || []).sort((a, b) => (a.ranking || 99) - (b.ranking || 99));
-            
+
             const partBadges = parts.map(p => {
                 const rankClass = p.ranking <= 3 && p.ranking > 0 ? `rank-${p.ranking}` : 'rank-other';
                 const memberName = p.club_members?.name || p.member_name || '?';
@@ -119,7 +119,7 @@ const DashboardPage = {
                 <div class="activity-info">
                     <div class="activity-title"><strong>[${Utils.formatDateKR(h.calc_date)}]</strong> ${Utils.escapeHtml(h.title || '스크린골프')} (${h.player_count}명)</div>
                     <div class="activity-meta" style="margin-top:4px;color:#10b981;font-weight:600;">
-                        ${(h.rank_amounts || []).map((amt, idx) => `${idx+1}등:${Utils.formatVND(amt)}`).join(' | ')}
+                        ${(h.rank_amounts || []).map((amt, idx) => `${idx + 1}등:${Utils.formatVND(amt)}`).join(' | ')}
                     </div>
                 </div>
                 <div style="font-weight:700;color:#38bdf8;">${Utils.formatVND(h.total_cost)}</div>
@@ -136,7 +136,7 @@ const DashboardPage = {
             const typeBadge = m.member_type === 'regular'
                 ? `<span style="background:rgba(16,185,129,0.18);color:#34d399;border:1px solid rgba(16,185,129,0.35);font-size:0.8rem;font-weight:700;padding:2px 8px;border-radius:6px;white-space:nowrap;">상시</span>`
                 : `<span style="background:rgba(139,92,246,0.18);color:#c084fc;border:1px solid rgba(139,92,246,0.35);font-size:0.8rem;font-weight:700;padding:2px 8px;border-radius:6px;white-space:nowrap;">출장</span>`;
-            
+
             html += `
                 <div class="active-member-card" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:linear-gradient(135deg, rgba(30,41,59,0.9), rgba(15,23,42,0.95));border:1px solid rgba(99,102,241,0.28);border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,0.18);transition:all 0.2s ease;">
                     <div class="member-avatar" style="height:42px;min-width:50px;padding:0 14px;font-size:0.92rem;font-weight:700;border-radius:21px;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 4px 12px rgba(99,102,241,0.35);color:#ffffff;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;">${avatarText}</div>
