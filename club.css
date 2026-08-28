@@ -132,7 +132,8 @@
 
 /* 초록색 Highlight TTL 행 (엑셀 스타일) */
 .calc-sheet-table .row-ttl {
-    background: #10b981; /* Vibrant Emerald Green */
+    background: #10b981;
+    /* Vibrant Emerald Green */
     color: #ffffff;
 }
 
@@ -365,4 +366,3 @@
 .rank-fee-card.rank-bronze .rank-fee-amount {
     color: #f97316;
 }
-
