@@ -1,7 +1,15 @@
-var APP_VERSION = 'v1.3.7';
-var APP_BUILD_TIME = '2026-08-28 11:45 (ICT)'; // 수정 작업 완료 시 자동 갱신
+var APP_VERSION = 'v1.3.8';
+var APP_BUILD_TIME = '2026-08-28 11:48 (ICT)'; // 수정 작업 완료 시 자동 갱신
 
 var APP_CHANGELOG = [
+    {
+        version: 'v1.3.8',
+        date: '2026-08-28 11:48',
+        items: [
+            '핸디표 정보 표현 영역(NX4, 글로벌, 평균, 최저, 최종) 가로 폭 48px 균등 통일',
+            '대시보드 totalCountDisplay 변수 복구 및 페이지 안정화'
+        ]
+    },
     {
         version: 'v1.3.7',
         date: '2026-08-28 11:45',
@@ -40,7 +48,7 @@ var supabaseClient = null;
     try {
         if (typeof supabase !== 'undefined' && supabase && supabase.createClient) {
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            console.log('✅ Supabase Client initialized (v1.3.7)');
+            console.log('✅ Supabase Client initialized (v1.3.8)');
         } else {
             console.warn('⚠️ supabase CDN not loaded yet');
         }
