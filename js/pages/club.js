@@ -83,7 +83,7 @@ const ClubPage = {
         try {
             const allMembers = await Store.getMembers(); // status 필터 없음 → 전체
             (allMembers || []).forEach(m => { if (m && m.id) allMembersMap[m.id] = m.name; });
-        } catch(e) {}
+        } catch (e) { }
 
         this.gamesMap = {};
         games.forEach(g => this.gamesMap[g.id] = g);
@@ -99,32 +99,32 @@ const ClubPage = {
             ${games.length === 0 ? '<div class="empty-state"><div class="empty-icon">⛳</div><p class="empty-text">아직 게임 기록이 없습니다</p></div>' : `
             <div style="display:flex;flex-direction:column;gap:6px;">
                 ${games.map(g => {
-                    const gDateKey = String(g.game_date || '').slice(0, 10);
-                    const calc = calcMap[gDateKey];
-                    const parts = (g.club_game_participants || []).sort((a, b) => (a.ranking || 99) - (b.ranking || 99));
-                    const hasUnranked = parts.some(p => !p.ranking);
+            const gDateKey = String(g.game_date || '').slice(0, 10);
+            const calc = calcMap[gDateKey];
+            const parts = (g.club_game_participants || []).sort((a, b) => (a.ranking || 99) - (b.ranking || 99));
+            const hasUnranked = parts.some(p => !p.ranking);
 
-                    // 참여자 인라인 배지 — 비활성 멤버도 allMembersMap으로 이름 보정
-                    const rankEmojis = ['🥇','🥈','🥉'];
-                    const partBadges = parts.map(p => {
-                        // club_members.name 우선, 없으면 전체멤버맵에서 보정
-                        const name = (p.club_members?.name) || allMembersMap[p.member_id] || '?';
-                        const r = p.ranking;
-                        const colors = ['#f59e0b','#94a3b8','#c084fc'];
-                        const rc = r >= 1 && r <= 3 ? colors[r-1] : '#64748b';
-                        const emoji = r >= 1 && r <= 3 ? rankEmojis[r-1] : '';
-                        const rankTxt = r ? `${emoji}${r}위` : '?위';
-                        let feeHint = '';
-                        if (calc && r && calc.rank_amounts && calc.rank_amounts[r-1] !== undefined) {
-                            feeHint = `<span style="color:#10b981;font-size:0.7rem;">(${Utils.formatVND(calc.rank_amounts[r-1])})</span>`;
-                        }
-                        return `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);font-size:0.79rem;white-space:nowrap;">
+            // 참여자 인라인 배지 — 비활성 멤버도 allMembersMap으로 이름 보정
+            const rankEmojis = ['🥇', '🥈', '🥉'];
+            const partBadges = parts.map(p => {
+                // club_members.name 우선, 없으면 전체멤버맵에서 보정
+                const name = (p.club_members?.name) || allMembersMap[p.member_id] || '?';
+                const r = p.ranking;
+                const colors = ['#f59e0b', '#94a3b8', '#c084fc'];
+                const rc = r >= 1 && r <= 3 ? colors[r - 1] : '#64748b';
+                const emoji = r >= 1 && r <= 3 ? rankEmojis[r - 1] : '';
+                const rankTxt = r ? `${emoji}${r}위` : '?위';
+                let feeHint = '';
+                if (calc && r && calc.rank_amounts && calc.rank_amounts[r - 1] !== undefined) {
+                    feeHint = `<span style="color:#10b981;font-size:0.7rem;">(${Utils.formatVND(calc.rank_amounts[r - 1])})</span>`;
+                }
+                return `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.09);font-size:0.79rem;white-space:nowrap;">
                             <span style="color:${rc};font-weight:700;font-size:0.74rem;">${rankTxt}</span>
                             <span style="color:#e2e8f0;font-weight:600;">${Utils.escapeHtml(name)}</span>${feeHint}
                         </span>`;
-                    }).join('');
+            }).join('');
 
-                    return `
+            return `
                     <div style="padding:9px 13px;background:linear-gradient(135deg, rgba(30,41,59,0.92), rgba(15,23,42,0.97));border:1px solid rgba(99,102,241,0.2);border-radius:11px;box-sizing:border-box;width:100%;">
                         <!-- 1줄: 날짜/장소/비용/버튼 -->
                         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
@@ -149,7 +149,7 @@ const ClubPage = {
                         </div>` : ''}
                     </div>
                     `;
-                }).join('')}
+        }).join('')}
             </div>
             `}`;
 
@@ -252,7 +252,7 @@ const ClubPage = {
                 </div>
                 <div class="form-group">
                     <label>총 비용 (VND)</label>
-                    <input type="text" id="game-cost" value="${editGame ? Utils.formatVND(editGame.total_cost).replace('₫','').trim() : ''}" placeholder="예: 800000" inputmode="numeric">
+                    <input type="text" id="game-cost" value="${editGame ? Utils.formatVND(editGame.total_cost).replace('₫', '').trim() : ''}" placeholder="예: 800000" inputmode="numeric">
                 </div>
             </div>
             <div id="game-modal-calc-info"></div>
@@ -280,7 +280,7 @@ const ClubPage = {
             const calc = await Store.getCalcHistoryByDate(dateVal);
             if (calc) {
                 if (costInput && (!costInput.value || costInput.dataset.autoPopulated === 'true' || !editGame)) {
-                    costInput.value = Utils.formatVND(calc.total_cost).replace('₫','').trim();
+                    costInput.value = Utils.formatVND(calc.total_cost).replace('₫', '').trim();
                     costInput.dataset.autoPopulated = 'true';
                 }
                 const rankSummary = (calc.rank_amounts || []).map((amt, idx) => `[${idx + 1}등: ${Utils.formatVND(amt)}]`).join('  ');
@@ -369,15 +369,15 @@ const ClubPage = {
             </div>
             <div class="club-members-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));gap:16px;">
                 ${members.map(m => {
-                    const avatarText = m.nickname ? Utils.escapeHtml(m.nickname) : (m.name.length >= 3 ? m.name.slice(-2) : m.name);
-                    const typeBadge = m.member_type === 'regular'
-                        ? `<span style="background:rgba(16,185,129,0.18);color:#34d399;border:1px solid rgba(16,185,129,0.35);font-size:0.82rem;font-weight:700;padding:2px 8px;border-radius:6px;white-space:nowrap;">상시</span>`
-                        : `<span style="background:rgba(139,92,246,0.18);color:#c084fc;border:1px solid rgba(139,92,246,0.35);font-size:0.82rem;font-weight:700;padding:2px 8px;border-radius:6px;white-space:nowrap;">출장</span>`;
-                    const statusBadge = m.status === 'active'
-                        ? `<span style="background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);font-size:0.78rem;padding:2px 6px;border-radius:6px;white-space:nowrap;">활동중</span>`
-                        : (m.status === 'inactive' ? `<span style="background:rgba(148,163,184,0.15);color:#94a3b8;font-size:0.78rem;padding:2px 6px;border-radius:6px;white-space:nowrap;">비활동</span>` : `<span style="background:rgba(244,63,94,0.15);color:#f43f5e;font-size:0.78rem;padding:2px 6px;border-radius:6px;white-space:nowrap;">퇴사</span>`);
+            const avatarText = m.nickname ? Utils.escapeHtml(m.nickname) : (m.name.length >= 3 ? m.name.slice(-2) : m.name);
+            const typeBadge = m.member_type === 'regular'
+                ? `<span style="background:rgba(16,185,129,0.18);color:#34d399;border:1px solid rgba(16,185,129,0.35);font-size:0.82rem;font-weight:700;padding:2px 8px;border-radius:6px;white-space:nowrap;">상시</span>`
+                : `<span style="background:rgba(139,92,246,0.18);color:#c084fc;border:1px solid rgba(139,92,246,0.35);font-size:0.82rem;font-weight:700;padding:2px 8px;border-radius:6px;white-space:nowrap;">출장</span>`;
+            const statusBadge = m.status === 'active'
+                ? `<span style="background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);font-size:0.78rem;padding:2px 6px;border-radius:6px;white-space:nowrap;">활동중</span>`
+                : (m.status === 'inactive' ? `<span style="background:rgba(148,163,184,0.15);color:#94a3b8;font-size:0.78rem;padding:2px 6px;border-radius:6px;white-space:nowrap;">비활동</span>` : `<span style="background:rgba(244,63,94,0.15);color:#f43f5e;font-size:0.78rem;padding:2px 6px;border-radius:6px;white-space:nowrap;">퇴사</span>`);
 
-                    return `
+            return `
                     <div class="member-card" style="padding:16px;background:linear-gradient(135deg, rgba(30,41,59,0.9), rgba(15,23,42,0.95));border:1px solid rgba(99,102,241,0.28);border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,0.2);">
                         <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
                             <div class="member-avatar" style="height:44px;min-width:52px;padding:0 14px;font-size:0.95rem;font-weight:700;border-radius:22px;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 4px 12px rgba(99,102,241,0.35);color:#ffffff;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;">${avatarText}</div>
@@ -462,8 +462,8 @@ const ClubPage = {
                 await Store.addMember(data);
             }
 
-            Utils.toast(editMember ? '멤버 정보 및 아이디가 수정되었습니다' : '멤버가 추가되었습니다', 'success'); 
-            Modal.close(); 
+            Utils.toast(editMember ? '멤버 정보 및 아이디가 수정되었습니다' : '멤버가 추가되었습니다', 'success');
+            Modal.close();
             await this.renderTab();
         });
     },
@@ -508,30 +508,30 @@ const ClubPage = {
         // ── 포디움 Top3 ──
         const podiumHtml = `
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;">
-            ${stats.slice(0,3).map((s, idx) => {
-                const medals  = ['🥇','🥈','🥉'];
-                const glow    = ['rgba(251,191,36,0.25)','rgba(148,163,184,0.18)','rgba(205,124,47,0.18)'];
-                const border  = ['rgba(251,191,36,0.55)','rgba(148,163,184,0.45)','rgba(205,124,47,0.45)'];
-                const txtc    = ['#fbbf24','#cbd5e1','#cd7c2f'];
-                const avgRankNum = s.avgRank !== '-' ? parseFloat(s.avgRank) : null;
-                const avgColor = avgRankNum !== null
-                    ? (avgRankNum <= 2 ? '#34d399' : avgRankNum <= 3.5 ? '#38bdf8' : '#f59e0b') : '#64748b';
-                return `<div style="padding:14px 16px;background:${glow[idx]};border:1.5px solid ${border[idx]};
+            ${stats.slice(0, 3).map((s, idx) => {
+            const medals = ['🥇', '🥈', '🥉'];
+            const glow = ['rgba(251,191,36,0.25)', 'rgba(148,163,184,0.18)', 'rgba(205,124,47,0.18)'];
+            const border = ['rgba(251,191,36,0.55)', 'rgba(148,163,184,0.45)', 'rgba(205,124,47,0.45)'];
+            const txtc = ['#fbbf24', '#cbd5e1', '#cd7c2f'];
+            const avgRankNum = s.avgRank !== '-' ? parseFloat(s.avgRank) : null;
+            const avgColor = avgRankNum !== null
+                ? (avgRankNum <= 2 ? '#34d399' : avgRankNum <= 3.5 ? '#38bdf8' : '#f59e0b') : '#64748b';
+            return `<div style="padding:14px 16px;background:${glow[idx]};border:1.5px solid ${border[idx]};
                                     border-radius:14px;text-align:center;position:relative;">
                     <div style="font-size:1.6rem;margin-bottom:4px;">${medals[idx]}</div>
                     <div style="font-size:1rem;font-weight:800;color:${txtc[idx]};">${Utils.escapeHtml(s.name)}</div>
                     <div style="display:flex;justify-content:center;gap:10px;margin-top:6px;flex-wrap:wrap;">
-                        <span style="font-size:0.72rem;color:#94a3b8;">평균 <b style="color:${avgColor};">${s.avgRank !== '-' ? s.avgRank+'등' : '-'}</b></span>
-                        <span style="font-size:0.72rem;color:#94a3b8;">최고 <b style="color:#34d399;">${s.best !== '-' ? s.best+'등' : '-'}</b></span>
-                        <span style="font-size:0.72rem;color:#94a3b8;">🥇 <b style="color:#fbbf24;">${memberFirstCount[s.name]||0}회</b></span>
+                        <span style="font-size:0.72rem;color:#94a3b8;">평균 <b style="color:${avgColor};">${s.avgRank !== '-' ? s.avgRank + '등' : '-'}</b></span>
+                        <span style="font-size:0.72rem;color:#94a3b8;">최고 <b style="color:#34d399;">${s.best !== '-' ? s.best + '등' : '-'}</b></span>
+                        <span style="font-size:0.72rem;color:#94a3b8;">🥇 <b style="color:#fbbf24;">${memberFirstCount[s.name] || 0}회</b></span>
                     </div>
                 </div>`;
-            }).join('')}
+        }).join('')}
         </div>`;
 
         // ── 컴팩트 테이블 ──
         const COLS = '44px 1fr 62px 72px 66px 58px 52px';
-        const HDR  = ['순위','멤버','게임','평균등','최고','🥇 1등','꼴찌'];
+        const HDR = ['순위', '멤버', '게임', '평균등', '최고', '🥇 1등', '꼴찌'];
 
         const tableHtml = `
         <div style="background:rgba(13,20,38,0.9);border:1px solid rgba(99,102,241,0.28);
@@ -540,32 +540,32 @@ const ClubPage = {
                         padding:8px 14px;align-items:center;
                         background:linear-gradient(90deg,rgba(99,102,241,0.2),rgba(139,92,246,0.12));
                         border-bottom:1px solid rgba(99,102,241,0.25);">
-                ${HDR.map((h,i) => `<div style="font-size:0.7rem;font-weight:800;color:#64748b;
-                    text-align:${i===1?'left':'center'};white-space:nowrap;">${h}</div>`).join('')}
+                ${HDR.map((h, i) => `<div style="font-size:0.7rem;font-weight:800;color:#64748b;
+                    text-align:${i === 1 ? 'left' : 'center'};white-space:nowrap;">${h}</div>`).join('')}
             </div>
             ${stats.map((s, idx) => {
-                const rank1 = idx + 1;
-                const bg = idx % 2 === 0 ? 'rgba(30,41,59,0.4)' : 'transparent';
-                let badge, rc;
-                if      (rank1===1) { badge='🥇'; rc='#fbbf24'; }
-                else if (rank1===2) { badge='🥈'; rc='#94a3b8'; }
-                else if (rank1===3) { badge='🥉'; rc='#cd7c2f'; }
-                else                { badge=rank1; rc='#475569'; }
+            const rank1 = idx + 1;
+            const bg = idx % 2 === 0 ? 'rgba(30,41,59,0.4)' : 'transparent';
+            let badge, rc;
+            if (rank1 === 1) { badge = '🥇'; rc = '#fbbf24'; }
+            else if (rank1 === 2) { badge = '🥈'; rc = '#94a3b8'; }
+            else if (rank1 === 3) { badge = '🥉'; rc = '#cd7c2f'; }
+            else { badge = rank1; rc = '#475569'; }
 
-                const avg = s.avgRank !== '-' ? parseFloat(s.avgRank) : null;
-                const ac  = avg===null ? '#475569'
-                    : avg<=2 ? '#34d399' : avg<=3.5 ? '#38bdf8' : avg<=5 ? '#f59e0b' : '#f43f5e';
-                const f1  = memberFirstCount[s.name]||0;
-                const lc  = memberLastCount[s.name]||0;
-                const initials = Utils.escapeHtml(s.name).substring(0,2);
+            const avg = s.avgRank !== '-' ? parseFloat(s.avgRank) : null;
+            const ac = avg === null ? '#475569'
+                : avg <= 2 ? '#34d399' : avg <= 3.5 ? '#38bdf8' : avg <= 5 ? '#f59e0b' : '#f43f5e';
+            const f1 = memberFirstCount[s.name] || 0;
+            const lc = memberLastCount[s.name] || 0;
+            const initials = Utils.escapeHtml(s.name).substring(0, 2);
 
-                return `<div style="display:grid;grid-template-columns:${COLS};
+            return `<div style="display:grid;grid-template-columns:${COLS};
                             padding:7px 14px;align-items:center;background:${bg};
                             border-bottom:1px solid rgba(255,255,255,0.03);
                             transition:background 0.12s;cursor:default;"
                          onmouseover="this.style.background='rgba(99,102,241,0.08)'"
                          onmouseout="this.style.background='${bg}'">
-                    <div style="text-align:center;font-size:${rank1<=3?'1.2rem':'0.82rem'};
+                    <div style="text-align:center;font-size:${rank1 <= 3 ? '1.2rem' : '0.82rem'};
                                 font-weight:800;color:${rc};">${badge}</div>
                     <div style="display:flex;align-items:center;gap:7px;min-width:0;">
                         <div style="width:28px;height:28px;border-radius:50%;flex-shrink:0;
@@ -577,12 +577,12 @@ const ClubPage = {
                             ${Utils.escapeHtml(s.name)}</span>
                     </div>
                     <div style="text-align:center;font-size:0.82rem;font-weight:700;color:#94a3b8;">${s.games}<small style="color:#475569;">회</small></div>
-                    <div style="text-align:center;font-size:0.9rem;font-weight:800;color:${ac};">${avg!==null?s.avgRank+'등':'—'}</div>
-                    <div style="text-align:center;font-size:0.85rem;font-weight:700;color:#34d399;">${s.best!=='-'?s.best+'등':'—'}</div>
-                    <div style="text-align:center;font-size:0.85rem;font-weight:700;color:#fbbf24;">${f1>0?f1+'회':'—'}</div>
-                    <div style="text-align:center;font-size:0.85rem;font-weight:700;color:#f43f5e;">${lc>0?lc+'회':'—'}</div>
+                    <div style="text-align:center;font-size:0.9rem;font-weight:800;color:${ac};">${avg !== null ? s.avgRank + '등' : '—'}</div>
+                    <div style="text-align:center;font-size:0.85rem;font-weight:700;color:#34d399;">${s.best !== '-' ? s.best + '등' : '—'}</div>
+                    <div style="text-align:center;font-size:0.85rem;font-weight:700;color:#fbbf24;">${f1 > 0 ? f1 + '회' : '—'}</div>
+                    <div style="text-align:center;font-size:0.85rem;font-weight:700;color:#f43f5e;">${lc > 0 ? lc + '회' : '—'}</div>
                 </div>`;
-            }).join('')}
+        }).join('')}
         </div>`;
 
         container.innerHTML = `
@@ -597,51 +597,51 @@ const ClubPage = {
     ratioPresets: {
         3: {
             ultraMild: { name: '⚖️ 초완만형', desc: '1등 25% / 2등 33% / 3등 42%', ratios: [25, 33, 42] },
-            mild:      { name: '⚖️ 완만형',   desc: '1등 20% / 2등 32% / 3등 48%', ratios: [20, 32, 48] },
-            standard:  { name: '⚡ 중등 차등형 (추천)', desc: '1등 15% / 2등 30% / 3등 55%', ratios: [15, 30, 55] },
-            strong:    { name: '⛳ 강한 차등형', desc: '1등 10% / 2등 28% / 3등 62%', ratios: [10, 28, 62] },
-            extreme:   { name: '🔥 극단 차등형', desc: '1등 5%  / 2등 25% / 3등 70%', ratios: [5, 25, 70] },
-            free1st:   { name: '🏆 1등 면제형', desc: '1등 0%  / 2등 35% / 3등 65%', ratios: [0, 35, 65] }
+            mild: { name: '⚖️ 완만형', desc: '1등 20% / 2등 32% / 3등 48%', ratios: [20, 32, 48] },
+            standard: { name: '⚡ 중등 차등형 (추천)', desc: '1등 15% / 2등 30% / 3등 55%', ratios: [15, 30, 55] },
+            strong: { name: '⛳ 강한 차등형', desc: '1등 10% / 2등 28% / 3등 62%', ratios: [10, 28, 62] },
+            extreme: { name: '🔥 극단 차등형', desc: '1등 5%  / 2등 25% / 3등 70%', ratios: [5, 25, 70] },
+            free1st: { name: '🏆 1등 면제형', desc: '1등 0%  / 2등 35% / 3등 65%', ratios: [0, 35, 65] }
         },
         4: {
             ultraMild: { name: '⚖️ 초완만형', desc: '1등 18% / 2등 24% / 3등 26% / 4등 32%', ratios: [18, 24, 26, 32] },
-            mild:      { name: '⚖️ 완만형',   desc: '1등 14% / 2등 22% / 3등 28% / 4등 36%', ratios: [14, 22, 28, 36] },
-            standard:  { name: '⚡ 중등 차등형 (추천)', desc: '1등 10% / 2등 20% / 3등 30% / 4등 40%', ratios: [10, 20, 30, 40] },
-            strong:    { name: '⛳ 강한 차등형', desc: '1등 6%  / 2등 17% / 3등 31% / 4등 46%', ratios: [6, 17, 31, 46] },
-            extreme:   { name: '🔥 극단 차등형', desc: '1등 3%  / 2등 12% / 3등 30% / 4등 55%', ratios: [3, 12, 30, 55] },
-            free1st:   { name: '🏆 1등 면제형', desc: '1등 0%  / 2등 18% / 3등 32% / 4등 50%', ratios: [0, 18, 32, 50] }
+            mild: { name: '⚖️ 완만형', desc: '1등 14% / 2등 22% / 3등 28% / 4등 36%', ratios: [14, 22, 28, 36] },
+            standard: { name: '⚡ 중등 차등형 (추천)', desc: '1등 10% / 2등 20% / 3등 30% / 4등 40%', ratios: [10, 20, 30, 40] },
+            strong: { name: '⛳ 강한 차등형', desc: '1등 6%  / 2등 17% / 3등 31% / 4등 46%', ratios: [6, 17, 31, 46] },
+            extreme: { name: '🔥 극단 차등형', desc: '1등 3%  / 2등 12% / 3등 30% / 4등 55%', ratios: [3, 12, 30, 55] },
+            free1st: { name: '🏆 1등 면제형', desc: '1등 0%  / 2등 18% / 3등 32% / 4등 50%', ratios: [0, 18, 32, 50] }
         },
         5: {
             ultraMild: { name: '⚖️ 초완만형', desc: '1등 15% / 2등 18% / 3등 20% / 4등 22% / 5등 25%', ratios: [15, 18, 20, 22, 25] },
-            mild:      { name: '⚖️ 완만형',   desc: '1등 12% / 2등 16% / 3등 19% / 4등 23% / 5등 30%', ratios: [12, 16, 19, 23, 30] },
-            standard:  { name: '⚡ 중등 차등형 (추천)', desc: '1등 10% / 2등 15% / 3등 20% / 4등 25% / 5등 30%', ratios: [10, 15, 20, 25, 30] },
-            strong:    { name: '⛳ 강한 차등형', desc: '1등 6%  / 2등 12% / 3등 18% / 4등 26% / 5등 38%', ratios: [6, 12, 18, 26, 38] },
-            extreme:   { name: '🔥 극단 차등형', desc: '1등 3%  / 2등 8%  / 3등 15% / 4등 26% / 5등 48%', ratios: [3, 8, 15, 26, 48] },
-            free1st:   { name: '🏆 1등 면제형', desc: '1등 0%  / 2등 12% / 3등 18% / 4등 27% / 5등 43%', ratios: [0, 12, 18, 27, 43] }
+            mild: { name: '⚖️ 완만형', desc: '1등 12% / 2등 16% / 3등 19% / 4등 23% / 5등 30%', ratios: [12, 16, 19, 23, 30] },
+            standard: { name: '⚡ 중등 차등형 (추천)', desc: '1등 10% / 2등 15% / 3등 20% / 4등 25% / 5등 30%', ratios: [10, 15, 20, 25, 30] },
+            strong: { name: '⛳ 강한 차등형', desc: '1등 6%  / 2등 12% / 3등 18% / 4등 26% / 5등 38%', ratios: [6, 12, 18, 26, 38] },
+            extreme: { name: '🔥 극단 차등형', desc: '1등 3%  / 2등 8%  / 3등 15% / 4등 26% / 5등 48%', ratios: [3, 8, 15, 26, 48] },
+            free1st: { name: '🏆 1등 면제형', desc: '1등 0%  / 2등 12% / 3등 18% / 4등 27% / 5등 43%', ratios: [0, 12, 18, 27, 43] }
         },
         6: {
             ultraMild: { name: '⚖️ 초완만형', desc: '1등 12% / 2등 14% / 3등 16% / 4등 18% / 5등 19% / 6등 21%', ratios: [12, 14, 16, 18, 19, 21] },
-            mild:      { name: '⚖️ 완만형',   desc: '1등 9%  / 2등 13% / 3등 16% / 4등 18% / 5등 21% / 6등 23%', ratios: [9, 13, 16, 18, 21, 23] },
-            standard:  { name: '⚡ 중등 차등형 (추천)', desc: '1등 5%  / 2등 10% / 3등 15% / 4등 20% / 5등 23% / 6등 27%', ratios: [5, 10, 15, 20, 23, 27] },
-            strong:    { name: '⛳ 강한 차등형', desc: '1등 4%  / 2등 8%  / 3등 13% / 4등 18% / 5등 24% / 6등 33%', ratios: [4, 8, 13, 18, 24, 33] },
-            extreme:   { name: '🔥 극단 차등형', desc: '1등 2%  / 2등 6%  / 3등 11% / 4등 17% / 5등 24% / 6등 40%', ratios: [2, 6, 11, 17, 24, 40] },
-            free1st:   { name: '🏆 1등 면제형', desc: '1등 0%  / 2등 8%  / 3등 14% / 4등 19% / 5등 24% / 6등 35%', ratios: [0, 8, 14, 19, 24, 35] }
+            mild: { name: '⚖️ 완만형', desc: '1등 9%  / 2등 13% / 3등 16% / 4등 18% / 5등 21% / 6등 23%', ratios: [9, 13, 16, 18, 21, 23] },
+            standard: { name: '⚡ 중등 차등형 (추천)', desc: '1등 5%  / 2등 10% / 3등 15% / 4등 20% / 5등 23% / 6등 27%', ratios: [5, 10, 15, 20, 23, 27] },
+            strong: { name: '⛳ 강한 차등형', desc: '1등 4%  / 2등 8%  / 3등 13% / 4등 18% / 5등 24% / 6등 33%', ratios: [4, 8, 13, 18, 24, 33] },
+            extreme: { name: '🔥 극단 차등형', desc: '1등 2%  / 2등 6%  / 3등 11% / 4등 17% / 5등 24% / 6등 40%', ratios: [2, 6, 11, 17, 24, 40] },
+            free1st: { name: '🏆 1등 면제형', desc: '1등 0%  / 2등 8%  / 3등 14% / 4등 19% / 5등 24% / 6등 35%', ratios: [0, 8, 14, 19, 24, 35] }
         },
         7: {
             ultraMild: { name: '⚖️ 초완만형', desc: '1등 10% / 2등 12% / 3등 13% / 4등 14% / 5등 16% / 6등 17% / 7등 18%', ratios: [10, 12, 13, 14, 16, 17, 18] },
-            mild:      { name: '⚖️ 완만형',   desc: '1등 7%  / 2등 10% / 3등 12% / 4등 14% / 5등 16% / 6등 19% / 7등 22%', ratios: [7, 10, 12, 14, 16, 19, 22] },
-            standard:  { name: '⚡ 중등 차등형 (추천)', desc: '1등 5%  / 2등 8%  / 3등 11% / 4등 14% / 5등 17% / 6등 21% / 7등 24%', ratios: [5, 8, 11, 14, 17, 21, 24] },
-            strong:    { name: '⛳ 강한 차등형', desc: '1등 3%  / 2등 6%  / 3등 10% / 4등 14% / 5등 18% / 6등 23% / 7등 26%', ratios: [3, 6, 10, 14, 18, 23, 26] },
-            extreme:   { name: '🔥 극단 차등형', desc: '1등 1%  / 2등 4%  / 3등 8%  / 4등 13% / 5등 18% / 6등 24% / 7등 32%', ratios: [1, 4, 8, 13, 18, 24, 32] },
-            free1st:   { name: '🏆 1등 면제형', desc: '1등 0%  / 2등 5%  / 3등 9%  / 4등 14% / 5등 18% / 6등 23% / 7등 31%', ratios: [0, 5, 9, 14, 18, 23, 31] }
+            mild: { name: '⚖️ 완만형', desc: '1등 7%  / 2등 10% / 3등 12% / 4등 14% / 5등 16% / 6등 19% / 7등 22%', ratios: [7, 10, 12, 14, 16, 19, 22] },
+            standard: { name: '⚡ 중등 차등형 (추천)', desc: '1등 5%  / 2등 8%  / 3등 11% / 4등 14% / 5등 17% / 6등 21% / 7등 24%', ratios: [5, 8, 11, 14, 17, 21, 24] },
+            strong: { name: '⛳ 강한 차등형', desc: '1등 3%  / 2등 6%  / 3등 10% / 4등 14% / 5등 18% / 6등 23% / 7등 26%', ratios: [3, 6, 10, 14, 18, 23, 26] },
+            extreme: { name: '🔥 극단 차등형', desc: '1등 1%  / 2등 4%  / 3등 8%  / 4등 13% / 5등 18% / 6등 24% / 7등 32%', ratios: [1, 4, 8, 13, 18, 24, 32] },
+            free1st: { name: '🏆 1등 면제형', desc: '1등 0%  / 2등 5%  / 3등 9%  / 4등 14% / 5등 18% / 6등 23% / 7등 31%', ratios: [0, 5, 9, 14, 18, 23, 31] }
         },
         8: {
             ultraMild: { name: '⚖️ 초완만형', desc: '1등 8%  / 2등 10% / 3등 11% / 4등 12% / 5등 13% / 6등 14% / 7등 15% / 8등 17%', ratios: [8, 10, 11, 12, 13, 14, 15, 17] },
-            mild:      { name: '⚖️ 완만형',   desc: '1등 6%  / 2등 8%  / 3등 10% / 4등 12% / 5등 13% / 6등 15% / 7등 17% / 8등 19%', ratios: [6, 8, 10, 12, 13, 15, 17, 19] },
-            standard:  { name: '⚡ 중등 차등형 (추천)', desc: '1등 4%  / 2등 7%  / 3등 9%  / 4등 11% / 5등 13% / 6등 16% / 7등 19% / 8등 21%', ratios: [4, 7, 9, 11, 13, 16, 19, 21] },
-            strong:    { name: '⛳ 강한 차등형', desc: '1등 2%  / 2등 5%  / 3등 8%  / 4등 11% / 5등 14% / 6등 17% / 7등 20% / 8등 23%', ratios: [2, 5, 8, 11, 14, 17, 20, 23] },
-            extreme:   { name: '🔥 극단 차등형', desc: '1등 1%  / 2등 3%  / 3등 6%  / 4등 10% / 5등 14% / 6등 18% / 7등 22% / 8등 26%', ratios: [1, 3, 6, 10, 14, 18, 22, 26] },
-            free1st:   { name: '🏆 1등 면제형', desc: '1등 0%  / 2등 4%  / 3등 7%  / 4등 11% / 5등 14% / 6등 17% / 7등 21% / 8등 26%', ratios: [0, 4, 7, 11, 14, 17, 21, 26] }
+            mild: { name: '⚖️ 완만형', desc: '1등 6%  / 2등 8%  / 3등 10% / 4등 12% / 5등 13% / 6등 15% / 7등 17% / 8등 19%', ratios: [6, 8, 10, 12, 13, 15, 17, 19] },
+            standard: { name: '⚡ 중등 차등형 (추천)', desc: '1등 4%  / 2등 7%  / 3등 9%  / 4등 11% / 5등 13% / 6등 16% / 7등 19% / 8등 21%', ratios: [4, 7, 9, 11, 13, 16, 19, 21] },
+            strong: { name: '⛳ 강한 차등형', desc: '1등 2%  / 2등 5%  / 3등 8%  / 4등 11% / 5등 14% / 6등 17% / 7등 20% / 8등 23%', ratios: [2, 5, 8, 11, 14, 17, 20, 23] },
+            extreme: { name: '🔥 극단 차등형', desc: '1등 1%  / 2등 3%  / 3등 6%  / 4등 10% / 5등 14% / 6등 18% / 7등 22% / 8등 26%', ratios: [1, 3, 6, 10, 14, 18, 22, 26] },
+            free1st: { name: '🏆 1등 면제형', desc: '1등 0%  / 2등 4%  / 3등 7%  / 4등 11% / 5등 14% / 6등 17% / 7등 21% / 8등 26%', ratios: [0, 4, 7, 11, 14, 17, 21, 26] }
         }
     },
 
@@ -679,6 +679,24 @@ const ClubPage = {
     },
 
     async renderCalculator(container) {
+        // 1. 현재 선택 날짜의 기 저장된 클라우드 산출 시트가 있는지 자동 확인 & 로드
+        const curDate = this.calcState.date || Utils.today();
+        this.calcState.date = curDate;
+
+        try {
+            const savedItem = await Store.getCalcHistoryByDate(curDate);
+            if (savedItem) {
+                this.calcState.count = savedItem.player_count || this.calcState.count;
+                this.calcState.golfMode = savedItem.golf_mode || this.calcState.golfMode;
+                this.calcState.golfVal = savedItem.golf_val !== undefined ? savedItem.golf_val : this.calcState.golfVal;
+                this.calcState.mealVal = savedItem.meal_val !== undefined ? savedItem.meal_val : this.calcState.mealVal;
+                this.calcState.ratios = savedItem.ratios || this.calcState.ratios;
+                this.calcState.memo = savedItem.title || this.calcState.memo;
+            }
+        } catch (e) {
+            console.warn('Auto load calc history check:', e);
+        }
+
         const count = this.calcState.count;
         const countPresets = this.ratioPresets[count] || this.ratioPresets[5];
 
@@ -696,7 +714,7 @@ const ClubPage = {
                     <div class="form-grid" style="grid-template-columns: 200px 1fr; gap:16px;">
                         <div class="form-group">
                             <label>산출 날짜 지정</label>
-                            <input type="date" id="calc-date" value="${this.calcState.date || Utils.today()}" class="calc-input-field" style="border-color:#38bdf8;font-weight:700;">
+                            <input type="date" id="calc-date" value="${this.calcState.date}" class="calc-input-field" style="border-color:#38bdf8;font-weight:700;">
                         </div>
                         <div class="form-group">
                             <label>모임/게임 타이틀 (메모)</label>
@@ -726,11 +744,11 @@ const ClubPage = {
                         </div>
                         <div class="form-group">
                             <label id="lbl-golf-val">${this.calcState.golfMode === 'per_person' ? '1인당 골프비 (VND)' : '총 골프비 (VND)'}</label>
-                            <input type="text" id="calc-golf-val" value="${Utils.formatVND(this.calcState.golfVal).replace('₫','').trim()}" inputmode="numeric" class="calc-input-field">
+                            <input type="text" id="calc-golf-val" value="${Utils.formatVND(this.calcState.golfVal).replace('₫', '').trim()}" inputmode="numeric" class="calc-input-field">
                         </div>
                         <div class="form-group">
                             <label>식사비 총액 MAX (VND)</label>
-                            <input type="text" id="calc-meal-val" value="${Utils.formatVND(this.calcState.mealVal).replace('₫','').trim()}" inputmode="numeric" class="calc-input-field">
+                            <input type="text" id="calc-meal-val" value="${Utils.formatVND(this.calcState.mealVal).replace('₫', '').trim()}" inputmode="numeric" class="calc-input-field">
                         </div>
                         <div class="form-group" style="grid-column: 1 / -1; margin-top: 6px;">
                             <label style="color:#38bdf8;font-weight:700;margin-bottom:8px;display:block;">🎯 ${count}인 게임 단계별 비율 프리셋 (등수 중복 0% / 원터치 적용)</label>
@@ -786,7 +804,26 @@ const ClubPage = {
         const dateInput = document.getElementById('calc-date');
         const memoInput = document.getElementById('calc-memo');
 
-        if (dateInput) dateInput.addEventListener('change', (e) => this.calcState.date = e.target.value);
+        if (dateInput) {
+            dateInput.addEventListener('change', async (e) => {
+                const selectedDate = e.target.value;
+                this.calcState.date = selectedDate;
+                // 날짜 변경 시 해당 날짜에 저장된 이력이 있으면 자동 로드
+                if (selectedDate) {
+                    const saved = await Store.getCalcHistoryByDate(selectedDate);
+                    if (saved) {
+                        this.calcState.count = saved.player_count || this.calcState.count;
+                        this.calcState.golfMode = saved.golf_mode || this.calcState.golfMode;
+                        this.calcState.golfVal = saved.golf_val !== undefined ? saved.golf_val : this.calcState.golfVal;
+                        this.calcState.mealVal = saved.meal_val !== undefined ? saved.meal_val : this.calcState.mealVal;
+                        this.calcState.ratios = saved.ratios || this.calcState.ratios;
+                        this.calcState.memo = saved.title || this.calcState.memo;
+                        Utils.toast(`[${selectedDate}] 저장된 산출 내역을 불러왔습니다!`, 'info');
+                        this.renderTab();
+                    }
+                }
+            });
+        }
         if (memoInput) memoInput.addEventListener('input', (e) => this.calcState.memo = e.target.value);
 
         if (countSelect) {
@@ -897,7 +934,7 @@ const ClubPage = {
 
     async openCalcHistoryModal() {
         const histories = await Store.getCalcHistoryList();
-        
+
         const cards = (histories || []).map(h => `
             <div style="padding:12px 14px;background:rgba(30,41,59,0.9);border:1px solid rgba(99,102,241,0.25);border-radius:12px;margin-bottom:10px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
@@ -910,7 +947,7 @@ const ClubPage = {
                     </div>
                 </div>
                 <div style="font-size:0.8rem;color:var(--text-muted);background:rgba(15,23,42,0.6);padding:6px 10px;border-radius:8px;margin-bottom:8px;">
-                    ${(h.rank_amounts || []).map((amt, idx) => `<strong>${idx+1}등:</strong> ${Utils.formatVND(amt)}`).join(' &nbsp;|&nbsp; ')}
+                    ${(h.rank_amounts || []).map((amt, idx) => `<strong>${idx + 1}등:</strong> ${Utils.formatVND(amt)}`).join(' &nbsp;|&nbsp; ')}
                 </div>
                 <div style="display:flex;justify-content:flex-end;gap:6px;">
                     <button class="btn btn-emerald btn-sm" onclick="ClubPage.applyCalcHistory('${h.calc_date}')">불러오기</button>
@@ -991,8 +1028,8 @@ const ClubPage = {
             let cardsHtml = `
                 <div class="calc-rank-vertical-list" style="display:flex;flex-direction:column;gap:10px;">
                     ${Array.from({ length: count }, (_, i) => {
-                        const medal = i === 0 ? '🥇 ' : (i === 1 ? '🥈 ' : (i === 2 ? '🥉 ' : ''));
-                        return `
+                const medal = i === 0 ? '🥇 ' : (i === 1 ? '🥈 ' : (i === 2 ? '🥉 ' : ''));
+                return `
                         <div class="calc-rank-card" style="padding:12px 14px;background:linear-gradient(135deg, rgba(30,41,59,0.95), rgba(15,23,42,0.98));border:1px solid rgba(99,102,241,0.35);border-radius:14px;box-shadow:0 3px 10px rgba(0,0,0,0.2);">
                             <!-- 상단: 등수 및 비율 변경 -->
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.08);">
@@ -1029,7 +1066,7 @@ const ClubPage = {
                             </div>
                         </div>
                         `;
-                    }).join('')}
+            }).join('')}
 
                     <!-- 전체 총액 합계 콤팩트 카드 -->
                     <div style="padding:12px 14px;background:linear-gradient(135deg, rgba(99,102,241,0.2), rgba(16,185,129,0.2));border:1px solid rgba(99,102,241,0.4);border-radius:14px;margin-top:4px;">
@@ -1150,8 +1187,8 @@ const ClubPage = {
                 return `│ ${rankName} │ ${ratioStr} │ ${amtStr} │`;
             }).join('\n');
 
-            rawElem.value = 
-`⛳ [회사 모임 회비 정산 시트]
+            rawElem.value =
+                `⛳ [회사 모임 회비 정산 시트]
 ===================================
 👥 참석 인원: ${count}명
 ⛳ 스크린 골프: ${Utils.formatVND(golfTotal)} ${golfMode === 'per_person' ? `(1인당 ${Utils.formatVND(golfVal)})` : ''}
