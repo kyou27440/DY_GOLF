@@ -61,12 +61,12 @@ const GHandicapPage = {
                 </div>
 
                 <!-- 테이블 헤더 -->
-                <div style="display:grid;grid-template-columns:minmax(72px,1fr) 66px 66px 44px 46px 48px 30px;
-                            padding:6px 8px;align-items:center;
+                <div style="display:grid;grid-template-columns:minmax(70px,1fr) 68px 68px 56px 56px 56px 32px;
+                            padding:6px 6px;align-items:center;
                             background:linear-gradient(90deg,rgba(99,102,241,0.22),rgba(139,92,246,0.15));
                             border-bottom:1px solid rgba(99,102,241,0.3);
                             font-size:0.68rem;font-weight:800;letter-spacing:0.01em;">
-                    <div style="color:#e2e8f0;">👥 멤버</div>
+                    <div style="color:#e2e8f0;padding-left:4px;">👥 멤버</div>
                     <div style="text-align:center;color:#c084fc;">⛳ NX4</div>
                     <div style="text-align:center;color:#38bdf8;">🌐 글로벌</div>
                     <div style="text-align:center;color:#a78bfa;">📊 평균</div>
@@ -223,15 +223,15 @@ const GHandicapPage = {
 
             html += `
             <div id="ghrow-${m.id}"
-                 style="display:grid;grid-template-columns:minmax(72px,1fr) 66px 66px 44px 46px 48px 30px;
-                        padding:4px 8px;min-height:38px;align-items:center;
+                 style="display:grid;grid-template-columns:minmax(70px,1fr) 68px 68px 56px 56px 56px 32px;
+                        padding:4px 6px;min-height:38px;align-items:center;
                         background:${rowBg};border-bottom:1px solid rgba(255,255,255,0.04);
                         transition:background 0.12s;"
                  onmouseover="this.style.background='rgba(99,102,241,0.1)'"
                  onmouseout="this.style.background='${rowBg}'">
 
                 <!-- 멤버 프로필 (컴팩트: 2글자 아바타 + 이름) -->
-                <div style="display:flex;align-items:center;gap:5px;min-width:0;" title="${Utils.escapeHtml(m.nickname ? `${m.name} (${m.nickname})` : m.name)}">
+                <div style="display:flex;align-items:center;gap:5px;min-width:0;padding-left:4px;" title="${Utils.escapeHtml(m.nickname ? `${m.name} (${m.nickname})` : m.name)}">
                     <div style="height:20px;width:20px;font-size:0.58rem;font-weight:800;border-radius:6px;
                                 background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;
                                 display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;flex-shrink:0;">
@@ -251,7 +251,7 @@ const GHandicapPage = {
                     <input type="number" step="0.01" min="-30" max="50" inputmode="decimal" id="val-normal-${m.id}" value="${normalHandi}"
                            placeholder="-" ${!useNormal ? 'disabled' : ''}
                            oninput="GHandicapPage.recalc(${m.id})"
-                           style="width:46px;height:25px;text-align:center;padding:0;font-size:0.82rem;
+                           style="width:48px;height:25px;text-align:center;padding:0;font-size:0.82rem;
                                   font-weight:800;color:#fff;background:rgba(15,23,42,0.9);
                                   border:1px solid rgba(192,132,252,0.45);border-radius:5px;box-sizing:border-box;
                                   outline:none;-moz-appearance:textfield;${!useNormal ? 'opacity:0.3;cursor:not-allowed;' : 'cursor:text;'}">
@@ -266,7 +266,7 @@ const GHandicapPage = {
                     <input type="number" step="0.01" min="-30" max="50" inputmode="decimal" id="val-global-${m.id}" value="${globalHandi}"
                            placeholder="-" ${!useGlobal ? 'disabled' : ''}
                            oninput="GHandicapPage.recalc(${m.id})"
-                           style="width:46px;height:25px;text-align:center;padding:0;font-size:0.82rem;
+                           style="width:48px;height:25px;text-align:center;padding:0;font-size:0.82rem;
                                   font-weight:800;color:#fff;background:rgba(15,23,42,0.9);
                                   border:1px solid rgba(56,189,248,0.45);border-radius:5px;box-sizing:border-box;
                                   outline:none;-moz-appearance:textfield;${!useGlobal ? 'opacity:0.3;cursor:not-allowed;' : 'cursor:text;'}">
@@ -275,9 +275,9 @@ const GHandicapPage = {
                 <!-- 3. 평균 표시 -->
                 <div style="display:flex;align-items:center;justify-content:center;">
                     <div id="disp-avg-${m.id}"
-                         style="width:40px;height:25px;display:flex;align-items:center;justify-content:center;
+                         style="width:48px;height:25px;display:flex;align-items:center;justify-content:center;
                                 background:rgba(15,23,42,0.7);border:1px solid rgba(167,139,250,0.3);
-                                border-radius:5px;font-size:0.8rem;font-weight:800;color:#a78bfa;">—</div>
+                                border-radius:5px;font-size:0.82rem;font-weight:800;color:#a78bfa;box-sizing:border-box;">—</div>
                 </div>
 
                 <!-- 4. 최저핸디 입력 -->
@@ -286,7 +286,7 @@ const GHandicapPage = {
                            placeholder="-"
                            oninput="GHandicapPage.recalc(${m.id})"
                            title="최저핸디 (하한 기준값)"
-                           style="width:40px;height:25px;text-align:center;padding:0;font-size:0.82rem;
+                           style="width:48px;height:25px;text-align:center;padding:0;font-size:0.82rem;
                                   font-weight:800;color:#f59e0b;background:rgba(15,23,42,0.9);
                                   border:1px solid rgba(245,158,11,0.45);border-radius:5px;box-sizing:border-box;
                                   outline:none;-moz-appearance:textfield;cursor:text;">
@@ -294,7 +294,7 @@ const GHandicapPage = {
 
                 <!-- 5. 최종핸디 표시 -->
                 <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
-                    <div style="width:44px;height:25px;display:flex;align-items:center;justify-content:center;
+                    <div style="width:48px;height:25px;display:flex;align-items:center;justify-content:center;
                                 background:rgba(15,23,42,0.9);border:1px solid rgba(52,211,153,0.5);
                                 border-radius:5px;box-sizing:border-box;">
                         <span id="disp-final-${m.id}" style="font-size:0.88rem;font-weight:800;color:#34d399;">
