@@ -176,16 +176,25 @@ const ClubPage = {
     async openGameModal(gameId = null) {
         const editGame = (gameId && this.gamesMap) ? this.gamesMap[gameId] : null;
 
-        // 활성 멤버 + 전체 비활성 멤버 모두 포함 (새 게임 추가 시에도 비활성 멤버 선택 가능)
+        // 활성 멤버 + 전체 비활성 멤버 모두 포함
         const activeMembers = await Store.getMembers('active');
         const allMembers = await Store.getMembers(); // status 무관 전체
+        const games = await Store.getGames();
         const activeMemberIds = new Set((activeMembers || []).map(m => m.id));
 
-        // 비활성 멤버 전체 추출
+        // 가장 최근 게임 참여자 ID 목록
+        let recentParticipantIds = new Set();
+        if (games && games.length > 0) {
+            const sortedGames = [...games].sort((a, b) => new Date(b.game_date) - new Date(a.game_date));
+            const lastGame = sortedGames[0];
+            if (lastGame && lastGame.club_game_participants) {
+                lastGame.club_game_participants.forEach(p => recentParticipantIds.add(p.member_id));
+            }
+        }
+
+        // 비활성 멤버 추출
         const inactiveMembers = (allMembers || []).filter(m => m && m.id && !activeMemberIds.has(m.id));
 
-        // 수정 모드: 이 게임에 참여했던 비활성 멤버를 맨 앞에 배치 (기존 기록 보호)
-        // 새 게임 모드: 비활성 멤버 전체를 활성 멤버 뒤에 배치
         let inactiveParticipants = [];
         let otherInactiveMembers = [];
         if (editGame && editGame.club_game_participants) {
@@ -199,77 +208,284 @@ const ClubPage = {
                     if (m) inactiveParticipants.push(m);
                 }
             });
-            // 나머지 비활성 멤버 (이 게임에 참여 안 했던 멤버)
             otherInactiveMembers = inactiveMembers.filter(m => !participantIds.has(m.id));
         } else {
-            // 새 게임: 비활성 멤버 전체를 뒤에 배치
             otherInactiveMembers = inactiveMembers;
         }
 
-        // 활성 멤버 + 비활성(이 게임 참여자) + 나머지 비활성 멤버
+        // 활성 멤버 + 비활성 참여자 + 나머지 비활성 멤버
         const members = [...activeMembers, ...inactiveParticipants, ...otherInactiveMembers];
 
         // 기존 참여자 맵 생성 (member_id -> ranking)
-        const partMap = {};
+        const selectedMap = {}; // member_id -> ranking (or null)
         if (editGame && editGame.club_game_participants) {
             editGame.club_game_participants.forEach(p => {
-                partMap[p.member_id] = p.ranking;
+                selectedMap[p.member_id] = p.ranking !== undefined && p.ranking !== null ? p.ranking : null;
             });
         }
 
-        const memberChecks = members.map(m => {
-            const isChecked = editGame ? (partMap[m.id] !== undefined) : false;
-            const rankVal = editGame && partMap[m.id] !== undefined && partMap[m.id] !== null ? partMap[m.id] : '';
-            const isInactive = m.status !== 'active';
-
-            return `
-                <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-color);${isInactive ? 'opacity:0.65;' : ''}">
-                    <input type="checkbox" id="gm-${m.id}" value="${m.id}" class="game-member-check" ${isChecked ? 'checked' : ''}>
-                    <label for="gm-${m.id}" style="flex:1;cursor:pointer;font-weight:600;">
-                        ${Utils.escapeHtml(m.name)} 
-                        <span class="badge badge-${m.member_type}" style="margin-left:4px">${m.member_type === 'regular' ? '상시' : '출장'}</span>
-                        ${isInactive ? `<span style="font-size:0.72rem;color:#f59e0b;margin-left:4px;">(비활성 - 이전기록)</span>` : ''}
-                    </label>
-                    <div style="display:flex;align-items:center;gap:4px;">
-                        <span style="font-size:0.8rem;color:var(--text-muted);">순위:</span>
-                        <input type="number" id="gr-${m.id}" placeholder="나중에 입력 가능" min="1" max="10" value="${rankVal}" style="width:110px;text-align:center;" class="game-rank-input">
-                    </div>
-                </div>
-            `;
-        }).join('');
-
         const defaultDate = editGame && editGame.game_date ? Utils.formatDate(editGame.game_date) : Utils.today();
 
-        Modal.open(editGame ? '🏆 게임 기록 & 순위 수정' : '⛳ 게임 기록 입력 (1차: 참석자 등록)', `
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>게임 날짜</label>
-                    <input type="date" id="game-date" value="${defaultDate}">
+        Modal.open(editGame ? '🏆 게임 기록 & 순위 수정' : '⛳ 게임 기록 입력 (참여자 등록)', `
+            <!-- 기본 정보 그리드 -->
+            <div class="form-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">
+                <div class="form-group" style="margin-bottom:6px;">
+                    <label style="font-size:0.78rem;font-weight:700;">게임 날짜</label>
+                    <input type="date" id="game-date" value="${defaultDate}" style="height:34px;font-size:0.85rem;">
                 </div>
-                <div class="form-group">
-                    <label>장소</label>
-                    <input type="text" id="game-location" value="${editGame ? Utils.escapeHtml(editGame.location) : '스크린골프장'}">
+                <div class="form-group" style="margin-bottom:6px;">
+                    <label style="font-size:0.78rem;font-weight:700;">장소</label>
+                    <input type="text" id="game-location" value="${editGame ? Utils.escapeHtml(editGame.location) : '스크린골프장'}" style="height:34px;font-size:0.85rem;">
                 </div>
-                <div class="form-group">
-                    <label>총 비용 (VND)</label>
-                    <input type="text" id="game-cost" value="${editGame ? Utils.formatVND(editGame.total_cost).replace('₫', '').trim() : ''}" placeholder="예: 800000" inputmode="numeric">
+                <div class="form-group" style="margin-bottom:6px;">
+                    <label style="font-size:0.78rem;font-weight:700;">총 비용 (VND)</label>
+                    <input type="text" id="game-cost" value="${editGame ? Utils.formatVND(editGame.total_cost).replace('₫', '').trim() : ''}" placeholder="예: 800000" inputmode="numeric" style="height:34px;font-size:0.85rem;">
                 </div>
             </div>
+
             <div id="game-modal-calc-info"></div>
-            <div class="form-group mt-md">
-                <label>👥 참석자 선택 및 순위 입력 <span style="font-size:0.8rem;color:#38bdf8;font-weight:normal;">(💡 1차로 참석자만 체크하고 저장 후, 나중에 순위를 넣으셔도 됩니다!)</span></label>
-                <div style="max-height:280px;overflow-y:auto;border:1px solid var(--border-color);border-radius:var(--radius-sm);padding:8px 12px;margin-top:6px;background:var(--bg-secondary);">
-                    ${members.length > 0 ? memberChecks : '<p class="text-muted">먼저 멤버를 추가해주세요</p>'}
+
+            <!-- 참여자 선택 섹션 -->
+            <div style="margin-top:12px;background:rgba(15,23,42,0.6);border:1px solid rgba(99,102,241,0.25);border-radius:12px;padding:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+                    <div style="font-weight:800;font-size:0.88rem;color:#f8fafc;display:flex;align-items:center;gap:6px;">
+                        <span>👥 참석자 선택</span>
+                        <span id="part-count-badge" style="font-size:0.72rem;padding:2px 8px;border-radius:12px;background:rgba(52,211,153,0.18);border:1px solid rgba(52,211,153,0.4);color:#34d399;font-weight:700;">0명 선택</span>
+                    </div>
+                    <!-- 퀵 프리셋 버튼 바 -->
+                    <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                        <button type="button" id="btn-quick-regular" class="btn btn-ghost btn-sm" style="font-size:0.7rem;padding:3px 8px;border-radius:6px;border:1px solid rgba(192,132,252,0.4);color:#c084fc;background:rgba(192,132,252,0.08);">⚡ 상시 전체</button>
+                        <button type="button" id="btn-quick-recent" class="btn btn-ghost btn-sm" style="font-size:0.7rem;padding:3px 8px;border-radius:6px;border:1px solid rgba(56,189,248,0.4);color:#38bdf8;background:rgba(56,189,248,0.08);">🔄 최근 게임</button>
+                        <button type="button" id="btn-quick-all" class="btn btn-ghost btn-sm" style="font-size:0.7rem;padding:3px 6px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);color:#cbd5e1;">전체</button>
+                        <button type="button" id="btn-quick-clear" class="btn btn-ghost btn-sm" style="font-size:0.7rem;padding:3px 6px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);color:#94a3b8;">해제</button>
+                    </div>
+                </div>
+
+                <!-- 멤버 칩 그리드 -->
+                <div id="game-members-chips-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:6px;max-height:190px;overflow-y:auto;padding-right:2px;">
+                    <!-- JS로 동적 렌더링 -->
                 </div>
             </div>
-            <div class="form-group mt-md">
-                <label>메모</label>
-                <input type="text" id="game-memo" value="${editGame ? Utils.escapeHtml(editGame.memo || '') : ''}" placeholder="메모 (선택)">
+
+            <!-- 순위 지정 섹션 (선택된 멤버만 노출) -->
+            <div style="margin-top:12px;background:rgba(15,23,42,0.6);border:1px solid rgba(52,211,153,0.25);border-radius:12px;padding:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <div style="font-weight:800;font-size:0.85rem;color:#34d399;display:flex;align-items:center;gap:6px;">
+                        <span>🏆 순위 지정 (원클릭)</span>
+                        <span style="font-size:0.7rem;color:#94a3b8;font-weight:normal;">💡 게임 전이면 비워두셔도 됩니다</span>
+                    </div>
+                    <button type="button" id="btn-clear-all-ranks" class="btn btn-ghost btn-sm" style="font-size:0.68rem;padding:2px 6px;color:#94a3b8;">순위 초기화</button>
+                </div>
+                <div id="game-ranking-container" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;">
+                    <!-- JS로 동적 렌더링 -->
+                </div>
+            </div>
+
+            <!-- 메모 입력 -->
+            <div class="form-group" style="margin-top:10px;margin-bottom:0;">
+                <input type="text" id="game-memo" value="${editGame ? Utils.escapeHtml(editGame.memo || '') : ''}" placeholder="메모 (선택사항, 예: 니어리스트 남대호)" style="height:34px;font-size:0.82rem;">
             </div>
         `, `
             <button class="btn btn-ghost" onclick="Modal.close()">취소</button>
-            <button class="btn btn-primary" id="btn-save-game">${editGame ? '수정 완료' : '저장'}</button>
+            <button class="btn btn-primary" id="btn-save-game" style="font-weight:800;padding:6px 18px;">${editGame ? '💾 수정 완료' : '💾 게임 저장'}</button>
         `);
+
+        // ── 렌더링 및 인터랙션 로직 ──
+        const renderChipsAndRanks = () => {
+            const chipsGrid = document.getElementById('game-members-chips-grid');
+            const rankContainer = document.getElementById('game-ranking-container');
+            const countBadge = document.getElementById('part-count-badge');
+            if (!chipsGrid || !rankContainer) return;
+
+            const selectedMemberIds = Object.keys(selectedMap).map(Number);
+            if (countBadge) {
+                const teams = Math.floor(selectedMemberIds.length / 4);
+                const remainder = selectedMemberIds.length % 4;
+                let teamStr = '';
+                if (selectedMemberIds.length >= 4) {
+                    teamStr = ` (${teams}팀${remainder > 0 ? ` +${remainder}명` : ''})`;
+                }
+                countBadge.textContent = `${selectedMemberIds.length}명 선택${teamStr}`;
+                countBadge.style.color = selectedMemberIds.length > 0 ? '#34d399' : '#94a3b8';
+            }
+
+            // 1. 칩 렌더링
+            chipsGrid.innerHTML = members.map(m => {
+                const isSelected = selectedMap[m.id] !== undefined;
+                const handiText = m.ghandicap !== undefined && m.ghandicap !== null && m.ghandicap !== '' ? ` (${m.ghandicap})` : '';
+                const isInactive = m.status !== 'active';
+                const avatarText = m.nickname ? Utils.escapeHtml(m.nickname) : (m.name.length >= 3 ? m.name.slice(-2) : m.name);
+
+                const activeStyle = isSelected
+                    ? 'background:linear-gradient(135deg,rgba(16,185,129,0.25),rgba(5,150,105,0.35));border:1.5px solid #10b981;box-shadow:0 0 10px rgba(16,185,129,0.25);'
+                    : 'background:rgba(30,41,59,0.4);border:1px solid rgba(255,255,255,0.08);opacity:0.85;';
+
+                return `
+                    <div class="part-chip-btn" data-mid="${m.id}"
+                         style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;cursor:pointer;user-select:none;transition:all 0.15s;${activeStyle}${isInactive ? 'opacity:0.6;' : ''}">
+                        <div style="width:22px;height:22px;border-radius:6px;background:${isSelected ? 'linear-gradient(135deg,#10b981,#059669)' : 'linear-gradient(135deg,#6366f1,#8b5cf6)'};color:#fff;font-size:0.62rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            ${isSelected ? '✓' : avatarText}
+                        </div>
+                        <div style="min-width:0;flex:1;">
+                            <div style="font-size:0.78rem;font-weight:700;color:${isSelected ? '#34d399' : '#e2e8f0'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                ${Utils.escapeHtml(m.name)}<span style="font-size:0.7rem;color:#a78bfa;font-weight:600;">${handiText}</span>
+                            </div>
+                            <div style="font-size:0.62rem;color:${m.member_type === 'regular' ? '#c084fc' : '#38bdf8'};font-weight:600;">
+                                ${m.member_type === 'regular' ? '상시' : '출장'}${isInactive ? '·비활성' : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // 칩 클릭 이벤트 바인딩
+            chipsGrid.querySelectorAll('.part-chip-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const mid = Number(btn.dataset.mid);
+                    if (selectedMap[mid] !== undefined) {
+                        delete selectedMap[mid];
+                    } else {
+                        selectedMap[mid] = null;
+                    }
+                    renderChipsAndRanks();
+                });
+            });
+
+            // 2. 순위 입력 섹션 렌더링
+            if (selectedMemberIds.length === 0) {
+                rankContainer.innerHTML = `
+                    <div style="text-align:center;padding:16px;color:#64748b;font-size:0.78rem;">
+                        👆 위에서 참석 멤버를 선택하면 순위를 지정할 수 있습니다.
+                    </div>
+                `;
+                return;
+            }
+
+            const totalSelected = selectedMemberIds.length;
+            const maxRank = Math.min(totalSelected, 12);
+
+            rankContainer.innerHTML = selectedMemberIds.map((mid, idx) => {
+                const m = members.find(item => item.id === mid);
+                if (!m) return '';
+                const currentRank = selectedMap[mid];
+                const rankText = currentRank ? `${currentRank}등` : '미정';
+                const avatarText = m.nickname ? Utils.escapeHtml(m.nickname) : (m.name.length >= 3 ? m.name.slice(-2) : m.name);
+
+                let rankBadgeBg = 'background:rgba(30,41,59,0.6);color:#94a3b8;border:1px solid rgba(255,255,255,0.1);';
+                if (currentRank === 1) rankBadgeBg = 'background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:1px solid #f59e0b;';
+                else if (currentRank === 2) rankBadgeBg = 'background:linear-gradient(135deg,#94a3b8,#64748b);color:#fff;border:1px solid #94a3b8;';
+                else if (currentRank === 3) rankBadgeBg = 'background:linear-gradient(135deg,#b45309,#78350f);color:#fff;border:1px solid #b45309;';
+                else if (currentRank) rankBadgeBg = 'background:rgba(52,211,153,0.2);color:#34d399;border:1px solid rgba(52,211,153,0.5);';
+
+                // 1등부터 N등까지의 원클릭 버튼 생성
+                const rankButtons = [];
+                for (let r = 1; r <= maxRank; r++) {
+                    const isRankActive = currentRank === r;
+                    const rEmoji = r === 1 ? '🥇' : (r === 2 ? '🥈' : (r === 3 ? '🥉' : `${r}`));
+                    const rStyle = isRankActive
+                        ? 'background:#10b981;color:#fff;font-weight:800;border:1px solid #10b981;box-shadow:0 0 6px rgba(16,185,129,0.5);'
+                        : 'background:rgba(30,41,59,0.7);color:#cbd5e1;border:1px solid rgba(255,255,255,0.1);';
+
+                    rankButtons.push(`
+                        <button type="button" class="btn-assign-rank" data-mid="${mid}" data-rank="${r}"
+                                style="font-size:0.68rem;padding:2px 6px;border-radius:4px;cursor:pointer;${rStyle}line-height:1.2;">
+                            ${rEmoji}
+                        </button>
+                    `);
+                }
+
+                return `
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;background:rgba(30,41,59,0.45);border:1px solid rgba(255,255,255,0.05);border-radius:8px;flex-wrap:wrap;">
+                        <!-- 멤버 이름 & 현재 등수 -->
+                        <div style="display:flex;align-items:center;gap:6px;min-width:110px;">
+                            <div style="width:26px;height:20px;border-radius:4px;font-size:0.68rem;font-weight:800;display:flex;align-items:center;justify-content:center;${rankBadgeBg}">
+                                ${currentRank ? `${currentRank}` : '—'}
+                            </div>
+                            <span style="font-weight:700;font-size:0.8rem;color:#f8fafc;">${Utils.escapeHtml(m.name)}</span>
+                            <span style="font-size:0.7rem;color:#a78bfa;">${m.ghandicap !== undefined && m.ghandicap !== null && m.ghandicap !== '' ? `(${m.ghandicap})` : ''}</span>
+                        </div>
+
+                        <!-- 등수 선택 원클릭 버튼 세트 -->
+                        <div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;">
+                            ${rankButtons.join('')}
+                            <button type="button" class="btn-assign-rank" data-mid="${mid}" data-rank="clear"
+                                    title="순위 취소"
+                                    style="font-size:0.65rem;padding:2px 5px;border-radius:4px;background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);cursor:pointer;line-height:1.2;">
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // 순위 버튼 클릭 이벤트 바인딩
+            rankContainer.querySelectorAll('.btn-assign-rank').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const mid = Number(btn.dataset.mid);
+                    const rankVal = btn.dataset.rank;
+                    if (rankVal === 'clear') {
+                        selectedMap[mid] = null;
+                    } else {
+                        const targetRank = Number(rankVal);
+                        // 이미 다른 멤버가 해당 등수면 스왑하거나 그 멤버는 미정으로 변경
+                        Object.keys(selectedMap).forEach(otherMid => {
+                            if (Number(otherMid) !== mid && selectedMap[otherMid] === targetRank) {
+                                selectedMap[otherMid] = null;
+                            }
+                        });
+                        selectedMap[mid] = targetRank;
+                    }
+                    renderChipsAndRanks();
+                });
+            });
+        };
+
+        // ── 퀵 버튼 이벤트 연결 ──
+        document.getElementById('btn-quick-regular').addEventListener('click', () => {
+            members.forEach(m => {
+                if (m.status === 'active' && m.member_type === 'regular') {
+                    if (selectedMap[m.id] === undefined) selectedMap[m.id] = null;
+                }
+            });
+            renderChipsAndRanks();
+        });
+
+        document.getElementById('btn-quick-recent').addEventListener('click', () => {
+            if (recentParticipantIds.size === 0) {
+                Utils.toast('이전 게임 기록이 없습니다', 'info');
+                return;
+            }
+            // 기존 선택 초기화 후 최근 참여자만 선택
+            Object.keys(selectedMap).forEach(k => delete selectedMap[k]);
+            members.forEach(m => {
+                if (recentParticipantIds.has(m.id)) {
+                    selectedMap[m.id] = null;
+                }
+            });
+            renderChipsAndRanks();
+        });
+
+        document.getElementById('btn-quick-all').addEventListener('click', () => {
+            members.forEach(m => {
+                if (m.status === 'active') {
+                    if (selectedMap[m.id] === undefined) selectedMap[m.id] = null;
+                }
+            });
+            renderChipsAndRanks();
+        });
+
+        document.getElementById('btn-quick-clear').addEventListener('click', () => {
+            Object.keys(selectedMap).forEach(k => delete selectedMap[k]);
+            renderChipsAndRanks();
+        });
+
+        document.getElementById('btn-clear-all-ranks').addEventListener('click', () => {
+            Object.keys(selectedMap).forEach(mid => { selectedMap[mid] = null; });
+            renderChipsAndRanks();
+        });
+
+        // 초기 렌더링
+        renderChipsAndRanks();
 
         const checkAndRenderCalcNotice = async () => {
             const dateVal = document.getElementById('game-date').value;
@@ -285,12 +501,12 @@ const ClubPage = {
                 }
                 const rankSummary = (calc.rank_amounts || []).map((amt, idx) => `[${idx + 1}등: ${Utils.formatVND(amt)}]`).join('  ');
                 calcInfoElem.innerHTML = `
-                    <div style="padding:10px 14px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.35);border-radius:8px;margin-top:10px;">
-                        <div style="font-weight:700;color:#10b981;display:flex;align-items:center;gap:6px;">
+                    <div style="padding:8px 12px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.35);border-radius:8px;margin-top:8px;">
+                        <div style="font-weight:700;font-size:0.8rem;color:#10b981;display:flex;align-items:center;gap:6px;">
                             📊 [${calc.calc_date}] 회비 산출 시트 연동됨 (총 비용: ${Utils.formatVND(calc.total_cost)})
                         </div>
-                        <div style="font-size:0.83rem;color:var(--text-primary);margin-top:4px;">
-                            💡 <strong>등수별 회비 지불금:</strong> ${rankSummary}
+                        <div style="font-size:0.75rem;color:var(--text-primary);margin-top:3px;">
+                            💡 <strong>등수별 회비:</strong> ${rankSummary}
                         </div>
                     </div>
                 `;
@@ -300,8 +516,8 @@ const ClubPage = {
                     costInput.dataset.autoPopulated = 'false';
                 }
                 calcInfoElem.innerHTML = `
-                    <div style="padding:8px 12px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;margin-top:10px;font-size:0.82rem;color:#f59e0b;">
-                        ⚠️ 해당 날짜(${dateVal})로 저장된 회비 산출 시트가 없습니다. [회비 산출 시트] 탭에서 [💾 이 날짜로 저장] 하시면 게임 기록에 지불 금액이 연동됩니다!
+                    <div style="padding:6px 10px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;margin-top:8px;font-size:0.75rem;color:#f59e0b;">
+                        ⚠️ 해당 날짜(${dateVal})의 회비 산출 시트가 없습니다. (직접 비용 입력 가능)
                     </div>
                 `;
             }
@@ -310,6 +526,7 @@ const ClubPage = {
         checkAndRenderCalcNotice();
         document.getElementById('game-date').addEventListener('change', checkAndRenderCalcNotice);
 
+        // ── 저장 버튼 클릭 ──
         document.getElementById('btn-save-game').addEventListener('click', async () => {
             const gameDate = document.getElementById('game-date').value;
             const calc = await Store.getCalcHistoryByDate(gameDate);
@@ -323,15 +540,16 @@ const ClubPage = {
             };
             if (!game.game_date) { Utils.toast('날짜를 입력해주세요', 'error'); return; }
 
-            const participants = [];
-            document.querySelectorAll('.game-member-check:checked').forEach(cb => {
-                const mid = Number(cb.value);
-                const rankVal = document.getElementById(`gr-${mid}`).value.trim();
-                const rank = rankVal !== '' ? Number(rankVal) : null;
-                participants.push({ member_id: mid, ranking: rank });
-            });
+            const selectedMemberIds = Object.keys(selectedMap).map(Number);
+            if (selectedMemberIds.length === 0) {
+                Utils.toast('참여자를 1명 이상 선택해주세요', 'warning');
+                return;
+            }
 
-            if (participants.length === 0) { Utils.toast('참여자를 선택해주세요', 'error'); return; }
+            const participants = selectedMemberIds.map(mid => ({
+                member_id: mid,
+                ranking: selectedMap[mid] !== undefined && selectedMap[mid] !== null ? Number(selectedMap[mid]) : null
+            }));
 
             if (editGame) {
                 await Store.updateGame(editGame.id, game, participants);
