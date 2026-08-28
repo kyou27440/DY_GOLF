@@ -12,8 +12,9 @@ const DashboardPage = {
         ]);
 
         const recentGames = (games || []).slice(0, 3);
-        const totalCountDisplay = totalGamesCount || (games || []).length;
-        const nowStr = `${new Date().getFullYear()}.${String(new Date().getMonth() + 1).padStart(2, '0')}.${String(new Date().getDate()).padStart(2, '0')}`;
+        const curVer = typeof APP_VERSION !== 'undefined' ? APP_VERSION : (window.APP_VERSION || 'v1.3.6');
+        const curBuildTime = typeof APP_BUILD_TIME !== 'undefined' ? APP_BUILD_TIME : (window.APP_BUILD_TIME || '2026-08-28 11:40 (ICT)');
+        const changelog = typeof APP_CHANGELOG !== 'undefined' ? APP_CHANGELOG : (window.APP_CHANGELOG || []);
 
         return `
         <div class="version-banner" style="background: linear-gradient(135deg, rgba(16,185,129,0.18), rgba(6,78,59,0.25)); border: 1px solid rgba(16,185,129,0.35); border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
@@ -25,8 +26,8 @@ const DashboardPage = {
                 </div>
             </div>
             <div style="text-align:right;flex-shrink:0;">
-                <span class="badge badge-income" style="font-size:0.85rem;padding:4px 10px;font-weight:700;">${window.APP_VERSION || 'v1.3.1'} (DY_GOLF)</span>
-                <div style="font-size:0.8rem;color:#38bdf8;font-weight:700;margin-top:4px;">🕒 리비젼: ${window.APP_BUILD_TIME || '—'}</div>
+                <span class="badge badge-income" style="font-size:0.85rem;padding:4px 10px;font-weight:800;background:rgba(16,185,129,0.25);border:1px solid #10b981;color:#34d399;">${curVer} (DY_GOLF)</span>
+                <div style="font-size:0.8rem;color:#38bdf8;font-weight:700;margin-top:4px;">🕒 리비젼: ${curBuildTime}</div>
             </div>
         </div>
 
@@ -72,6 +73,30 @@ const DashboardPage = {
                     <button class="btn btn-ghost btn-sm" onclick="Router.navigate('club', 'members')">멤버 관리 ➔</button>
                 </div>
                 ${this.renderActiveMembers(members)}
+            </div>
+
+            <!-- 최근 업데이트 (리비전 이력) 카드 -->
+            <div class="card full-width" style="background:rgba(15,23,42,0.85);border:1px solid rgba(56,189,248,0.3);">
+                <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <span class="card-title" style="color:#38bdf8;font-size:0.95rem;display:flex;align-items:center;gap:6px;">
+                        <span>📋 최근 업데이트 내역</span>
+                        <span style="font-size:0.75rem;padding:2px 8px;border-radius:12px;background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.4);color:#38bdf8;">${curVer}</span>
+                    </span>
+                    <span style="font-size:0.75rem;color:#94a3b8;">🕒 ${curBuildTime}</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    ${changelog.length > 0 ? changelog.map(log => `
+                        <div style="background:rgba(30,41,59,0.5);border-radius:8px;padding:10px 12px;border:1px solid rgba(255,255,255,0.05);">
+                            <div style="font-size:0.82rem;font-weight:800;color:#f8fafc;margin-bottom:6px;display:flex;align-items:center;gap:8px;">
+                                <span style="color:#10b981;">🚀 ${log.version}</span>
+                                <span style="font-size:0.72rem;color:#94a3b8;font-weight:normal;">(${log.date})</span>
+                            </div>
+                            <ul style="margin:0;padding-left:18px;font-size:0.78rem;color:#cbd5e1;line-height:1.6;">
+                                ${log.items.map(item => `<li>${item}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `).join('') : '<div style="font-size:0.8rem;color:#94a3b8;">업데이트 내역이 없습니다.</div>'}
+                </div>
             </div>
         </div>`;
     },
