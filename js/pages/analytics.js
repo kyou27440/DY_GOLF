@@ -18,16 +18,16 @@ const AnalyticsPage = {
 
         // ─ 1등 / 꼴찌 횟수 계산 ─
         const memberFirstCount = {};
-        const memberLastCount  = {};
+        const memberLastCount = {};
         trend.forEach(g => {
-            const parts  = g.club_game_participants || [];
+            const parts = g.club_game_participants || [];
             const ranked = parts.filter(p => p.ranking);
             if (!ranked.length) return;
             const maxRank = Math.max(...ranked.map(p => p.ranking));
             ranked.forEach(p => {
                 const name = p.club_members?.name || '?';
-                if (p.ranking === 1)       memberFirstCount[name] = (memberFirstCount[name] || 0) + 1;
-                if (p.ranking === maxRank) memberLastCount[name]  = (memberLastCount[name]  || 0) + 1;
+                if (p.ranking === 1) memberFirstCount[name] = (memberFirstCount[name] || 0) + 1;
+                if (p.ranking === maxRank) memberLastCount[name] = (memberLastCount[name] || 0) + 1;
             });
         });
 
@@ -60,20 +60,20 @@ const AnalyticsPage = {
                 </div>
                 <!-- 멤버 행 -->
                 ${stats.map((s, idx) => {
-                    const rank1  = idx + 1;
-                    const rowBg  = idx % 2 === 0 ? 'rgba(30,41,59,0.45)' : 'rgba(15,23,42,0.3)';
-                    let rankBadge, rankColor;
-                    if      (rank1 === 1) { rankBadge = '🥇'; rankColor = '#fbbf24'; }
-                    else if (rank1 === 2) { rankBadge = '🥈'; rankColor = '#94a3b8'; }
-                    else if (rank1 === 3) { rankBadge = '🥉'; rankColor = '#cd7c2f'; }
-                    else                 { rankBadge = String(rank1); rankColor = '#64748b'; }
-                    const avgRankNum = s.avgRank !== '-' ? parseFloat(s.avgRank) : null;
-                    const avgColor   = avgRankNum !== null
-                        ? (avgRankNum <= 2 ? '#34d399' : avgRankNum <= 3.5 ? '#38bdf8' : avgRankNum <= 5 ? '#f59e0b' : '#f43f5e')
-                        : '#64748b';
-                    const first1 = memberFirstCount[s.name] || 0;
-                    const last1  = memberLastCount[s.name]  || 0;
-                    return `<div style="display:grid;grid-template-columns:52px 1fr 80px 80px 80px 70px 70px;
+            const rank1 = idx + 1;
+            const rowBg = idx % 2 === 0 ? 'rgba(30,41,59,0.45)' : 'rgba(15,23,42,0.3)';
+            let rankBadge, rankColor;
+            if (rank1 === 1) { rankBadge = '🥇'; rankColor = '#fbbf24'; }
+            else if (rank1 === 2) { rankBadge = '🥈'; rankColor = '#94a3b8'; }
+            else if (rank1 === 3) { rankBadge = '🥉'; rankColor = '#cd7c2f'; }
+            else { rankBadge = String(rank1); rankColor = '#64748b'; }
+            const avgRankNum = s.avgRank !== '-' ? parseFloat(s.avgRank) : null;
+            const avgColor = avgRankNum !== null
+                ? (avgRankNum <= 2 ? '#34d399' : avgRankNum <= 3.5 ? '#38bdf8' : avgRankNum <= 5 ? '#f59e0b' : '#f43f5e')
+                : '#64748b';
+            const first1 = memberFirstCount[s.name] || 0;
+            const last1 = memberLastCount[s.name] || 0;
+            return `<div style="display:grid;grid-template-columns:52px 1fr 80px 80px 80px 70px 70px;
                                         padding:12px 16px;align-items:center;min-height:58px;
                                         background:${rowBg};border-bottom:1px solid rgba(255,255,255,0.04);
                                         transition:background 0.15s;"
@@ -81,7 +81,7 @@ const AnalyticsPage = {
                                  onmouseout="this.style.background='${rowBg}'">
                         <div style="text-align:center;font-size:${rank1 <= 3 ? '1.5rem' : '1rem'};font-weight:800;color:${rankColor};">${rankBadge}</div>
                         <div style="display:flex;align-items:center;gap:9px;">
-                            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:0.76rem;font-weight:800;color:#fff;flex-shrink:0;">${Utils.escapeHtml(s.name).substring(0,2)}</div>
+                            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:0.76rem;font-weight:800;color:#fff;flex-shrink:0;">${Utils.escapeHtml(s.name).substring(0, 2)}</div>
                             <span style="font-weight:700;font-size:0.95rem;color:#f1f5f9;">${Utils.escapeHtml(s.name)}</span>
                         </div>
                         <div style="text-align:center;font-size:0.88rem;font-weight:700;color:#cbd5e1;">${s.games}<span style="font-size:0.72rem;color:#64748b;"> 회</span></div>
@@ -90,17 +90,17 @@ const AnalyticsPage = {
                         <div style="text-align:center;font-size:0.9rem;font-weight:700;color:#fbbf24;">${first1 > 0 ? first1 + '회' : '—'}</div>
                         <div style="text-align:center;font-size:0.9rem;font-weight:700;color:#f43f5e;">${last1 > 0 ? last1 + '회' : '—'}</div>
                     </div>`;
-                }).join('')}
+        }).join('')}
             </div>
 
             <!-- 시상대 요약 카드 (상위 3명) -->
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
                 ${stats.slice(0, 3).map((s, idx) => {
-                    const labels  = ['🥇 종합 1위', '🥈 종합 2위', '🥉 종합 3위'];
-                    const colors  = ['rgba(251,191,36,0.18)', 'rgba(148,163,184,0.15)', 'rgba(205,124,47,0.15)'];
-                    const borders = ['rgba(251,191,36,0.5)',  'rgba(148,163,184,0.4)',  'rgba(205,124,47,0.4)'];
-                    const first1  = memberFirstCount[s.name] || 0;
-                    return `<div style="padding:16px;background:${colors[idx]};border:1px solid ${borders[idx]};border-radius:14px;">
+            const labels = ['🥇 종합 1위', '🥈 종합 2위', '🥉 종합 3위'];
+            const colors = ['rgba(251,191,36,0.18)', 'rgba(148,163,184,0.15)', 'rgba(205,124,47,0.15)'];
+            const borders = ['rgba(251,191,36,0.5)', 'rgba(148,163,184,0.4)', 'rgba(205,124,47,0.4)'];
+            const first1 = memberFirstCount[s.name] || 0;
+            return `<div style="padding:16px;background:${colors[idx]};border:1px solid ${borders[idx]};border-radius:14px;">
                         <div style="font-size:0.72rem;font-weight:700;color:#94a3b8;margin-bottom:5px;">${labels[idx]}</div>
                         <div style="font-size:1.15rem;font-weight:800;color:#f8fafc;">${Utils.escapeHtml(s.name)}</div>
                         <div style="font-size:0.78rem;color:#94a3b8;margin-top:5px;display:flex;gap:10px;flex-wrap:wrap;">
@@ -109,7 +109,7 @@ const AnalyticsPage = {
                             <span>1등 ${first1}회</span>
                         </div>
                     </div>`;
-                }).join('')}
+        }).join('')}
             </div>
         `;
     }
