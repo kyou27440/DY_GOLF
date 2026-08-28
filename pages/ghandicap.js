@@ -430,7 +430,7 @@ const GHandicapPage = {
         return { validCount, rawAvg: formattedAvg, computed, finalHandicap, status, normalVal, globalVal, useNormal, useGlobal, currentHandicapVal };
     },
 
-    recalc(memberId) {
+    recalc(memberId, updatePanel = true) {
         const res = this.computeGHandicap(memberId);
         const dispFinal = document.getElementById(`disp-final-${memberId}`);
         const dispAvg = document.getElementById(`disp-avg-${memberId}`);
@@ -452,6 +452,7 @@ const GHandicapPage = {
             dispFinal.textContent = res.finalHandicap !== null ? res.finalHandicap : '—';
             dispFinal.style.color = '#64748b';
             if (dispInfo) dispInfo.textContent = '';
+            if (updatePanel) this.updateSidePanel();
             return;
         }
 
@@ -471,6 +472,122 @@ const GHandicapPage = {
                 dispInfo.style.color = '#34d399';
             }
         }
+
+        if (updatePanel) {
+            this.updateSidePanel();
+        }
+    },
+
+    /** 우측 통계 및 카톡 공유 텍스트 실시간 갱신 */
+    updateSidePanel() {
+        if (!this.members || this.members.length === 0) return;
+
+        let totalHandi = 0;
+        let validHandiCount = 0;
+        let minHandi = Infinity;
+        let minHandiMember = '-';
+
+        let singleCount = 0; // <= 9
+        let midCount = 0;    // 10 ~ 15
+        let highCount = 0;   // >= 16
+
+        const lines = [];
+        const now = new Date();
+        const dateStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+
+        lines.push(`⛳ [DY GOLF] 멤버별 핸디표`);
+        lines.push(`📅 기준일: ${dateStr}`);
+        lines.push(`━━━━━━━━━━━━━━━━`);
+
+        // 현재 정렬 순서대로 목록 생성
+        const getFinalVal = (m) => {
+            const dispElem = document.getElementById(`disp-final-${m.id}`);
+            if (dispElem && dispElem.textContent.trim() !== '—') {
+                const num = Number(dispElem.textContent.trim());
+                if (!isNaN(num)) return num;
+            }
+            const cfg = this.configs[m.id] || {};
+            const v = cfg.finalHandicap !== undefined && cfg.finalHandicap !== null && cfg.finalHandicap !== ''
+                ? cfg.finalHandicap
+                : (m.ghandicap !== undefined && m.ghandicap !== null && m.ghandicap !== '' ? m.ghandicap : null);
+            return v !== null ? Number(v) : null;
+        };
+
+        const sorted = [...this.members].sort((a, b) => {
+            const vA = getFinalVal(a) ?? 999;
+            const vB = getFinalVal(b) ?? 999;
+            if (this.sortMode === 'handicap_asc') return vA - vB;
+            if (this.sortMode === 'handicap_desc') return vB - vA;
+            return a.name.localeCompare(b.name, 'ko');
+        });
+
+        sorted.forEach((m, idx) => {
+            const hVal = getFinalVal(m);
+            const rank = idx + 1;
+            const rankEmoji = rank === 1 ? '🥇' : (rank === 2 ? '🥈' : (rank === 3 ? '🥉' : '▪️'));
+
+            if (hVal !== null) {
+                totalHandi += hVal;
+                validHandiCount++;
+
+                if (hVal < minHandi) {
+                    minHandi = hVal;
+                    minHandiMember = m.name;
+                }
+
+                if (hVal <= 9) singleCount++;
+                else if (hVal <= 15) midCount++;
+                else highCount++;
+
+                lines.push(`${rankEmoji} ${m.name} : ${hVal}`);
+            } else {
+                lines.push(`${rankEmoji} ${m.name} : 미정`);
+            }
+        });
+
+        const avgHandi = validHandiCount > 0 ? (totalHandi / validHandiCount).toFixed(1) : '-';
+
+        lines.push(`━━━━━━━━━━━━━━━━`);
+        lines.push(`📊 인원: ${this.members.length}명 / 평균: ${avgHandi}`);
+
+        // DOM 통계 업데이트
+        const elTotal = document.getElementById('stat-total-count');
+        const elAvg = document.getElementById('stat-avg-handicap');
+        const elMin = document.getElementById('stat-min-handicap');
+        const elSingle = document.getElementById('stat-single-count');
+        const elMid = document.getElementById('stat-mid-count');
+        const elHigh = document.getElementById('stat-high-count');
+        const elPreview = document.getElementById('ghandicap-kakao-preview');
+
+        if (elTotal) elTotal.textContent = `${this.members.length}명`;
+        if (elAvg) elAvg.textContent = `${avgHandi}`;
+        if (elMin) elMin.textContent = minHandi !== Infinity ? `${minHandiMember} (${minHandi})` : '-';
+        if (elSingle) elSingle.textContent = `${singleCount}명`;
+        if (elMid) elMid.textContent = `${midCount}명`;
+        if (elHigh) elHigh.textContent = `${highCount}명`;
+
+        if (elPreview) {
+            elPreview.value = lines.join('\n');
+        }
+    },
+
+    /** 카톡 공지용 텍스트 클립보드 복사 */
+    copyKakaoText() {
+        const elPreview = document.getElementById('ghandicap-kakao-preview');
+        if (!elPreview || !elPreview.value) {
+            Utils.toast('복사할 핸디 정보가 없습니다.', 'warning');
+            return;
+        }
+        navigator.clipboard.writeText(elPreview.value)
+            .then(() => {
+                Utils.toast('📋 카톡 공지용 텍스트가 복사되었습니다!', 'success');
+            })
+            .catch(() => {
+                // fallback
+                elPreview.select();
+                document.execCommand('copy');
+                Utils.toast('📋 카톡 공지용 텍스트가 복사되었습니다!', 'success');
+            });
     },
 
     async saveSingle(memberId) {
@@ -512,6 +629,7 @@ const GHandicapPage = {
             setTimeout(() => { row.style.background = ''; }, 1200);
         }
 
+        this.updateSidePanel();
         Utils.toast(`[${m.name}] 최종핸디 ${configData.finalHandicap} 저장 완료!`, 'success');
     },
 
@@ -521,6 +639,7 @@ const GHandicapPage = {
         for (const m of this.members) {
             await this.saveSingle(m.id);
         }
+        this.updateSidePanel();
         Utils.toast('모든 멤버의 최종핸디가 저장되었습니다!', 'success');
     }
 };
