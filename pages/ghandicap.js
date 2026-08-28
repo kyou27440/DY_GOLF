@@ -143,6 +143,9 @@ const GHandicapPage = {
 
             </div>
         </div>
+        `;
+    },
+
     async afterRender() {
         try {
             const [members, configs] = await Promise.all([
