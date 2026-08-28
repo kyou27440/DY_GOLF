@@ -2,13 +2,13 @@
    GHANDICAP.JS — 멤버별 핸디 통합 관리 (NX4 핸드 + 글로벌핸디 ➔ 최종핸디)
    규칙:
    1. NX4 핸드 + 글로벌핸디 2개 평균 기준
-   ─── 평균 ≤ 15 구간 ───
-   2. 반올림(Math.round) 적용  예) 3.3→3, 4.6→5, 14.6→15
-   3. 상승 가능 (맥스 15, 15 초과 불가)
-   ─── 평균 > 15 구간 ───
-   4. 내림(Math.floor) 적용  예) 16.5→16, 16.8→16
-   5. 상승 불가 — 최저핸디에서 더 올라갈 수 없음 (내림만 반영, 올라가면 최저핸디 유지)
-   6. 최저핸디 기준: val-base(최저핸디) 인풋 우선, 없으면 cfg.baseHandicap
+   ─── 1) 평균 ≤ 5 구간 ───
+   2. 반올림(Math.round) 적용  예) 3.3→3, 4.6→5
+   ─── 2) 평균 6~15 구간 (5 < 평균 ≤ 15) ───
+   3. 내림(Math.floor) 적용  예) 6.3→6, 9.1→9, 13.4→13, 14.1→14
+   ─── 3) 평균 > 15 구간 ───
+   4. 내림(Math.floor) 적용 & 상승 불가 (최저핸디 유지)
+   5. 최저핸디 기준: val-base(최저핸디) 인풋 우선, 없으면 cfg.baseHandicap
    ============================================ */
 
 const GHandicapPage = {
@@ -27,8 +27,9 @@ const GHandicapPage = {
                         <div style="font-weight:800;font-size:0.95rem;color:#f8fafc;">멤버별 핸디 통합 관리</div>
                         <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:3px;">
                             <span style="font-size:0.67rem;padding:1px 7px;border-radius:20px;background:rgba(192,132,252,0.15);border:1px solid rgba(192,132,252,0.35);color:#c084fc;font-weight:700;">평균산출</span>
-                            <span style="font-size:0.67rem;padding:1px 7px;border-radius:20px;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);color:#38bdf8;font-weight:700;">≤15 반올림·상승</span>
-                            <span style="font-size:0.67rem;padding:1px 7px;border-radius:20px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);color:#34d399;font-weight:700;">&gt;15 내림·최저유지</span>
+                            <span style="font-size:0.67rem;padding:1px 7px;border-radius:20px;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);color:#38bdf8;font-weight:700;">≤5 반올림</span>
+                            <span style="font-size:0.67rem;padding:1px 7px;border-radius:20px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;font-weight:700;">6~15 내림</span>
+                            <span style="font-size:0.67rem;padding:1px 7px;border-radius:20px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);color:#34d399;font-weight:700;">&gt;15 최저유지</span>
                         </div>
                     </div>
                 </div>
@@ -134,9 +135,10 @@ const GHandicapPage = {
                         <span>📜 핸디 산출 규정 (2026 개정)</span>
                     </div>
                     <ul style="margin:0;padding-left:16px;font-size:0.72rem;color:#cbd5e1;line-height:1.5;">
-                        <li><b>기본 산출</b>: 선택된 NX4 핸디와 글로벌 핸디의 평균 기준</li>
-                        <li><b style="color:#38bdf8;">평균 15 이하</b>: 반올림(Math.round) 적용 & <b>최대 15까지 상승 가능</b></li>
-                        <li><b style="color:#f59e0b;">평균 15 초과</b>: 내림(Math.floor) 적용 & <b>상승 불가 (최저핸디 하한 유지)</b></li>
+                        <li><b>기본 산출</b>: 선택된 NX4 핸디와 글로벌 핸디의 2개 평균 기준</li>
+                        <li><b style="color:#38bdf8;">평균 5 이하</b>: <b>반올림(Math.round)</b> 적용 (예: 3.3→3, 4.6→5)</li>
+                        <li><b style="color:#f59e0b;">평균 6~15</b>: <b>내림(Math.floor)</b> 적용 (예: 6.3→6, 9.1→9, 13.4→13)</li>
+                        <li><b style="color:#c084fc;">평균 15 초과</b>: <b>내림 & 상승 불가 (최저핸디 하한 유지)</b></li>
                         <li><b style="color:#34d399;">최저핸디 갱신</b>: 평균이 최저핸디보다 낮아지면(개선 시) 최종핸디 자동 하향</li>
                     </ul>
                 </div>
@@ -357,12 +359,12 @@ const GHandicapPage = {
     },
 
     /** G-핸디 (최종핸디) 보정 및 산출 공식 로직
-     * ─── 평균 ≤ 15 구간 ───
-     * 1. Math.round(평균) 적용  예) 3.3→3, 4.6→5, 14.6→15
-     * 2. 상승 가능 (맥스 15, 15 초과 불가)
-     * ─── 평균 > 15 구간 ───
-     * 3. Math.floor(평균) 적용  예) 16.5→16, 16.8→16
-     * 4. 상승 불가 — computed ≥ 최저핸디면 최저핸디 유지 (내림만 반영)
+     * ─── 1) 평균 ≤ 5 구간 ───
+     * 1. Math.round(평균) 반올림 적용  예) 3.3→3, 4.6→5
+     * ─── 2) 평균 6~15 구간 (5 < 평균 ≤ 15) ───
+     * 2. Math.floor(평균) 내림 적용  예) 6.3→6, 9.1→9, 13.4→13, 14.1→14
+     * ─── 3) 평균 > 15 구간 ───
+     * 3. Math.floor(평균) 내림 적용 & 상승 불가 (최저핸디 하한 유지)
      * 최저핸디 기준: val-base(최저핸디) 인풋 우선, 없으면 cfg.baseHandicap
      */
     computeGHandicap(memberId) {
@@ -407,19 +409,18 @@ const GHandicapPage = {
 
         let computed;
         let finalHandicap;
-        let status = 'applied'; // 'applied' | 'guarded_max15' | 'guarded_stay'
+        let status = 'applied'; // 'applied' | 'guarded_stay'
 
-        if (formattedAvg <= 15) {
-            // ─ 평균 ≤ 15: 반올림, 상승 가능, 맥스 15 ─
+        if (formattedAvg <= 5) {
+            // ─ 1) 평균 ≤ 5: 반올림(Math.round) ─
             computed = Math.round(formattedAvg);
-            if (computed > 15) computed = 15;
             finalHandicap = computed;
-            if (computed === 15 && currentHandicapVal !== null && currentHandicapVal < computed) {
-                // 맥스 15에 걸린 경우
-                status = 'guarded_max15';
-            }
+        } else if (formattedAvg <= 15) {
+            // ─ 2) 평균 6~15 (5 < formattedAvg <= 15): 내림(Math.floor) ─
+            computed = Math.floor(formattedAvg);
+            finalHandicap = computed;
         } else {
-            // ─ 평균 > 15: 내림, 상승 불가 (최저핸디 유지) ─
+            // ─ 3) 평균 > 15: 내림(Math.floor) & 상승 불가 (최저핸디 유지) ─
             computed = Math.floor(formattedAvg);
             finalHandicap = computed;
             if (currentHandicapVal !== null && computed >= currentHandicapVal) {
