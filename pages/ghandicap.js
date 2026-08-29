@@ -19,46 +19,48 @@ const GHandicapPage = {
 
     async render() {
         return `
-        <!-- 페이지 헤더 -->
+        <!-- 페이지 헤더 (배지만) -->
         <div style="background:linear-gradient(135deg,rgba(30,41,59,0.85),rgba(15,23,42,0.95));border:1px solid rgba(99,102,241,0.3);border-radius:14px;padding:10px 14px;margin-bottom:12px;box-shadow:0 4px 20px rgba(0,0,0,0.25);">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-                <div style="display:flex;align-items:center;gap:10px;">
-                    <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">🏆</div>
-                    <div>
-                        <div style="font-weight:800;font-size:0.95rem;color:#f8fafc;">멤버별 핸디 통합 관리</div>
-                        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:3px;">
-                            <span style="font-size:0.67rem;padding:1px 7px;border-radius:20px;background:rgba(192,132,252,0.15);border:1px solid rgba(192,132,252,0.35);color:#c084fc;font-weight:700;">평균산출</span>
-                            <span style="font-size:0.67rem;padding:1px 7px;border-radius:20px;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);color:#38bdf8;font-weight:700;">≤5 반올림</span>
-                            <span style="font-size:0.67rem;padding:1px 7px;border-radius:20px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;font-weight:700;">6~15 내림</span>
-                            <span style="font-size:0.67rem;padding:1px 7px;border-radius:20px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);color:#34d399;font-weight:700;">&gt;15 최저유지</span>
-                        </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">🏆</div>
+                <div>
+                    <div style="font-weight:800;font-size:0.95rem;color:#f8fafc;">멤버별 핸디 통합 관리</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:3px;">
+                        <span style="font-size:0.67rem;padding:1px 7px;border-radius:20px;background:rgba(192,132,252,0.15);border:1px solid rgba(192,132,252,0.35);color:#c084fc;font-weight:700;">평균산출</span>
+                        <span style="font-size:0.67rem;padding:1px 7px;border-radius:20px;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);color:#38bdf8;font-weight:700;">≤5 반올림</span>
+                        <span style="font-size:0.67rem;padding:1px 7px;border-radius:20px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;font-weight:700;">6~15 내림</span>
+                        <span style="font-size:0.67rem;padding:1px 7px;border-radius:20px;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);color:#34d399;font-weight:700;">&gt;15 최저유지</span>
                     </div>
-                </div>
-                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-                    <span style="font-size:0.7rem;color:#64748b;font-weight:600;">정렬:</span>
-                    <button id="sort-handicap-asc" onclick="GHandicapPage.setSort('handicap_asc')"
-                            style="font-size:0.7rem;padding:3px 8px;border-radius:16px;border:1px solid rgba(52,211,153,0.5);background:rgba(52,211,153,0.15);color:#34d399;font-weight:700;cursor:pointer;">🏆 낮음↑</button>
-                    <button id="sort-handicap-desc" onclick="GHandicapPage.setSort('handicap_desc')"
-                            style="font-size:0.7rem;padding:3px 8px;border-radius:16px;border:1px solid rgba(99,102,241,0.35);background:rgba(99,102,241,0.1);color:#a78bfa;font-weight:700;cursor:pointer;">🏆 높음↓</button>
-                    <button id="sort-name" onclick="GHandicapPage.setSort('name')"
-                            style="font-size:0.7rem;padding:3px 8px;border-radius:16px;border:1px solid rgba(148,163,184,0.3);background:rgba(148,163,184,0.08);color:#94a3b8;font-weight:700;cursor:pointer;">👤 이름순</button>
-                    <button class="btn btn-primary" id="btn-save-all-ghandicap" style="font-weight:700;padding:5px 14px;font-size:0.8rem;border-radius:8px;white-space:nowrap;">💾 전체 저장</button>
                 </div>
             </div>
         </div>
 
-        <!-- 메인 2단 레이아웃 (좌: 컴팩트 핸디 테이블 / 우: 통계 & 카톡공지 & 규정 패널) -->
-        <div style="display:grid;grid-template-columns:minmax(320px, 520px) minmax(300px, 1fr);gap:14px;align-items:start;">
+        <!-- 메인 2단 레이아웃 (좌: 핸디 테이블 / 우: 통계 & 카톡공지 & 규정 패널) -->
+        <div style="display:grid;grid-template-columns:minmax(480px,780px) minmax(200px,340px);gap:14px;align-items:start;">
             
             <!-- [좌측] 카톡 캡처 최적화 컴팩트 테이블 카드 -->
-            <div id="ghandicap-capture-card" style="background:rgba(15,23,42,0.85);border:1px solid rgba(99,102,241,0.3);border-radius:14px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,0.28);width:100%;max-width:520px;">
-                <!-- 캡처 상단 타이틀 바 -->
-                <div style="padding:6px 12px;background:rgba(30,41,59,0.7);border-bottom:1px solid rgba(255,255,255,0.08);display:flex;justify-content:space-between;align-items:center;">
-                    <div style="font-size:0.75rem;font-weight:800;color:#cbd5e1;display:flex;align-items:center;gap:6px;">
-                        <span>⛳ DY GOLF 핸디표</span>
-                        <span id="ghandicap-current-date" style="font-size:0.65rem;color:#64748b;font-weight:600;"></span>
+            <div id="ghandicap-capture-card" style="background:rgba(15,23,42,0.85);border:1px solid rgba(99,102,241,0.3);border-radius:14px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,0.28);width:100%;">
+                <!-- 캡처 타이틀 바 (1행: 날짜 + 캡처최적화) -->
+                <div style="padding:6px 12px 4px 12px;background:rgba(30,41,59,0.7);border-bottom:1px solid rgba(255,255,255,0.08);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div style="font-size:0.75rem;font-weight:800;color:#cbd5e1;display:flex;align-items:center;gap:6px;">
+                            <span>⛳ DY GOLF 핸디표</span>
+                            <span id="ghandicap-current-date" style="font-size:0.65rem;color:#64748b;font-weight:600;"></span>
+                        </div>
+                        <span style="font-size:0.65rem;color:#38bdf8;font-weight:700;background:rgba(56,189,248,0.12);padding:1px 6px;border-radius:4px;">📱 캡처 최적화</span>
                     </div>
-                    <span style="font-size:0.65rem;color:#38bdf8;font-weight:700;background:rgba(56,189,248,0.12);padding:1px 6px;border-radius:4px;">📱 캡처 최적화</span>
+                    <!-- 정렬 필터 바 (2행) -->
+                    <div style="display:flex;align-items:center;gap:5px;margin-top:5px;padding-bottom:4px;border-top:1px solid rgba(255,255,255,0.05);padding-top:5px;">
+                        <span style="font-size:0.68rem;color:#64748b;font-weight:700;white-space:nowrap;">🔀 정렬:</span>
+                        <button id="sort-handicap-asc" onclick="GHandicapPage.setSort('handicap_asc')"
+                                style="font-size:0.68rem;padding:2px 9px;border-radius:12px;border:1px solid rgba(52,211,153,0.5);background:rgba(52,211,153,0.15);color:#34d399;font-weight:700;cursor:pointer;white-space:nowrap;">🏆 낮음↑</button>
+                        <button id="sort-handicap-desc" onclick="GHandicapPage.setSort('handicap_desc')"
+                                style="font-size:0.68rem;padding:2px 9px;border-radius:12px;border:1px solid rgba(99,102,241,0.35);background:rgba(99,102,241,0.1);color:#a78bfa;font-weight:700;cursor:pointer;white-space:nowrap;">🏆 높음↓</button>
+                        <button id="sort-name" onclick="GHandicapPage.setSort('name')"
+                                style="font-size:0.68rem;padding:2px 9px;border-radius:12px;border:1px solid rgba(148,163,184,0.3);background:rgba(148,163,184,0.08);color:#94a3b8;font-weight:700;cursor:pointer;white-space:nowrap;">👤 이름순</button>
+                        <div style="flex:1;"></div>
+                        <button class="btn btn-primary" id="btn-save-all-ghandicap" style="font-weight:700;padding:3px 10px;font-size:0.72rem;border-radius:7px;white-space:nowrap;">💾 전체 저장</button>
+                    </div>
                 </div>
 
                 <!-- 테이블 헤더 -->
