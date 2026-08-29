@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 
 <head>
@@ -18,7 +18,7 @@
     <title>DY_GOLF - 모임 &amp; 골프 관리</title>
     <script>
         (function () {
-            const VER = '1.4.0_20260829_1148';
+            const VER = '1.4.1_20260829_1155';
             const saved = localStorage.getItem('app_ver_v1');
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.getRegistrations().then(r => r.forEach(x => x.unregister())).catch(() => { });
@@ -36,16 +36,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="css/index.css?v=1.4.0_20260829_1148">
-    <link rel="stylesheet" href="css/sidebar.css?v=1.4.0_20260829_1148">
-    <link rel="stylesheet" href="css/dashboard.css?v=1.4.0_20260829_1148">
-    <link rel="stylesheet" href="css/personal.css?v=1.4.0_20260829_1148">
-    <link rel="stylesheet" href="css/club.css?v=1.4.0_20260829_1148">
-    <link rel="stylesheet" href="css/exchange.css?v=1.4.0_20260829_1148">
-    <link rel="stylesheet" href="css/analytics.css?v=1.4.0_20260829_1148">
-    <link rel="stylesheet" href="css/settings.css?v=1.4.0_20260829_1148">
-    <link rel="stylesheet" href="css/modal.css?v=1.4.0_20260829_1148">
-    <link rel="stylesheet" href="css/mobile.css?v=1.4.0_20260829_1148">
+    <link rel="stylesheet" href="css/index.css?v=1.4.1_20260829_1155">
+    <link rel="stylesheet" href="css/sidebar.css?v=1.4.1_20260829_1155">
+    <link rel="stylesheet" href="css/dashboard.css?v=1.4.1_20260829_1155">
+    <link rel="stylesheet" href="css/personal.css?v=1.4.1_20260829_1155">
+    <link rel="stylesheet" href="css/club.css?v=1.4.1_20260829_1155">
+    <link rel="stylesheet" href="css/exchange.css?v=1.4.1_20260829_1155">
+    <link rel="stylesheet" href="css/analytics.css?v=1.4.1_20260829_1155">
+    <link rel="stylesheet" href="css/settings.css?v=1.4.1_20260829_1155">
+    <link rel="stylesheet" href="css/modal.css?v=1.4.1_20260829_1155">
+    <link rel="stylesheet" href="css/mobile.css?v=1.4.1_20260829_1155">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
@@ -87,7 +87,7 @@
                 </a>
             </nav>
             <div class="sidebar-footer">
-                <div class="sidebar-version">v1.4.0 DY_GOLF (2026-08-29 11:48 ICT)</div>
+                <div class="sidebar-version">v1.4.1 DY_GOLF (2026-08-29 11:55 ICT)</div>
             </div>
         </aside>
 
@@ -146,19 +146,19 @@
 
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="js/config.js?v=1.4.0_20260829_1148"></script>
-    <script src="js/store.js?v=1.4.0_20260829_1148"></script>
-    <script src="js/utils.js?v=1.4.0_20260829_1148"></script>
-    <script src="js/modal.js?v=1.4.0_20260829_1148"></script>
-    <script src="js/router.js?v=1.4.0_20260829_1148"></script>
-    <script src="js/pages/dashboard.js?v=1.4.0_20260829_1148"></script>
-    <script src="js/pages/personal.js?v=1.4.0_20260829_1148"></script>
-    <script src="js/pages/club.js?v=1.4.0_20260829_1148"></script>
-    <script src="js/pages/exchange.js?v=1.4.0_20260829_1148"></script>
-    <script src="js/pages/analytics.js?v=1.4.0_20260829_1148"></script>
-    <script src="js/pages/ghandicap.js?v=1.4.0_20260829_1148"></script>
-    <script src="js/pages/settings.js?v=1.4.0_20260829_1148"></script>
-    <script src="js/app.js?v=1.4.0_20260829_1148"></script>
+    <script src="js/config.js?v=1.4.1_20260829_1155"></script>
+    <script src="js/store.js?v=1.4.1_20260829_1155"></script>
+    <script src="js/utils.js?v=1.4.1_20260829_1155"></script>
+    <script src="js/modal.js?v=1.4.1_20260829_1155"></script>
+    <script src="js/router.js?v=1.4.1_20260829_1155"></script>
+    <script src="js/pages/dashboard.js?v=1.4.1_20260829_1155"></script>
+    <script src="js/pages/personal.js?v=1.4.1_20260829_1155"></script>
+    <script src="js/pages/club.js?v=1.4.1_20260829_1155"></script>
+    <script src="js/pages/exchange.js?v=1.4.1_20260829_1155"></script>
+    <script src="js/pages/analytics.js?v=1.4.1_20260829_1155"></script>
+    <script src="js/pages/ghandicap.js?v=1.4.1_20260829_1155"></script>
+    <script src="js/pages/settings.js?v=1.4.1_20260829_1155"></script>
+    <script src="js/app.js?v=1.4.1_20260829_1155"></script>
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(r => r.forEach(x => x.unregister()));
