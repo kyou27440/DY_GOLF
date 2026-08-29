@@ -1,7 +1,14 @@
-var APP_VERSION = 'v1.3.9';
-var APP_BUILD_TIME = '2026-08-28 11:55 (ICT)'; // 수정 작업 완료 시 자동 갱신
+﻿var APP_VERSION = 'v1.4.0';
+var APP_BUILD_TIME = '2026-08-29 11:48 (ICT)'; // 수정 작업 완료 시 자동 갱신
 
 var APP_CHANGELOG = [
+    {
+        version: 'v1.4.0',
+        date: '2026-08-29 11:48',
+        items: [
+            '핸디표 정렬 실시간 반영(최종핸디 기준 오름/내림/이름순) 및 수기 입력값 새로고침 후 유지(debounce 자동저장 1.5초)'
+        ]
+    },
     {
         version: 'v1.3.9',
         date: '2026-08-28 11:55',
@@ -49,7 +56,7 @@ var supabaseClient = null;
     try {
         if (typeof supabase !== 'undefined' && supabase && supabase.createClient) {
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            console.log('✅ Supabase Client initialized (v1.3.9)');
+            console.log('✅ Supabase Client initialized (v1.4.0)');
         } else {
             console.warn('⚠️ supabase CDN not loaded yet');
         }
