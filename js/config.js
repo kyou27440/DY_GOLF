@@ -1,7 +1,15 @@
-﻿var APP_VERSION = 'v1.4.0';
-var APP_BUILD_TIME = '2026-08-29 11:48 (ICT)'; // 수정 작업 완료 시 자동 갱신
+var APP_VERSION = 'v1.4.1';
+var APP_BUILD_TIME = '2026-08-29 11:55 (ICT)'; // 수정 작업 완료 시 자동 갱신
 
 var APP_CHANGELOG = [
+    {
+        version: 'v1.4.1',
+        date: '2026-08-29 11:55',
+        items: [
+            '핸디표 정렬 필터(낙음↑/높음↓/이름순) 테이블 내부로 이동하여 항상 노출',
+            '좌측 핵디표 움 1.5배 확장(780px), 우측 패널 폭 압축으로 간섭 제거'
+        ]
+    },
     {
         version: 'v1.4.0',
         date: '2026-08-29 11:48',
