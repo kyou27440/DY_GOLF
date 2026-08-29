@@ -14,7 +14,8 @@
 const GHandicapPage = {
     configs: {},
     members: [],
-    sortMode: 'handicap_asc',  // 'handicap_asc' | 'handicap_desc' | 'name'
+    sortMode: 'name',  // 'handicap_asc' | 'handicap_desc' | 'name'
+    _autoSaveTimers: {},  // memberId → debounce timer
 
     async render() {
         return `
@@ -186,13 +187,17 @@ const GHandicapPage = {
             return;
         }
 
-        // ── 정렬 ──
+        // ── 정렬: configs의 finalHandicap 우선, 없으면 m.ghandicap ──
         const getHandicapVal = (m) => {
             const cfg = this.configs[m.id] || {};
-            const v = cfg.finalHandicap !== undefined && cfg.finalHandicap !== null && cfg.finalHandicap !== ''
-                ? cfg.finalHandicap
-                : (m.ghandicap !== undefined && m.ghandicap !== null && m.ghandicap !== '' ? m.ghandicap : null);
-            return v !== null ? Number(v) : Infinity;
+            // configs에 임시 저장된 값 우선
+            if (cfg.finalHandicap !== undefined && cfg.finalHandicap !== null && cfg.finalHandicap !== '') {
+                return Number(cfg.finalHandicap);
+            }
+            if (m.ghandicap !== undefined && m.ghandicap !== null && m.ghandicap !== '') {
+                return Number(m.ghandicap);
+            }
+            return Infinity;
         };
         const sorted = [...this.members].sort((a, b) => {
             if (this.sortMode === 'handicap_asc') return getHandicapVal(a) - getHandicapVal(b);
@@ -455,6 +460,8 @@ const GHandicapPage = {
             dispFinal.textContent = res.finalHandicap !== null ? res.finalHandicap : '—';
             dispFinal.style.color = '#64748b';
             if (dispInfo) dispInfo.textContent = '';
+            // configs에 임시 반영 (새로고침 방지)
+            this._syncConfigFromDom(memberId, res);
             if (updatePanel) this.updateSidePanel();
             return;
         }
@@ -476,9 +483,48 @@ const GHandicapPage = {
             }
         }
 
+        // configs에 임시 반영 (새로고침 방지) + debounce 자동저장
+        this._syncConfigFromDom(memberId, res);
+        this._scheduleAutoSave(memberId);
+
         if (updatePanel) {
             this.updateSidePanel();
         }
+    },
+
+    /** DOM 입력값을 configs에 즉시 임시 반영 (새로고침 시 값 유지용) */
+    _syncConfigFromDom(memberId, res) {
+        const useNormal = document.getElementById(`chk-normal-${memberId}`)?.checked ?? true;
+        const useGlobal = document.getElementById(`chk-global-${memberId}`)?.checked ?? true;
+        const normalVal = document.getElementById(`val-normal-${memberId}`)?.value.trim() || '';
+        const globalVal = document.getElementById(`val-global-${memberId}`)?.value.trim() || '';
+        const baseVal   = document.getElementById(`val-base-${memberId}`)?.value.trim() || '';
+
+        if (!this.configs[memberId]) this.configs[memberId] = {};
+        Object.assign(this.configs[memberId], {
+            useGolfzon:    useNormal,
+            useGlobal:     useGlobal,
+            golfzonHandi:  normalVal !== '' && !isNaN(Number(normalVal)) ? Number(normalVal) : '',
+            globalHandi:   globalVal !== '' && !isNaN(Number(globalVal)) ? Number(globalVal) : '',
+            baseHandicap:  baseVal   !== '' && !isNaN(Number(baseVal))   ? Number(baseVal)   : '',
+            finalHandicap: res ? res.finalHandicap : (this.configs[memberId].finalHandicap ?? '')
+        });
+    },
+
+    /** debounce 자동저장 (1.5초 후 localStorage에 저장) */
+    _scheduleAutoSave(memberId) {
+        if (this._autoSaveTimers[memberId]) clearTimeout(this._autoSaveTimers[memberId]);
+        this._autoSaveTimers[memberId] = setTimeout(async () => {
+            const cfg = this.configs[memberId];
+            if (!cfg) return;
+            try {
+                // localStorage에만 빠르게 저장 (원격은 💾 버튼으로)
+                const all = Store._getLocalGHandicapConfigs ? Store._getLocalGHandicapConfigs() : {};
+                all[memberId] = { ...all[memberId], ...cfg, updated_at: new Date().toISOString() };
+                localStorage.setItem('club_ghandicap_configs_v1', JSON.stringify(all));
+            } catch(e) {}
+            delete this._autoSaveTimers[memberId];
+        }, 1500);
     },
 
     /** 우측 통계 및 카톡 공유 텍스트 실시간 갱신 */
