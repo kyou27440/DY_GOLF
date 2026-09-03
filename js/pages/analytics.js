@@ -3,18 +3,30 @@
    ============================================ */
 
 const AnalyticsPage = {
+    showActiveOnly: true,   // 기본: 활성 멤버만 표시
+
     async render() {
         return `<div id="analytics-body" style="padding:4px 0;"></div>`;
     },
 
     async afterRender() {
+        await this._renderContent();
+    },
+
+    async _renderContent() {
         const container = document.getElementById('analytics-body');
         if (!container) return;
 
-        const [stats, trend] = await Promise.all([
+        const [allStats, trend] = await Promise.all([
             Store.getMemberStats(),
             Store.getRankingTrend(30)
         ]);
+
+        // ─ 활성 멤버 필터 적용 ─
+        const stats = this.showActiveOnly
+            ? allStats.filter(s => s.status === 'active')
+            : allStats;
+        const inactiveCount = allStats.filter(s => s.status !== 'active').length;
 
         // ─ 1등 / 꼴찌 횟수 계산 ─
         const memberFirstCount = {};
@@ -63,9 +75,18 @@ const AnalyticsPage = {
                         <div style="font-weight:800;font-size:0.95rem;color:#f8fafc;">멤버별 성적 현황</div>
                         <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:3px;">
                             <span style="font-size:0.67rem;padding:1px 7px;border-radius:20px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.35);color:#a78bfa;font-weight:700;">평균등수순</span>
-                            <span style="font-size:0.67rem;padding:1px 7px;border-radius:20px;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);color:#38bdf8;font-weight:700;">총 ${stats.length}명 참여</span>
+                            <span style="font-size:0.67rem;padding:1px 7px;border-radius:20px;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);color:#38bdf8;font-weight:700;">총 ${stats.length}명 표시</span>
                         </div>
                     </div>
+                </div>
+                <!-- 활성 멤버 필터 토글 -->
+                <div style="display:flex;align-items:center;gap:6px;">
+                    ${inactiveCount > 0 ? `<span style="font-size:0.68rem;color:#64748b;">비활성 ${inactiveCount}명</span>` : ''}
+                    <button id="analytics-filter-btn"
+                        style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;border:1.5px solid ${this.showActiveOnly ? 'rgba(52,211,153,0.6)' : 'rgba(148,163,184,0.4)'};background:${this.showActiveOnly ? 'rgba(52,211,153,0.12)' : 'rgba(30,41,59,0.6)'};color:${this.showActiveOnly ? '#34d399' : '#94a3b8'};font-size:0.72rem;font-weight:700;cursor:pointer;transition:all 0.15s;">
+                        <span style="width:7px;height:7px;border-radius:50%;background:${this.showActiveOnly ? '#34d399' : '#64748b'};display:inline-block;"></span>
+                        ${this.showActiveOnly ? '활성 멤버만' : '전체 멤버'}
+                    </button>
                 </div>
             </div>
         </div>
@@ -217,6 +238,15 @@ const AnalyticsPage = {
             </div>
         </div>
         `;
+
+        // ─ 필터 버튼 이벤트 ─
+        const filterBtn = document.getElementById('analytics-filter-btn');
+        if (filterBtn) {
+            filterBtn.addEventListener('click', () => {
+                this.showActiveOnly = !this.showActiveOnly;
+                this._renderContent();
+            });
+        }
     },
 
     copyKakaoText() {
