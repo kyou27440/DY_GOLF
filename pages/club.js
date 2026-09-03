@@ -701,20 +701,49 @@ const ClubPage = {
     // ─── 순위/성적 탭 ───
 
     async renderRanking(container) {
-        const [stats, trend] = await Promise.all([Store.getMemberStats(), Store.getRankingTrend(20)]);
+        const [stats, trend, calcHistories] = await Promise.all([
+            Store.getMemberStats(),
+            Store.getRankingTrend(20),
+            Store.getCalcHistoryList()
+        ]);
+
+        // ─ calcHistory를 날짜별 맵으로 구성 ─
+        const calcMap = {};
+        (calcHistories || []).forEach(c => {
+            if (c && c.calc_date) {
+                const dateKey = String(c.calc_date).slice(0, 10);
+                calcMap[dateKey] = c;
+            }
+        });
 
         // ─ 1등 횟수 및 최하위 횟수 계산 ─
         const memberFirstCount = {};
         const memberLastCount = {};
+        // ─ 멤버별 누적 회비 계산 (member_id 기준) ─
+        const memberFeeTotal = {};   // member_id → 누적 납부 금액
+        const memberFeeCount = {};   // member_id → 회비 집계된 게임 수
+
         trend.forEach(g => {
             const parts = g.club_game_participants || [];
             const ranked = parts.filter(p => p.ranking);
             if (!ranked.length) return;
             const maxRank = Math.max(...ranked.map(p => p.ranking));
+
+            // 해당 게임 날짜의 calcHistory 조회
+            const gDateKey = String(g.game_date || '').slice(0, 10);
+            const calc = calcMap[gDateKey];
+
             ranked.forEach(p => {
                 const name = p.club_members?.name || '?';
                 if (p.ranking === 1) memberFirstCount[name] = (memberFirstCount[name] || 0) + 1;
                 if (p.ranking === maxRank) memberLastCount[name] = (memberLastCount[name] || 0) + 1;
+
+                // 회비 누적: calcHistory의 rank_amounts[ranking-1]
+                if (calc && calc.rank_amounts && p.ranking && calc.rank_amounts[p.ranking - 1] !== undefined) {
+                    const mid = p.member_id;
+                    memberFeeTotal[mid] = (memberFeeTotal[mid] || 0) + Number(calc.rank_amounts[p.ranking - 1]);
+                    memberFeeCount[mid] = (memberFeeCount[mid] || 0) + 1;
+                }
             });
         });
 
@@ -734,6 +763,9 @@ const ClubPage = {
             const avgRankNum = s.avgRank !== '-' ? parseFloat(s.avgRank) : null;
             const avgColor = avgRankNum !== null
                 ? (avgRankNum <= 2 ? '#34d399' : avgRankNum <= 3.5 ? '#38bdf8' : '#f59e0b') : '#64748b';
+            const totalFee = memberFeeTotal[s.member_id] || 0;
+            const feeGames = memberFeeCount[s.member_id] || 0;
+            const avgFee = feeGames > 0 ? Math.round(totalFee / feeGames) : 0;
             return `<div style="padding:14px 16px;background:${glow[idx]};border:1.5px solid ${border[idx]};
                                     border-radius:14px;text-align:center;position:relative;">
                     <div style="font-size:1.6rem;margin-bottom:4px;">${medals[idx]}</div>
@@ -743,22 +775,23 @@ const ClubPage = {
                         <span style="font-size:0.72rem;color:#94a3b8;">최고 <b style="color:#34d399;">${s.best !== '-' ? s.best + '등' : '-'}</b></span>
                         <span style="font-size:0.72rem;color:#94a3b8;">🥇 <b style="color:#fbbf24;">${memberFirstCount[s.name] || 0}회</b></span>
                     </div>
+                    ${totalFee > 0 ? `<div style="margin-top:6px;font-size:0.7rem;color:#94a3b8;">누적회비 <b style="color:#10b981;">${Utils.formatVND(totalFee)}</b></div>` : ''}
                 </div>`;
         }).join('')}
         </div>`;
 
-        // ── 컴팩트 테이블 ──
-        const COLS = '44px 1fr 62px 72px 66px 58px 52px';
-        const HDR = ['순위', '멤버', '게임', '평균등', '최고', '🥇 1등', '꼴찌'];
+        // ── 확장된 테이블 (컬럼 2개 추가) ──
+        const COLS = '40px 1fr 58px 68px 60px 54px 50px 100px 100px';
+        const HDR = ['순위', '멤버', '게임', '평균등', '최고', '🥇 1등', '꼴찌', '💰 누적회비', '1회당 평균'];
 
         const tableHtml = `
         <div style="background:rgba(13,20,38,0.9);border:1px solid rgba(99,102,241,0.28);
-                    border-radius:14px;overflow:hidden;max-width:520px;">
+                    border-radius:14px;overflow:hidden;max-width:680px;">
             <div style="display:grid;grid-template-columns:${COLS};
                         padding:8px 14px;align-items:center;
                         background:linear-gradient(90deg,rgba(99,102,241,0.2),rgba(139,92,246,0.12));
                         border-bottom:1px solid rgba(99,102,241,0.25);">
-                ${HDR.map((h, i) => `<div style="font-size:0.7rem;font-weight:800;color:#64748b;
+                ${HDR.map((h, i) => `<div style="font-size:0.68rem;font-weight:800;color:#64748b;
                     text-align:${i === 1 ? 'left' : 'center'};white-space:nowrap;">${h}</div>`).join('')}
             </div>
             ${stats.map((s, idx) => {
@@ -777,6 +810,11 @@ const ClubPage = {
             const lc = memberLastCount[s.name] || 0;
             const initials = Utils.escapeHtml(s.name).substring(0, 2);
 
+            // 회비 데이터
+            const totalFee = memberFeeTotal[s.member_id] || 0;
+            const feeGames = memberFeeCount[s.member_id] || 0;
+            const avgFeePerGame = feeGames > 0 ? Math.round(totalFee / feeGames) : 0;
+
             return `<div style="display:grid;grid-template-columns:${COLS};
                             padding:7px 14px;align-items:center;background:${bg};
                             border-bottom:1px solid rgba(255,255,255,0.03);
@@ -786,19 +824,25 @@ const ClubPage = {
                     <div style="text-align:center;font-size:${rank1 <= 3 ? '1.2rem' : '0.82rem'};
                                 font-weight:800;color:${rc};">${badge}</div>
                     <div style="display:flex;align-items:center;gap:7px;min-width:0;">
-                        <div style="width:28px;height:28px;border-radius:50%;flex-shrink:0;
+                        <div style="width:26px;height:26px;border-radius:50%;flex-shrink:0;
                                     background:linear-gradient(135deg,#6366f1,#8b5cf6);
                                     display:flex;align-items:center;justify-content:center;
-                                    font-size:0.65rem;font-weight:800;color:#fff;">${initials}</div>
-                        <span style="font-weight:700;font-size:0.88rem;color:#e2e8f0;
+                                    font-size:0.62rem;font-weight:800;color:#fff;">${initials}</div>
+                        <span style="font-weight:700;font-size:0.85rem;color:#e2e8f0;
                                      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                             ${Utils.escapeHtml(s.name)}</span>
                     </div>
-                    <div style="text-align:center;font-size:0.82rem;font-weight:700;color:#94a3b8;">${s.games}<small style="color:#475569;">회</small></div>
-                    <div style="text-align:center;font-size:0.9rem;font-weight:800;color:${ac};">${avg !== null ? s.avgRank + '등' : '—'}</div>
-                    <div style="text-align:center;font-size:0.85rem;font-weight:700;color:#34d399;">${s.best !== '-' ? s.best + '등' : '—'}</div>
-                    <div style="text-align:center;font-size:0.85rem;font-weight:700;color:#fbbf24;">${f1 > 0 ? f1 + '회' : '—'}</div>
-                    <div style="text-align:center;font-size:0.85rem;font-weight:700;color:#f43f5e;">${lc > 0 ? lc + '회' : '—'}</div>
+                    <div style="text-align:center;font-size:0.8rem;font-weight:700;color:#94a3b8;">${s.games}<small style="color:#475569;">회</small></div>
+                    <div style="text-align:center;font-size:0.88rem;font-weight:800;color:${ac};">${avg !== null ? s.avgRank + '등' : '—'}</div>
+                    <div style="text-align:center;font-size:0.82rem;font-weight:700;color:#34d399;">${s.best !== '-' ? s.best + '등' : '—'}</div>
+                    <div style="text-align:center;font-size:0.82rem;font-weight:700;color:#fbbf24;">${f1 > 0 ? f1 + '회' : '—'}</div>
+                    <div style="text-align:center;font-size:0.82rem;font-weight:700;color:#f43f5e;">${lc > 0 ? lc + '회' : '—'}</div>
+                    <div style="text-align:center;font-size:0.75rem;font-weight:700;color:#10b981;line-height:1.3;">
+                        ${totalFee > 0 ? Utils.formatVND(totalFee) : '<span style="color:#475569;">—</span>'}
+                    </div>
+                    <div style="text-align:center;font-size:0.75rem;font-weight:700;color:#38bdf8;line-height:1.3;">
+                        ${avgFeePerGame > 0 ? Utils.formatVND(avgFeePerGame) : '<span style="color:#475569;">—</span>'}
+                    </div>
                 </div>`;
         }).join('')}
         </div>`;
