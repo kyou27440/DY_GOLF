@@ -1,7 +1,23 @@
-var APP_VERSION = 'v1.4.1';
-var APP_BUILD_TIME = '2026-08-29 11:55 (ICT)'; // 수정 작업 완료 시 자동 갱신
+var APP_VERSION = 'v1.4.3';
+var APP_BUILD_TIME = '2026-09-03 13:15 (ICT)'; // 수정 작업 완료 시 자동 갱신
 
 var APP_CHANGELOG = [
+    {
+        version: 'v1.4.3',
+        date: '2026-09-03 13:15',
+        items: [
+            '성적 통계 & 순위/성적 탭 비활성 멤버 필터 기능 추가 (활성/전체 토글, 즉시 재렌더링)',
+            '비활성 인원 카운트 표시 및 두 페이지 독립 필터 상태 유지'
+        ]
+    },
+    {
+        version: 'v1.4.2',
+        date: '2026-09-03 12:45',
+        items: [
+            '순위/성적 탭 멤버별 누적 회비 & 1회당 평균 컬럼 추가, 테이블 폭 680px 확장',
+            '회비 산출 시트 이력과 게임별 참여자 순위 날짜 연결 실시간 연산'
+        ]
+    },
     {
         version: 'v1.4.1',
         date: '2026-08-29 11:55',
@@ -64,7 +80,7 @@ var supabaseClient = null;
     try {
         if (typeof supabase !== 'undefined' && supabase && supabase.createClient) {
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            console.log('✅ Supabase Client initialized (v1.4.0)');
+            console.log('✅ Supabase Client initialized (v1.4.3)');
         } else {
             console.warn('⚠️ supabase CDN not loaded yet');
         }
