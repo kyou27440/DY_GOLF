@@ -4,6 +4,7 @@
 
 const ClubPage = {
     currentTab: 'games',
+    rankingShowActiveOnly: true,   // 순위탭 기본: 활성 멤버만
 
     async render() {
         const tab = this.currentTab || 'games';
@@ -701,11 +702,17 @@ const ClubPage = {
     // ─── 순위/성적 탭 ───
 
     async renderRanking(container) {
-        const [stats, trend, calcHistories] = await Promise.all([
+        const [allStats, trend, calcHistories] = await Promise.all([
             Store.getMemberStats(),
             Store.getRankingTrend(20),
             Store.getCalcHistoryList()
         ]);
+
+        // ─ 활성 멤버 필터 적용 ─
+        const stats = this.rankingShowActiveOnly
+            ? allStats.filter(s => s.status === 'active')
+            : allStats;
+        const inactiveCount = allStats.filter(s => s.status !== 'active').length;
 
         // ─ calcHistory를 날짜별 맵으로 구성 ─
         const calcMap = {};
@@ -848,12 +855,33 @@ const ClubPage = {
         </div>`;
 
         container.innerHTML = `
-            <div class="section-header" style="margin-bottom:14px;">
+            <div class="section-header" style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
                 <span class="section-title">🏆 멤버별 성적 현황</span>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    ${inactiveCount > 0 ? `<span style="font-size:0.68rem;color:#64748b;">비활성 ${inactiveCount}명</span>` : ''}
+                    <button id="ranking-filter-btn"
+                        style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;
+                               border:1.5px solid ${this.rankingShowActiveOnly ? 'rgba(52,211,153,0.6)' : 'rgba(148,163,184,0.4)'};
+                               background:${this.rankingShowActiveOnly ? 'rgba(52,211,153,0.12)' : 'rgba(30,41,59,0.6)'};
+                               color:${this.rankingShowActiveOnly ? '#34d399' : '#94a3b8'};
+                               font-size:0.72rem;font-weight:700;cursor:pointer;transition:all 0.15s;">
+                        <span style="width:7px;height:7px;border-radius:50%;background:${this.rankingShowActiveOnly ? '#34d399' : '#64748b'};display:inline-block;"></span>
+                        ${this.rankingShowActiveOnly ? '활성 멤버만' : '전체 멤버'}
+                    </button>
+                </div>
             </div>
             ${podiumHtml}
             ${tableHtml}
         `;
+
+        // ─ 필터 버튼 이벤트 ─
+        const filterBtn = document.getElementById('ranking-filter-btn');
+        if (filterBtn) {
+            filterBtn.addEventListener('click', () => {
+                this.rankingShowActiveOnly = !this.rankingShowActiveOnly;
+                this.renderRanking(container);
+            });
+        }
     },
 
     ratioPresets: {
