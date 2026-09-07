@@ -216,9 +216,9 @@ const GHandicapPage = {
             // 아바타 텍스트: 2글자로 컴팩트하게 통일
             const avatarText = m.name.length >= 2 ? m.name.slice(-2) : m.name;
 
-            const normalHandi = cfg.golfzonHandi !== undefined && cfg.golfzonHandi !== '' && cfg.golfzonHandi !== null ? cfg.golfzonHandi : '';
-            const globalHandi = cfg.globalHandi !== undefined && cfg.globalHandi !== '' && cfg.globalHandi !== null ? cfg.globalHandi : '';
-            const baseHandi = cfg.baseHandicap !== undefined && cfg.baseHandicap !== '' && cfg.baseHandicap !== null ? cfg.baseHandicap : '';
+            const normalHandi = cfg.golfzonHandi !== undefined && cfg.golfzonHandi !== '' && cfg.golfzonHandi !== null ? Number(cfg.golfzonHandi).toFixed(2) : '';
+            const globalHandi = cfg.globalHandi !== undefined && cfg.globalHandi !== '' && cfg.globalHandi !== null ? Number(cfg.globalHandi).toFixed(2) : '';
+            const baseHandi = cfg.baseHandicap !== undefined && cfg.baseHandicap !== '' && cfg.baseHandicap !== null ? Number(cfg.baseHandicap).toFixed(2) : '';
             const useNormal = cfg.useGolfzon !== undefined ? cfg.useGolfzon : true;
             const useGlobal = cfg.useGlobal !== undefined ? cfg.useGlobal : true;
 
@@ -289,7 +289,7 @@ const GHandicapPage = {
 
                 <!-- 4. 최저핸디 입력 -->
                 <div style="display:flex;align-items:center;justify-content:center;">
-                    <input type="number" step="1" min="0" max="50" inputmode="numeric" id="val-base-${m.id}" value="${baseHandi}"
+                    <input type="number" step="0.01" min="0" max="50" inputmode="decimal" id="val-base-${m.id}" value="${baseHandi}"
                            placeholder="-"
                            oninput="GHandicapPage.recalc(${m.id})"
                            title="최저핸디 (하한 기준값)"
@@ -450,7 +450,7 @@ const GHandicapPage = {
         // ── 평균 열 업데이트 ──
         if (dispAvg) {
             if (res.rawAvg !== null) {
-                dispAvg.textContent = res.rawAvg;
+                dispAvg.textContent = res.rawAvg.toFixed(2);
                 dispAvg.style.color = '#a78bfa';
             } else {
                 dispAvg.textContent = '—';
