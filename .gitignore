@@ -6,3 +6,9 @@ desktop-tutorial/
 # System files
 .DS_Store
 Thumbs.db
+
+# Temporary files
+tmp_*
+chrome_*
+*cdp*
+debug_*.py
