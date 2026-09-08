@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="?ㅽ겕由곌낏??紐⑥엫 寃뚯엫 湲곕줉 & ?몃뵒罹?愿由???쒕낫??- DY_GOLF">
+    <meta name="description" content="스크린골프 모임 게임 기록 &amp; 핸디캡 관리 대시보드 - DY_GOLF">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -15,7 +15,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="icons/app-icon.svg">
     <link rel="apple-touch-icon" href="icons/app-icon.svg">
-    <title>DY_GOLF - 紐⑥엫 &amp; 怨⑦봽 愿由?/title>
+    <title>DY_GOLF - 모임 &amp; 골프 관리</title>
     <script>
         (function () {
             const VER = '1.4.4_20260907_1630';
@@ -67,27 +67,27 @@
             <nav class="sidebar-nav">
                 <a href="#" class="nav-item active" data-page="dashboard">
                     <span class="nav-icon">&#127968;</span>
-                    <span class="nav-text">??쒕낫??/span>
+                    <span class="nav-text">대시보드</span>
                 </a>
                 <a href="#" class="nav-item" data-page="club">
                     <span class="nav-icon">&#9971;</span>
-                    <span class="nav-text">紐⑥엫 &amp; 怨⑦봽 愿由?/span>
+                    <span class="nav-text">모임 &amp; 골프 관리</span>
                 </a>
                 <a href="#" class="nav-item" data-page="analytics">
                     <span class="nav-icon">&#128200;</span>
-                    <span class="nav-text">?깆쟻?듦퀎</span>
+                    <span class="nav-text">성적통계</span>
                 </a>
                 <a href="#" class="nav-item" data-page="ghandicap">
                     <span class="nav-icon">&#127948;</span>
-                    <span class="nav-text">G-?몃뵒 愿由?/span>
+                    <span class="nav-text">G-핸디 관리</span>
                 </a>
                 <a href="#" class="nav-item" data-page="settings">
                     <span class="nav-icon">&#9881;</span>
-                    <span class="nav-text">?ㅼ젙</span>
+                    <span class="nav-text">설정</span>
                 </a>
             </nav>
             <div class="sidebar-footer">
-                <div class="sidebar-version">v1.4.3 DY_GOLF (2026-09-03 13:15 ICT)</div>
+                <div class="sidebar-version">v1.4.4 DY_GOLF (2026-09-07 16:30 ICT)</div>
             </div>
         </aside>
 
@@ -100,7 +100,7 @@
                             <path d="M3 12h18M3 6h18M3 18h18" />
                         </svg>
                     </button>
-                    <h1 id="page-title" class="page-title">??쒕낫??/h1>
+                    <h1 id="page-title" class="page-title">대시보드</h1>
                 </div>
                 <div class="header-right">
                     <span id="current-date" class="current-date"></span>
@@ -110,25 +110,25 @@
         </main>
     </div>
 
-    <button id="fab-quick-add" class="fab" aria-label="鍮좊Ⅸ ?낅젰">&#10010;</button>
+    <button id="fab-quick-add" class="fab" aria-label="빠른 입력">&#10010;</button>
 
     <nav class="bottom-nav">
         <div class="bottom-nav-inner">
             <a href="#" class="bottom-nav-item" data-page="club" data-tab="games">
                 <span class="bnav-icon">&#127918;</span>
-                <span class="bnav-text">寃뚯엫湲곕줉</span>
+                <span class="bnav-text">게임기록</span>
             </a>
             <a href="#" class="bottom-nav-item" data-page="club" data-tab="calculator">
                 <span class="bnav-icon">&#129518;</span>
-                <span class="bnav-text">?뚮퉬?곗텧</span>
+                <span class="bnav-text">회비산출</span>
             </a>
             <a href="#" class="bottom-nav-item" data-page="club" data-tab="ranking">
                 <span class="bnav-icon">&#127942;</span>
-                <span class="bnav-text">?쒖쐞/?듦퀎</span>
+                <span class="bnav-text">순위/통계</span>
             </a>
             <a href="#" class="bottom-nav-item active" data-page="dashboard">
                 <span class="bnav-icon">&#127968;</span>
-                <span class="bnav-text">??쒕낫??/span>
+                <span class="bnav-text">대시보드</span>
             </a>
         </div>
     </nav>
