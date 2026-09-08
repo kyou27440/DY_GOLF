@@ -412,15 +412,18 @@ const GHandicapPage = {
         }
 
         const rawAvg = sum / validCount;
-        const formattedAvg = Math.round(rawAvg * 10) / 10;
+        const formattedAvg = Math.round(rawAvg * 100) / 100;
+
+        // 사사오입 (절댓값 기준 반올림: 0.5 -> 1, -0.5 -> -1)
+        const roundHalfAway = (val) => val >= 0 ? Math.round(val) : -Math.round(-val);
 
         let computed;
         let finalHandicap;
         let status = 'applied'; // 'applied' | 'guarded_stay'
 
         if (formattedAvg <= 5) {
-            // ─ 1) 평균 ≤ 5: 반올림(Math.round) ─
-            computed = Math.round(formattedAvg);
+            // ─ 1) 평균 ≤ 5: 사사오입(반올림) 적용 ─
+            computed = roundHalfAway(formattedAvg);
             finalHandicap = computed;
         } else if (formattedAvg <= 15) {
             // ─ 2) 평균 6~15 (5 < formattedAvg <= 15): 내림(Math.floor) ─
