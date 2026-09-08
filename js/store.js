@@ -374,11 +374,6 @@ const Store = {
         return list;
     },
 
-    async getGamesCount() {
-        const games = await this.getGames();
-        return games ? games.length : 0;
-    },
-
     /** PC/모바일 로컬스토리지에만 저장되어 있는 게임기록/멤버/산출시트를 Supabase 클라우드 DB로 완전 동기화 */
     async syncAllLocalDataToSupabase() {
         const client = (typeof supabaseClient !== 'undefined' && supabaseClient && typeof supabaseClient.from === 'function') 
