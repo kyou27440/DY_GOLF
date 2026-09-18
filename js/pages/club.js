@@ -885,6 +885,14 @@ const ClubPage = {
     },
 
     ratioPresets: {
+        2: {
+            ultraMild: { name: '⚖️ 초완만형', desc: '1등 45% / 2등 55%', ratios: [45, 55] },
+            mild: { name: '⚖️ 완만형', desc: '1등 40% / 2등 60%', ratios: [40, 60] },
+            standard: { name: '⚡ 중등 차등형 (추천)', desc: '1등 30% / 2등 70%', ratios: [30, 70] },
+            strong: { name: '⛳ 강한 차등형', desc: '1등 20% / 2등 80%', ratios: [20, 80] },
+            extreme: { name: '🔥 극단 차등형', desc: '1등 10% / 2등 90%', ratios: [10, 90] },
+            free1st: { name: '🏆 1등 면제형', desc: '1등 0%  / 2등 100%', ratios: [0, 100] }
+        },
         3: {
             ultraMild: { name: '⚖️ 초완만형', desc: '1등 25% / 2등 33% / 3등 42%', ratios: [25, 33, 42] },
             mild: { name: '⚖️ 완만형', desc: '1등 20% / 2등 32% / 3등 48%', ratios: [20, 32, 48] },
@@ -1022,7 +1030,7 @@ const ClubPage = {
                         <div class="form-group">
                             <label>참여 인원수</label>
                             <select id="calc-count" class="calc-input-field">
-                                ${[3, 4, 5, 6, 7, 8].map(n => `<option value="${n}" ${this.calcState.count === n ? 'selected' : ''}>${n}명</option>`).join('')}
+                                ${[2, 3, 4, 5, 6, 7, 8].map(n => `<option value="${n}" ${this.calcState.count === n ? 'selected' : ''}>${n}명</option>`).join('')}
                             </select>
                         </div>
                         <div class="form-group">
