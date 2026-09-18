@@ -1,7 +1,14 @@
-var APP_VERSION = 'v1.4.5';
-var APP_BUILD_TIME = '2026-09-08 07:55 (ICT)'; // 수정 작업 완료 시 자동 갱신
+var APP_VERSION = 'v1.4.6';
+var APP_BUILD_TIME = '2026-09-18 12:28 (ICT)'; // 수정 작업 완료 시 자동 갱신
 
 var APP_CHANGELOG = [
+    {
+        version: 'v1.4.6',
+        date: '2026-09-18 12:28',
+        items: [
+            '회비 산출 시트 2인 참여 모드 지원 (참여 인원수 2명 선택 및 2인 단계별 비율 프리셋 6종 추가)'
+        ]
+    },
     {
         version: 'v1.4.5',
         date: '2026-09-08 07:55',
