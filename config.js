@@ -1,7 +1,15 @@
-var APP_VERSION = 'v1.4.6';
-var APP_BUILD_TIME = '2026-09-18 12:28 (ICT)'; // 수정 작업 완료 시 자동 갱신
+var APP_VERSION = 'v1.4.7';
+var APP_BUILD_TIME = '2026-10-09 10:55 (ICT)'; // 수정 작업 완료 시 자동 갱신
 
 var APP_CHANGELOG = [
+    {
+        version: 'v1.4.7',
+        date: '2026-10-09 10:55',
+        items: [
+            '게임 기록 순위 미정/시작 전(?위) 참여자 목록 제작자(김상국) 최우선 맨 앞 정렬',
+            '참석자 선택 팝업 및 대시보드 활동 멤버 목록 제작자(김상국) 우선 노출'
+        ]
+    },
     {
         version: 'v1.4.6',
         date: '2026-09-18 12:28',
@@ -16,6 +24,22 @@ var APP_CHANGELOG = [
             'G-핸디표 NX4·글로벌·평균·최저핸디 소수점 2자리(0.01 단위) 표시 및 입력 지원',
             '음수 핸디 반올림 로직 사사오입(절댓값 0.5 이상 올림) 보정 (예: -0.50 / -0.51 → 최종핸디 -1)',
             '대시보드 HTML 태그 및 인코딩 정상 복구'
+        ]
+    },
+    {
+        version: 'v1.4.3',
+        date: '2026-09-03 13:15',
+        items: [
+            '성적 통계 & 순위/성적 탭 비활성 멤버 필터 기능 추가 (활성/전체 토글, 즉시 재렌더링)',
+            '비활성 인원 카운트 표시 및 두 페이지 독립 필터 상태 유지'
+        ]
+    },
+    {
+        version: 'v1.4.2',
+        date: '2026-09-03 12:45',
+        items: [
+            '순위/성적 탭 멤버별 누적 회비 & 1회당 평균 컬럼 추가, 테이블 폭 680px 확장',
+            '회비 산출 시트 이력과 게임별 참여자 순위 날짜 연결 실시간 연산'
         ]
     },
     {
@@ -80,7 +104,7 @@ var supabaseClient = null;
     try {
         if (typeof supabase !== 'undefined' && supabase && supabase.createClient) {
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            console.log('✅ Supabase Client initialized (v1.4.0)');
+            console.log('✅ Supabase Client initialized (v1.4.3)');
         } else {
             console.warn('⚠️ supabase CDN not loaded yet');
         }
