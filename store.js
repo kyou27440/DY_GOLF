@@ -356,6 +356,19 @@ const Store = {
                             }
                         }
                     });
+                    // 순위 정렬: 순위 오름차순, 순위 미정(시작 전)/동률일 경우 제작자(김상국) 최우선
+                    g.club_game_participants.sort((a, b) => {
+                        const ra = a.ranking || 999;
+                        const rb = b.ranking || 999;
+                        if (ra !== rb) return ra - rb;
+                        const nameA = a.club_members?.name || memMap[a.member_id]?.name || a.member_name || '';
+                        const nameB = b.club_members?.name || memMap[b.member_id]?.name || b.member_name || '';
+                        const isKimA = nameA.includes('김상국') || a.member_id === 6;
+                        const isKimB = nameB.includes('김상국') || b.member_id === 6;
+                        if (isKimA && !isKimB) return -1;
+                        if (!isKimA && isKimB) return 1;
+                        return (a.id || 0) - (b.id || 0);
+                    });
                 }
             });
         } catch(e) {}
