@@ -4,6 +4,7 @@
 
 const ClubPage = {
     currentTab: 'games',
+    rankingShowActiveOnly: true,   // 순위탭 기본: 활성 멤버만
 
     async render() {
         const tab = this.currentTab || 'games';
@@ -101,7 +102,19 @@ const ClubPage = {
                 ${games.map(g => {
             const gDateKey = String(g.game_date || '').slice(0, 10);
             const calc = calcMap[gDateKey];
-            const parts = (g.club_game_participants || []).sort((a, b) => (a.ranking || 99) - (b.ranking || 99));
+            const parts = (g.club_game_participants || []).sort((a, b) => {
+                const ra = a.ranking || 999;
+                const rb = b.ranking || 999;
+                if (ra !== rb) return ra - rb;
+                // 순위가 없거나(시작 전) 같은 경우: 대시보드 제작자(김상국) 항상 맨 앞 정렬
+                const nameA = (a.club_members?.name) || allMembersMap[a.member_id] || a.member_name || '';
+                const nameB = (b.club_members?.name) || allMembersMap[b.member_id] || b.member_name || '';
+                const isKimA = nameA.includes('김상국') || a.member_id === 6;
+                const isKimB = nameB.includes('김상국') || b.member_id === 6;
+                if (isKimA && !isKimB) return -1;
+                if (!isKimA && isKimB) return 1;
+                return (a.id || 0) - (b.id || 0);
+            });
             const hasUnranked = parts.some(p => !p.ranking);
 
             // 참여자 인라인 배지 — 비활성 멤버도 allMembersMap으로 이름 보정
@@ -213,8 +226,14 @@ const ClubPage = {
             otherInactiveMembers = inactiveMembers;
         }
 
-        // 활성 멤버 + 비활성 참여자 + 나머지 비활성 멤버
-        const members = [...activeMembers, ...inactiveParticipants, ...otherInactiveMembers];
+        // 활성 멤버 + 비활성 참여자 + 나머지 비활성 멤버 (제작자 김상국 최우선 정렬)
+        const members = [...activeMembers, ...inactiveParticipants, ...otherInactiveMembers].sort((a, b) => {
+            const isKimA = (a.name || '').includes('김상국') || a.id === 6;
+            const isKimB = (b.name || '').includes('김상국') || b.id === 6;
+            if (isKimA && !isKimB) return -1;
+            if (!isKimA && isKimB) return 1;
+            return (a.name || '').localeCompare(b.name || '', 'ko');
+        });
 
         // 기존 참여자 맵 생성 (member_id -> ranking)
         const selectedMap = {}; // member_id -> ranking (or null)
@@ -297,7 +316,20 @@ const ClubPage = {
             const countBadge = document.getElementById('part-count-badge');
             if (!chipsGrid || !rankContainer) return;
 
-            const selectedMemberIds = Object.keys(selectedMap).map(Number);
+            const selectedMemberIds = Object.keys(selectedMap).map(Number).sort((a, b) => {
+                const rankA = selectedMap[a];
+                const rankB = selectedMap[b];
+                const ra = rankA || 999;
+                const rb = rankB || 999;
+                if (ra !== rb) return ra - rb;
+                const nameA = members.find(m => m.id === a)?.name || '';
+                const nameB = members.find(m => m.id === b)?.name || '';
+                const isKimA = nameA.includes('김상국') || a === 6;
+                const isKimB = nameB.includes('김상국') || b === 6;
+                if (isKimA && !isKimB) return -1;
+                if (!isKimA && isKimB) return 1;
+                return 0;
+            });
             if (countBadge) {
                 const teams = Math.floor(selectedMemberIds.length / 4);
                 const remainder = selectedMemberIds.length % 4;
@@ -540,7 +572,20 @@ const ClubPage = {
             };
             if (!game.game_date) { Utils.toast('날짜를 입력해주세요', 'error'); return; }
 
-            const selectedMemberIds = Object.keys(selectedMap).map(Number);
+            const selectedMemberIds = Object.keys(selectedMap).map(Number).sort((a, b) => {
+                const rankA = selectedMap[a];
+                const rankB = selectedMap[b];
+                const ra = rankA || 999;
+                const rb = rankB || 999;
+                if (ra !== rb) return ra - rb;
+                const nameA = members.find(m => m.id === a)?.name || '';
+                const nameB = members.find(m => m.id === b)?.name || '';
+                const isKimA = nameA.includes('김상국') || a === 6;
+                const isKimB = nameB.includes('김상국') || b === 6;
+                if (isKimA && !isKimB) return -1;
+                if (!isKimA && isKimB) return 1;
+                return 0;
+            });
             if (selectedMemberIds.length === 0) {
                 Utils.toast('참여자를 1명 이상 선택해주세요', 'warning');
                 return;
@@ -577,6 +622,13 @@ const ClubPage = {
     // ─── 멤버 관리 탭 ───
     async renderMembers(container) {
         const members = await Store.getMembers();
+        members.sort((a, b) => {
+            const isKimA = (a.name || '').includes('김상국') || a.id === 6;
+            const isKimB = (b.name || '').includes('김상국') || b.id === 6;
+            if (isKimA && !isKimB) return -1;
+            if (!isKimA && isKimB) return 1;
+            return (a.name || '').localeCompare(b.name || '', 'ko');
+        });
         this.membersMap = {};
         members.forEach(m => this.membersMap[m.id] = m);
 
@@ -701,11 +753,17 @@ const ClubPage = {
     // ─── 순위/성적 탭 ───
 
     async renderRanking(container) {
-        const [stats, trend, calcHistories] = await Promise.all([
+        const [allStats, trend, calcHistories] = await Promise.all([
             Store.getMemberStats(),
             Store.getRankingTrend(20),
             Store.getCalcHistoryList()
         ]);
+
+        // ─ 활성 멤버 필터 적용 ─
+        const stats = this.rankingShowActiveOnly
+            ? allStats.filter(s => s.status === 'active')
+            : allStats;
+        const inactiveCount = allStats.filter(s => s.status !== 'active').length;
 
         // ─ calcHistory를 날짜별 맵으로 구성 ─
         const calcMap = {};
@@ -848,12 +906,33 @@ const ClubPage = {
         </div>`;
 
         container.innerHTML = `
-            <div class="section-header" style="margin-bottom:14px;">
+            <div class="section-header" style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
                 <span class="section-title">🏆 멤버별 성적 현황</span>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    ${inactiveCount > 0 ? `<span style="font-size:0.68rem;color:#64748b;">비활성 ${inactiveCount}명</span>` : ''}
+                    <button id="ranking-filter-btn"
+                        style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;
+                               border:1.5px solid ${this.rankingShowActiveOnly ? 'rgba(52,211,153,0.6)' : 'rgba(148,163,184,0.4)'};
+                               background:${this.rankingShowActiveOnly ? 'rgba(52,211,153,0.12)' : 'rgba(30,41,59,0.6)'};
+                               color:${this.rankingShowActiveOnly ? '#34d399' : '#94a3b8'};
+                               font-size:0.72rem;font-weight:700;cursor:pointer;transition:all 0.15s;">
+                        <span style="width:7px;height:7px;border-radius:50%;background:${this.rankingShowActiveOnly ? '#34d399' : '#64748b'};display:inline-block;"></span>
+                        ${this.rankingShowActiveOnly ? '활성 멤버만' : '전체 멤버'}
+                    </button>
+                </div>
             </div>
             ${podiumHtml}
             ${tableHtml}
         `;
+
+        // ─ 필터 버튼 이벤트 ─
+        const filterBtn = document.getElementById('ranking-filter-btn');
+        if (filterBtn) {
+            filterBtn.addEventListener('click', () => {
+                this.rankingShowActiveOnly = !this.rankingShowActiveOnly;
+                this.renderRanking(container);
+            });
+        }
     },
 
     ratioPresets: {
@@ -1459,27 +1538,6 @@ const ClubPage = {
 
             rawElem.value =
                 `⛳ [회사 모임 회비 정산 시트]
-===================================
-👥 참석 인원: ${count}명
-⛳ 스크린 골프: ${Utils.formatVND(golfTotal)} ${golfMode === 'per_person' ? `(1인당 ${Utils.formatVND(golfVal)})` : ''}
-🍜 식사비 (MAX): ${Utils.formatVND(mealTotal)}
-💵 총 정산 비용: ${Utils.formatVND(ttlGrandTotal)}
------------------------------------
-┌   순위   ┬  비율  ┬    납부 금액 (VND)    ┐
-├──────────┼────────┼───────────────────┤
-${rankLines}
-└──────────┴────────┴───────────────────┘
-※ 게임 종료 후 최종 순위에 따라 입금해 주세요! 🙏`;
-        }
-    }
-};
-
-Router.register('club', ClubPage);
-window.ClubPage = ClubPage;
-            }).join('\n');
-
-rawElem.value =
-    `⛳ [회사 모임 회비 정산 시트]
 ===================================
 👥 참석 인원: ${count}명
 ⛳ 스크린 골프: ${Utils.formatVND(golfTotal)} ${golfMode === 'per_person' ? `(1인당 ${Utils.formatVND(golfVal)})` : ''}
