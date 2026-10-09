@@ -105,7 +105,19 @@ const DashboardPage = {
     renderRecentGames(games) {
         let html = '<div class="recent-games-container" style="display:flex;flex-direction:column;gap:10px;">';
         games.forEach(g => {
-            const parts = (g.club_game_participants || []).sort((a, b) => (a.ranking || 99) - (b.ranking || 99));
+            const parts = (g.club_game_participants || []).sort((a, b) => {
+                const ra = a.ranking || 999;
+                const rb = b.ranking || 999;
+                if (ra !== rb) return ra - rb;
+                // 순위가 없거나(시작 전) 같은 경우: 대시보드 제작자(김상국) 항상 맨 앞 정렬
+                const nameA = a.club_members?.name || a.member_name || '';
+                const nameB = b.club_members?.name || b.member_name || '';
+                const isKimA = nameA.includes('김상국') || a.member_id === 6;
+                const isKimB = nameB.includes('김상국') || b.member_id === 6;
+                if (isKimA && !isKimB) return -1;
+                if (!isKimA && isKimB) return 1;
+                return (a.id || 0) - (b.id || 0);
+            });
 
             const partBadges = parts.map(p => {
                 const rankClass = p.ranking <= 3 && p.ranking > 0 ? `rank-${p.ranking}` : 'rank-other';
@@ -156,8 +168,15 @@ const DashboardPage = {
     },
 
     renderActiveMembers(members) {
+        const sortedMembers = [...(members || [])].sort((a, b) => {
+            const isKimA = (a.name || '').includes('김상국') || a.id === 6;
+            const isKimB = (b.name || '').includes('김상국') || b.id === 6;
+            if (isKimA && !isKimB) return -1;
+            if (!isKimA && isKimB) return 1;
+            return (a.name || '').localeCompare(b.name || '', 'ko');
+        });
         let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(210px, 1fr));gap:14px;">';
-        members.forEach(m => {
+        sortedMembers.forEach(m => {
             const avatarText = m.nickname ? Utils.escapeHtml(m.nickname) : (m.name.length >= 3 ? m.name.slice(-2) : m.name);
             const typeBadge = m.member_type === 'regular'
                 ? `<span style="background:rgba(16,185,129,0.18);color:#34d399;border:1px solid rgba(16,185,129,0.35);font-size:0.8rem;font-weight:700;padding:2px 8px;border-radius:6px;white-space:nowrap;">상시</span>`
