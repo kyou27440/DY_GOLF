@@ -48,11 +48,15 @@ const DashboardPage = {
     },
 
     _buildHtml(games, totalGamesCount, members, calcHistories) {
-        const recentGames = (games || []).slice(0, 3);
-        const totalCountDisplay = totalGamesCount || (games || []).length;
-        const curVer = typeof APP_VERSION !== 'undefined' ? APP_VERSION : (window.APP_VERSION || 'v1.5.0');
-        const curBuildTime = typeof APP_BUILD_TIME !== 'undefined' ? APP_BUILD_TIME : (window.APP_BUILD_TIME || '2026-11-13 12:55 (ICT)');
-        const changelog = typeof APP_CHANGELOG !== 'undefined' ? APP_CHANGELOG : (window.APP_CHANGELOG || []);
+        const safeGames = Array.isArray(games) ? games : [];
+        const safeMembers = Array.isArray(members) ? members : [];
+        const safeCalcs = Array.isArray(calcHistories) ? calcHistories : [];
+        const recentGames = safeGames.slice(0, 3);
+        const totalCountDisplay = totalGamesCount || safeGames.length;
+        const curVer = typeof APP_VERSION !== 'undefined' ? APP_VERSION : (window.APP_VERSION || 'v1.5.1');
+        const curBuildTime = typeof APP_BUILD_TIME !== 'undefined' ? APP_BUILD_TIME : (window.APP_BUILD_TIME || '2026-11-13 14:15 (ICT)');
+        const rawChangelog = typeof APP_CHANGELOG !== 'undefined' ? APP_CHANGELOG : (window.APP_CHANGELOG || []);
+        const changelog = Array.isArray(rawChangelog) ? rawChangelog : [];
 
         return `
         <div class="version-banner" style="background: linear-gradient(135deg, rgba(16,185,129,0.18), rgba(6,78,59,0.25)); border: 1px solid rgba(16,185,129,0.35); border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
@@ -73,7 +77,7 @@ const DashboardPage = {
             <div class="summary-card amber">
                 <div class="card-icon">📊</div>
                 <div class="card-label">저장된 산출 이력</div>
-                <div class="card-value">${(calcHistories || []).length}건 보관</div>
+                <div class="card-value">${safeCalcs.length}건 보관</div>
                 <div class="card-sub">날짜별 회비 산출 시트</div>
             </div>
             <div class="summary-card indigo">
@@ -85,7 +89,7 @@ const DashboardPage = {
             <div class="summary-card rose">
                 <div class="card-icon">👥</div>
                 <div class="card-label">활동 모임 멤버</div>
-                <div class="card-value">${members.length}명</div>
+                <div class="card-value">${safeMembers.length}명</div>
                 <div class="card-sub">상시 & 출장 멤버</div>
             </div>
         </div>
@@ -103,14 +107,14 @@ const DashboardPage = {
                     <span class="card-title">📊 최근 저장된 회비 산출 이력</span>
                     <button class="btn btn-emerald btn-sm" onclick="Router.navigate('club', 'calculator')">산출시트 이동</button>
                 </div>
-                ${calcHistories && calcHistories.length > 0 ? this.renderRecentCalcs(calcHistories.slice(0, 3)) : '<div class="empty-state"><div class="empty-icon">📊</div><p class="empty-text">저장된 산출 이력이 없습니다</p></div>'}
+                ${safeCalcs.length > 0 ? this.renderRecentCalcs(safeCalcs.slice(0, 3)) : '<div class="empty-state"><div class="empty-icon">📊</div><p class="empty-text">저장된 산출 이력이 없습니다</p></div>'}
             </div>
             <div class="card full-width">
                 <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
                     <span class="card-title">👥 활동 중인 모임 멤버</span>
                     <button class="btn btn-ghost btn-sm" onclick="Router.navigate('club', 'members')">멤버 관리 ➔</button>
                 </div>
-                ${this.renderActiveMembers(members)}
+                ${this.renderActiveMembers(safeMembers)}
             </div>
 
             <!-- 최근 업데이트 (리비전 이력) 카드 -->
@@ -130,7 +134,7 @@ const DashboardPage = {
                                 <span style="font-size:0.72rem;color:#94a3b8;font-weight:normal;">(${log.date})</span>
                             </div>
                             <ul style="margin:0;padding-left:18px;font-size:0.78rem;color:#cbd5e1;line-height:1.6;">
-                                ${log.items.map(item => `<li>${item}</li>`).join('')}
+                                ${(log.items || []).map(item => `<li>${item}</li>`).join('')}
                             </ul>
                         </div>
                     `).join('') : '<div style="font-size:0.8rem;color:#94a3b8;">업데이트 내역이 없습니다.</div>'}
@@ -214,7 +218,9 @@ const DashboardPage = {
         });
         let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(210px, 1fr));gap:14px;">';
         sortedMembers.forEach(m => {
-            const avatarText = m.nickname ? Utils.escapeHtml(m.nickname) : (m.name.length >= 3 ? m.name.slice(-2) : m.name);
+            if (!m) return;
+            const mName = String(m.name || '');
+            const avatarText = m.nickname ? Utils.escapeHtml(m.nickname) : (mName.length >= 3 ? mName.slice(-2) : (mName || '?'));
             const typeBadge = m.member_type === 'regular'
                 ? `<span style="background:rgba(16,185,129,0.18);color:#34d399;border:1px solid rgba(16,185,129,0.35);font-size:0.8rem;font-weight:700;padding:2px 8px;border-radius:6px;white-space:nowrap;">상시</span>`
                 : `<span style="background:rgba(139,92,246,0.18);color:#c084fc;border:1px solid rgba(139,92,246,0.35);font-size:0.8rem;font-weight:700;padding:2px 8px;border-radius:6px;white-space:nowrap;">출장</span>`;
@@ -223,10 +229,10 @@ const DashboardPage = {
                 <div class="active-member-card" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:linear-gradient(135deg, rgba(30,41,59,0.9), rgba(15,23,42,0.95));border:1px solid rgba(99,102,241,0.28);border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,0.18);transition:all 0.2s ease;">
                     <div class="member-avatar" style="height:42px;min-width:50px;padding:0 14px;font-size:0.92rem;font-weight:700;border-radius:21px;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 4px 12px rgba(99,102,241,0.35);color:#ffffff;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;">${avatarText}</div>
                     <div style="overflow:hidden;flex:1;">
-                        <div style="font-weight:700;font-size:1.05rem;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${Utils.escapeHtml(m.name)}</div>
+                        <div style="font-weight:700;font-size:1.05rem;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${Utils.escapeHtml(mName)}</div>
                         <div style="display:flex;align-items:center;gap:6px;margin-top:5px;white-space:nowrap;">
                             ${typeBadge}
-                            <span style="font-size:0.88rem;color:#cbd5e1;font-weight:500;white-space:nowrap;">• ${Utils.escapeHtml(m.company)}</span>
+                            <span style="font-size:0.88rem;color:#cbd5e1;font-weight:500;white-space:nowrap;">• ${Utils.escapeHtml(m.company || '현지')}</span>
                         </div>
                     </div>
                 </div>
