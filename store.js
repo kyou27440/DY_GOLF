@@ -48,26 +48,30 @@ const Store = {
 
     /** 로컬/메모리 캐시 존재 여부 (대시보드 0.01초 즉시 렌더링 판단용) */
     hasInstantDashboardCache() {
-        if (this._memCache.games && this._memCache.members) return true;
+        if (Array.isArray(this._memCache.games) && Array.isArray(this._memCache.members) && this._memCache.members.length > 0) {
+            return true;
+        }
         const localGames = this._getLocalGames();
         const localMembers = this._getLocalMembers();
-        return (localGames.length > 0 || localMembers.length > 0);
+        return (localGames.length > 0 && localMembers.length > 0);
     },
 
     /** 대시보드용 동기(Synchronous) 즉시 캐시 데이터 반환 */
     getCachedDashboardData() {
-        const allGames = this._memCache.games || this._getLocalGames() || [];
-        const allMembers = this._memCache.members || (this._getLocalMembers() || []).map(m => this._parseMember(m));
-        const activeMembers = allMembers.filter(m => !m.status || m.status === 'active');
-        const calcHistories = this._memCache.calcHistory || this._getLocalCalcHistory() || [];
+        const allGames = Array.isArray(this._memCache.games) ? this._memCache.games : this._getLocalGames();
+        const allMembers = Array.isArray(this._memCache.members)
+            ? this._memCache.members
+            : this._getLocalMembers().map(m => this._parseMember(m));
+        const activeMembers = allMembers.filter(m => m && m.name && (!m.status || m.status === 'active'));
+        const calcHistories = Array.isArray(this._memCache.calcHistory) ? this._memCache.calcHistory : this._getLocalCalcHistory();
 
         // 로컬 게임에 멤버 이름 매핑 보완
         const memMap = {};
-        allMembers.forEach(m => { if (m && m.id) memMap[m.id] = m; });
+        allMembers.forEach(m => { if (m && m.id && m.name) memMap[m.id] = m; });
         allGames.forEach(g => {
             if (g && Array.isArray(g.club_game_participants)) {
                 g.club_game_participants.forEach(p => {
-                    if ((!p.club_members || !p.club_members.name) && memMap[p.member_id]) {
+                    if (p && (!p.club_members || !p.club_members.name) && memMap[p.member_id]) {
                         p.club_members = { name: memMap[p.member_id].name };
                     }
                 });
@@ -198,7 +202,8 @@ const Store = {
     },
 
     _parseMember(member) {
-        if (!member) return member;
+        if (!member) return { id: 0, name: '', nickname: '', company: '현지', member_type: 'regular', status: 'active', memo: '' };
+        const safeName = typeof member.name === 'string' ? member.name : String(member.name || '');
         let nick = member.nickname || '';
         let memo = member.memo || '';
         if (!nick && memo && memo.includes('[nick:')) {
@@ -208,19 +213,31 @@ const Store = {
                 memo = memo.replace(/\[nick:[^\]]*\]/g, '').trim();
             }
         }
-        return { ...member, nickname: nick, memo: memo };
+        return {
+            ...member,
+            name: safeName,
+            company: member.company || '현지',
+            nickname: nick,
+            memo: memo
+        };
     },
 
     _getLocalMembers() {
         try {
             const raw = localStorage.getItem('club_local_members_v1');
-            return raw ? JSON.parse(raw) : [];
+            const parsed = raw ? JSON.parse(raw) : [];
+            if (!Array.isArray(parsed)) return [];
+            // 이름이 없는 불완전한 로컬 조각(상태 변경 시 잘못 저장된 객체 등) 자동 필터링
+            return parsed.filter(m => m && m.id && typeof m.name === 'string' && m.name.trim().length > 0);
         } catch(e) { return []; }
     },
 
     _saveLocalMembers(list) {
         try {
-            localStorage.setItem('club_local_members_v1', JSON.stringify(list));
+            const validList = Array.isArray(list)
+                ? list.filter(m => m && m.id && typeof m.name === 'string' && m.name.trim().length > 0)
+                : [];
+            localStorage.setItem('club_local_members_v1', JSON.stringify(validList));
         } catch(e) {}
     },
 
@@ -321,12 +338,16 @@ const Store = {
         } catch(e) {}
 
         const localList = this._getLocalMembers();
-        let updatedItem = dbMember || { ...prepared, id: id };
         const existingIdx = localList.findIndex(m => String(m.id) === String(id));
+        let updatedItem = {
+            ...(existingIdx >= 0 ? localList[existingIdx] : {}),
+            ...(dbMember || {}),
+            ...prepared,
+            id: id
+        };
         if (existingIdx >= 0) {
-            updatedItem = { ...localList[existingIdx], ...prepared };
             localList[existingIdx] = updatedItem;
-        } else {
+        } else if (updatedItem.name) {
             localList.push(updatedItem);
         }
         this._saveLocalMembers(localList);
@@ -397,7 +418,8 @@ const Store = {
     _getLocalGames() {
         try {
             const raw = localStorage.getItem('club_local_games_v1');
-            return raw ? JSON.parse(raw) : [];
+            const parsed = raw ? JSON.parse(raw) : [];
+            return Array.isArray(parsed) ? parsed : [];
         } catch(e) { return []; }
     },
 
@@ -976,7 +998,8 @@ const Store = {
     _getLocalCalcHistory() {
         try {
             const raw = localStorage.getItem('club_calc_history_v1');
-            return raw ? JSON.parse(raw) : [];
+            const parsed = raw ? JSON.parse(raw) : [];
+            return Array.isArray(parsed) ? parsed : [];
         } catch(e) {
             return [];
         }
