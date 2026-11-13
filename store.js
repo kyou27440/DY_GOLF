@@ -273,6 +273,28 @@ const Store = {
                     }
                 });
 
+                // 3. 만약 클라우드 DB가 휴면(Paused)이라 dbList가 비어있다면 로컬 게임 기록 속 참여자 정보에서도 멤버 임시 복원
+                if (dbList.length === 0) {
+                    const localGames = this._getLocalGames();
+                    localGames.forEach(g => {
+                        (g.club_game_participants || []).forEach(p => {
+                            const mid = p && p.member_id;
+                            const mName = p?.club_members?.name || p?.member_name;
+                            if (mid && mName && !combinedMap[String(mid)]) {
+                                combinedMap[String(mid)] = {
+                                    id: mid,
+                                    name: mName,
+                                    company: '현지',
+                                    member_type: 'regular',
+                                    status: 'active',
+                                    join_date: String(g.game_date || '2026-07-21').slice(0, 10),
+                                    memo: ''
+                                };
+                            }
+                        });
+                    });
+                }
+
                 const finalList = Object.values(combinedMap);
                 if (dbList.length > 0) {
                     this._saveLocalMembers(finalList);
@@ -453,6 +475,7 @@ const Store = {
                                 .select('*, club_game_participants(*, club_members(name))')
                                 .order('game_date', { ascending: false });
                             if (!error && data && data.length > 0) return data;
+                            if (window.__SUPABASE_OFFLINE__) return [];
 
                             const { data: data2 } = await this.from('club_games')
                                 .select('*, club_game_participants(*)')
