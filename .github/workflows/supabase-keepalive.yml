@@ -1,0 +1,27 @@
+name: Supabase Keep-Alive (휴면 방지 자동 핑)
+
+on:
+  schedule:
+    # 매주 월요일, 목요일 오전 09:00 (ICT 기준 09:00 = UTC 02:00) 자동 실행하여 7일 미사용 휴면(Paused) 영구 방지
+    - cron: '0 2 * * 1,4'
+  workflow_dispatch:
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API to prevent auto-pause
+        run: |
+          SUPABASE_URL="https://qkkcugjuopjeuiyczjzf.supabase.co"
+          SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFra2N1Z2p1b3BqZXVpeWN6anpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2NjE2NjQsImV4cCI6MjEwMDIzNzY2NH0.qPYwvuSBp_SEvi1vG4qoCIpbsBU1eTIYz43q-Df00DY"
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/club_members?select=id&limit=1" \
+            -H "apikey: ${SUPABASE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_KEY}")
+          echo "Supabase Keep-Alive HTTP Status: ${HTTP_STATUS}"
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "✅ Supabase DB is active and healthy!"
+          else
+            echo "⚠️ Supabase returned status ${HTTP_STATUS}"
+            exit 1
+          fi
