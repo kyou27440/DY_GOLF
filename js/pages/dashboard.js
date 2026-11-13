@@ -3,18 +3,55 @@
    ============================================ */
 
 const DashboardPage = {
+    _needsBgSync: false,
+
     async render() {
-        const [games, totalGamesCount, members, calcHistories] = await Promise.all([
-            Store.getGames({ limit: 5 }).catch(() => []),
-            Store.getGamesCount().catch(() => 0),
+        // 1. 로컬 또는 인메모리 캐시가 있으면 네트워크 대기 없이 0.01초 즉시 렌더링! (Stale-While-Revalidate)
+        if (Store.hasInstantDashboardCache()) {
+            const cached = Store.getCachedDashboardData();
+            this._needsBgSync = !(Store._isCacheValid('games') && Store._isCacheValid('members') && Store._isCacheValid('calcHistory'));
+            return this._buildHtml(cached.games, cached.totalGamesCount, cached.members, cached.calcHistories);
+        }
+
+        // 2. 최초 접속(캐시 없음): 단일 병렬 웨이브로 최소 쿼리만 실행 (getGames 내부에서 getMembers/count 동시 해결)
+        this._needsBgSync = false;
+        const [games, members, calcHistories] = await Promise.all([
+            Store.getGames().catch(() => []),
             Store.getMembers('active').catch(() => []),
             Store.getCalcHistoryList().catch(() => [])
         ]);
 
+        return this._buildHtml(games, (games || []).length, members, calcHistories);
+    },
+
+    async afterRender() {
+        // 캐시로 즉시 화면을 먼저 띄운 뒤, 백그라운드에서 클라우드 최신 데이터 조용히 동기화
+        if (!this._needsBgSync) return;
+        this._needsBgSync = false;
+
+        try {
+            const [allGames, members, calcHistories] = await Promise.all([
+                Store.getGames({}, { forceRefresh: true }).catch(() => []),
+                Store.getMembers('active', { forceRefresh: true }).catch(() => []),
+                Store.getCalcHistoryList({ forceRefresh: true }).catch(() => [])
+            ]);
+
+            if (Router.currentPage === 'dashboard') {
+                const container = document.getElementById('page-container');
+                if (container) {
+                    container.innerHTML = `<div class="page-content">${this._buildHtml(allGames, (allGames || []).length, members, calcHistories)}</div>`;
+                }
+            }
+        } catch (e) {
+            console.warn('Dashboard background sync error:', e);
+        }
+    },
+
+    _buildHtml(games, totalGamesCount, members, calcHistories) {
         const recentGames = (games || []).slice(0, 3);
         const totalCountDisplay = totalGamesCount || (games || []).length;
-        const curVer = typeof APP_VERSION !== 'undefined' ? APP_VERSION : (window.APP_VERSION || 'v1.3.7');
-        const curBuildTime = typeof APP_BUILD_TIME !== 'undefined' ? APP_BUILD_TIME : (window.APP_BUILD_TIME || '2026-08-28 11:45 (ICT)');
+        const curVer = typeof APP_VERSION !== 'undefined' ? APP_VERSION : (window.APP_VERSION || 'v1.5.0');
+        const curBuildTime = typeof APP_BUILD_TIME !== 'undefined' ? APP_BUILD_TIME : (window.APP_BUILD_TIME || '2026-11-13 12:55 (ICT)');
         const changelog = typeof APP_CHANGELOG !== 'undefined' ? APP_CHANGELOG : (window.APP_CHANGELOG || []);
 
         return `
