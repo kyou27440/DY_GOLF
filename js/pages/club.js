@@ -69,8 +69,11 @@ const ClubPage = {
 
     // ─── 게임 기록 탭 ───
     async renderGames(container) {
-        const games = await Store.getGames({ limit: 50 });
-        const calcHistories = await Store.getCalcHistoryList();
+        const [games, calcHistories, allMembers] = await Promise.all([
+            Store.getGames({ limit: 50 }).catch(() => []),
+            Store.getCalcHistoryList().catch(() => []),
+            Store.getMembers().catch(() => [])
+        ]);
         const calcMap = {};
         (calcHistories || []).forEach(c => {
             if (c && c.calc_date) {
@@ -80,11 +83,8 @@ const ClubPage = {
         });
 
         // 비활성 멤버 포함 전체 멤버 이름 맵 (이전 기록 표시 보장)
-        let allMembersMap = {};
-        try {
-            const allMembers = await Store.getMembers(); // status 필터 없음 → 전체
-            (allMembers || []).forEach(m => { if (m && m.id) allMembersMap[m.id] = m.name; });
-        } catch (e) { }
+        const allMembersMap = {};
+        (allMembers || []).forEach(m => { if (m && m.id) allMembersMap[m.id] = m.name; });
 
         this.gamesMap = {};
         games.forEach(g => this.gamesMap[g.id] = g);
