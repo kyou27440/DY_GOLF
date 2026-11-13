@@ -22,6 +22,12 @@ AI 또는 개발자가 기능을 수정하거나 추가했을 때 **반드시 �
 
 ## 📜 버전별 변경 이력 (Changelog)
 
+### 🚀 [v1.5.1] — 2026-11-13 14:15 (ICT)
+* **대시보드 초기 로딩 `length` 참조 오류 핫픽스 (`js/store.js`, `js/pages/dashboard.js`, `js/pages/club.js`, `js/pages/analytics.js`, `js/pages/ghandicap.js`)**:
+  - 기존 브라우저 `localStorage`(`club_local_members_v1`)에 상태 변경 등으로 `name` 속성이 누락된 불완전한 멤버 객체가 남아 있을 때, 즉시 캐시 렌더링 시 `m.name.length`에서 발생하던 `Cannot read properties of undefined (reading 'length')` 오류 수정
+  - `_getLocalMembers` / `_saveLocalMembers`에서 이름(`name`)이 없는 불완전한 로컬 조각을 자동 필터링·정화하고, `updateMember` 병합 로직 보완
+  - 대시보드 및 전 페이지의 배열/문자열 `.length` 접근에 방어 코드(`Array.isArray`, `String(m.name || '')`) 일괄 적용
+
 ### 🚀 [v1.5.0] — 2026-11-13 12:55 (ICT)
 * **PC & 모바일 대시보드 및 전체 탭 로딩 속도 대폭 최적화 (`index.html`, `js/store.js`, `js/pages/dashboard.js`, `js/router.js`, `js/app.js`)**:
   - **0.01초 즉시 렌더링 (Stale-While-Revalidate)**: 대시보드 진입 시 로컬/메모리 캐시로 즉시 화면을 먼저 표시하고 백그라운드에서 클라우드 최신 데이터를 동기화하여 체감 대기시간 제거
