@@ -11,6 +11,77 @@ if (typeof supabaseClient === 'undefined' || !supabaseClient || typeof supabaseC
 }
 
 const Store = {
+    // ── 인메모리 캐시 & 중복 요청 방지 (In-Flight Deduplication) ──
+    _memCache: {
+        members: null,
+        games: null,
+        calcHistory: null,
+        ghandicapConfigs: null,
+        settings: {},
+        ts: {}
+    },
+    _inflight: {},
+    CACHE_TTL: 60 * 1000, // 60초 동안 메모리 캐시 즉시 반환 (수정/저장 시 즉시 갱신)
+
+    _isCacheValid(key) {
+        return !!(this._memCache[key] !== null && this._memCache[key] !== undefined && this._memCache.ts[key] && (Date.now() - this._memCache.ts[key] < this.CACHE_TTL));
+    },
+
+    _setCache(key, data) {
+        this._memCache[key] = data;
+        this._memCache.ts[key] = Date.now();
+    },
+
+    invalidateCache(key = null) {
+        if (key) {
+            this._memCache[key] = null;
+            delete this._memCache.ts[key];
+        } else {
+            this._memCache.members = null;
+            this._memCache.games = null;
+            this._memCache.calcHistory = null;
+            this._memCache.ghandicapConfigs = null;
+            this._memCache.settings = {};
+            this._memCache.ts = {};
+        }
+    },
+
+    /** 로컬/메모리 캐시 존재 여부 (대시보드 0.01초 즉시 렌더링 판단용) */
+    hasInstantDashboardCache() {
+        if (this._memCache.games && this._memCache.members) return true;
+        const localGames = this._getLocalGames();
+        const localMembers = this._getLocalMembers();
+        return (localGames.length > 0 || localMembers.length > 0);
+    },
+
+    /** 대시보드용 동기(Synchronous) 즉시 캐시 데이터 반환 */
+    getCachedDashboardData() {
+        const allGames = this._memCache.games || this._getLocalGames() || [];
+        const allMembers = this._memCache.members || (this._getLocalMembers() || []).map(m => this._parseMember(m));
+        const activeMembers = allMembers.filter(m => !m.status || m.status === 'active');
+        const calcHistories = this._memCache.calcHistory || this._getLocalCalcHistory() || [];
+
+        // 로컬 게임에 멤버 이름 매핑 보완
+        const memMap = {};
+        allMembers.forEach(m => { if (m && m.id) memMap[m.id] = m; });
+        allGames.forEach(g => {
+            if (g && Array.isArray(g.club_game_participants)) {
+                g.club_game_participants.forEach(p => {
+                    if ((!p.club_members || !p.club_members.name) && memMap[p.member_id]) {
+                        p.club_members = { name: memMap[p.member_id].name };
+                    }
+                });
+            }
+        });
+
+        return {
+            games: allGames.slice(0, 5),
+            totalGamesCount: allGames.length,
+            members: activeMembers,
+            calcHistories
+        };
+    },
+
     // ── Safe Query Helper ──
     from(tableName) {
         if (typeof supabaseClient === 'undefined' || !supabaseClient || typeof supabaseClient.from !== 'function') {
@@ -153,34 +224,52 @@ const Store = {
         } catch(e) {}
     },
 
-    async getMembers(statusFilter = null) {
-        let dbList = [];
-        try {
-            let q = this.from('club_members').select('*').order('name');
-            if (statusFilter) q = q.eq('status', statusFilter);
-            const { data, error } = await q;
-            if (!error && data && data.length > 0) dbList = data;
-        } catch(e) {
-            console.error('getMembers DB error:', e);
+    async getMembers(statusFilter = null, options = {}) {
+        // 1. 인메모리 캐시가 유효하면 즉시 반환 (0ms)
+        if (!options.forceRefresh && this._isCacheValid('members')) {
+            const cached = this._memCache.members || [];
+            return statusFilter ? cached.filter(m => m.status === statusFilter) : [...cached];
         }
 
-        const localList = this._getLocalMembers();
-        const combinedMap = {};
+        // 2. 동시에 여러 곳에서 getMembers() 호출 시 단일 네트워크 요청만 실행 (Deduplication)
+        if (!this._inflight.members) {
+            this._inflight.members = (async () => {
+                let dbList = [];
+                try {
+                    const { data, error } = await this.from('club_members').select('*').order('name');
+                    if (!error && data && data.length > 0) dbList = data;
+                } catch(e) {
+                    console.error('getMembers DB error:', e);
+                }
 
-        // 1. DB 데이터 우선 등록 (클라우드가 진실의 원천)
-        dbList.forEach(m => { if (m && m.id) combinedMap[String(m.id)] = m; });
+                const localList = this._getLocalMembers();
+                const combinedMap = {};
 
-        // 2. 로컬에만 있는 신규 항목만 보완 (DB 데이터를 절대 덮어쓰지 않음)
-        localList.forEach(m => {
-            if (!m || !m.id) return;
-            if (statusFilter && m.status !== statusFilter) return;
-            if (!combinedMap[String(m.id)]) {
-                combinedMap[String(m.id)] = m;
-            }
-        });
+                // 1. DB 데이터 우선 등록 (클라우드가 진실의 원천)
+                dbList.forEach(m => { if (m && m.id) combinedMap[String(m.id)] = m; });
 
-        const finalList = Object.values(combinedMap);
-        return finalList.map(m => this._parseMember(m));
+                // 2. 로컬에만 있는 신규 항목만 보완 (DB 데이터를 절대 덮어쓰지 않음)
+                localList.forEach(m => {
+                    if (!m || !m.id) return;
+                    if (!combinedMap[String(m.id)]) {
+                        combinedMap[String(m.id)] = m;
+                    }
+                });
+
+                const finalList = Object.values(combinedMap);
+                if (dbList.length > 0) {
+                    this._saveLocalMembers(finalList);
+                }
+                const parsed = finalList.map(m => this._parseMember(m));
+                this._setCache('members', parsed);
+                return parsed;
+            })().finally(() => {
+                delete this._inflight.members;
+            });
+        }
+
+        const allMembers = await this._inflight.members;
+        return statusFilter ? allMembers.filter(m => m.status === statusFilter) : [...allMembers];
     },
 
     async addMember(member) {
@@ -210,6 +299,7 @@ const Store = {
             localList.push(savedMember);
         }
         this._saveLocalMembers(localList);
+        this.invalidateCache('members');
 
         return this._parseMember(savedMember);
     },
@@ -240,6 +330,7 @@ const Store = {
             localList.push(updatedItem);
         }
         this._saveLocalMembers(localList);
+        this.invalidateCache('members');
 
         return this._parseMember(updatedItem);
     },
@@ -259,15 +350,31 @@ const Store = {
         } catch(e) {}
     },
 
-    async getGHandicapConfigs() {
-        let configs = this._getLocalGHandicapConfigs();
-        try {
-            const remoteConfig = await this.getSetting('ghandicap_configs');
-            if (remoteConfig && typeof remoteConfig === 'object') {
-                configs = { ...remoteConfig, ...configs };
-            }
-        } catch(e) {}
-        return configs;
+    async getGHandicapConfigs(options = {}) {
+        if (!options.forceRefresh && this._isCacheValid('ghandicapConfigs')) {
+            return { ...this._memCache.ghandicapConfigs };
+        }
+        if (!this._inflight.ghandicapConfigs) {
+            this._inflight.ghandicapConfigs = (async () => {
+                let configs = this._getLocalGHandicapConfigs();
+                try {
+                    const remoteConfig = await this.getSetting('ghandicap_configs');
+                    if (remoteConfig) {
+                        const parsed = typeof remoteConfig === 'string' ? JSON.parse(remoteConfig) : remoteConfig;
+                        if (parsed && typeof parsed === 'object') {
+                            configs = { ...parsed, ...configs };
+                            this._saveLocalGHandicapConfigs(configs);
+                        }
+                    }
+                } catch(e) {}
+                this._setCache('ghandicapConfigs', configs);
+                return configs;
+            })().finally(() => {
+                delete this._inflight.ghandicapConfigs;
+            });
+        }
+        const res = await this._inflight.ghandicapConfigs;
+        return { ...res };
     },
 
     async saveGHandicapConfig(memberId, configData) {
@@ -278,6 +385,7 @@ const Store = {
             updated_at: new Date().toISOString()
         };
         this._saveLocalGHandicapConfigs(configs);
+        this._setCache('ghandicapConfigs', configs);
         try {
             await this.setSetting('ghandicap_configs', configs);
         } catch(e) {}
@@ -299,92 +407,108 @@ const Store = {
         } catch(e) {}
     },
 
-    async getGames(filters = {}) {
-        let dbList = [];
-        try {
-            let q = this.from('club_games').select('*, club_game_participants(*, club_members(name))').order('game_date', { ascending: false });
-            if (filters.startDate) q = q.gte('game_date', filters.startDate);
-            if (filters.endDate) q = q.lte('game_date', filters.endDate);
-            if (filters.limit) q = q.limit(filters.limit);
-            const { data, error } = await q;
-            if (!error && data && data.length > 0) {
-                dbList = data;
-            } else {
-                // PostgREST 관계 조인 오류 대비 백업 쿼리 (기본 테이블 조회 후 로컬 매핑)
-                let q2 = this.from('club_games').select('*, club_game_participants(*)').order('game_date', { ascending: false });
-                if (filters.startDate) q2 = q2.gte('game_date', filters.startDate);
-                if (filters.endDate) q2 = q2.lte('game_date', filters.endDate);
-                if (filters.limit) q2 = q2.limit(filters.limit);
-                const { data: data2 } = await q2;
-                if (data2 && data2.length > 0) dbList = data2;
-            }
-        } catch(e) {
-            console.error('getGames error:', e);
+    _applyGameFilters(list, filters = {}) {
+        let filtered = [...(list || [])];
+        if (filters.startDate) filtered = filtered.filter(g => g.game_date >= filters.startDate);
+        if (filters.endDate) filtered = filtered.filter(g => g.game_date <= filters.endDate);
+        if (filters.limit) filtered = filtered.slice(0, filters.limit);
+        return filtered;
+    },
+
+    async getGames(filters = {}, options = {}) {
+        // 1. 인메모리 캐시가 유효하면 네트워크 호출 없이 0ms 즉시 반환
+        if (!options.forceRefresh && this._isCacheValid('games')) {
+            return this._applyGameFilters(this._memCache.games, filters);
         }
 
-        const localList = this._getLocalGames();
-        const combinedMap = {};
-        // 1. DB 클라우드 데이터 우선 추가 (클라우드가 진실의 원천)
-        dbList.forEach(g => { if (g && g.id) combinedMap[String(g.id)] = g; });
+        // 2. 동시 호출 시 단일 네트워크 요청으로 병합 (Deduplication) + 멤버 조회 병렬 처리
+        if (!this._inflight.games) {
+            this._inflight.games = (async () => {
+                const [dbList, members] = await Promise.all([
+                    (async () => {
+                        try {
+                            const { data, error } = await this.from('club_games')
+                                .select('*, club_game_participants(*, club_members(name))')
+                                .order('game_date', { ascending: false });
+                            if (!error && data && data.length > 0) return data;
 
-        // 2. DB에 존재하지 않는 로컬 전용 신규 임시 항목만 보완 (기존 삭제/수정된 항목 부활 방지)
-        localList.forEach(g => {
-            if (g && g.id && !combinedMap[String(g.id)]) {
-                const isLocalTemp = (typeof g.id === 'string' && isNaN(Number(g.id))) || Number(g.id) > 1000000000000;
-                if (isLocalTemp || dbList.length === 0) {
-                    combinedMap[String(g.id)] = g;
-                }
-            }
-        });
-
-        let list = Object.values(combinedMap).sort((a, b) => new Date(b.game_date) - new Date(a.game_date));
-        if (filters.limit) list = list.slice(0, filters.limit);
-
-        // 멤버 정보 매핑 보완 (로컬/DB 백업 동기화)
-        try {
-            const members = await this.getMembers();
-            const memMap = {};
-            (members || []).forEach(m => { if (m && m.id) memMap[m.id] = m; });
-
-            list.forEach(g => {
-                if (g.club_game_participants && Array.isArray(g.club_game_participants)) {
-                    g.club_game_participants.forEach(p => {
-                        if (!p.club_members || !p.club_members.name) {
-                            const m = memMap[p.member_id];
-                            if (m) {
-                                p.club_members = { name: m.name };
-                            }
+                            const { data: data2 } = await this.from('club_games')
+                                .select('*, club_game_participants(*)')
+                                .order('game_date', { ascending: false });
+                            if (data2 && data2.length > 0) return data2;
+                        } catch(e) {
+                            console.error('getGames error:', e);
                         }
-                    });
-                    // 순위 정렬: 순위 오름차순, 순위 미정(시작 전)/동률일 경우 제작자(김상국) 최우선
-                    g.club_game_participants.sort((a, b) => {
-                        const ra = a.ranking || 999;
-                        const rb = b.ranking || 999;
-                        if (ra !== rb) return ra - rb;
-                        const nameA = a.club_members?.name || memMap[a.member_id]?.name || a.member_name || '';
-                        const nameB = b.club_members?.name || memMap[b.member_id]?.name || b.member_name || '';
-                        const isKimA = nameA.includes('김상국') || a.member_id === 6;
-                        const isKimB = nameB.includes('김상국') || b.member_id === 6;
-                        if (isKimA && !isKimB) return -1;
-                        if (!isKimA && isKimB) return 1;
-                        return (a.id || 0) - (b.id || 0);
-                    });
+                        return [];
+                    })(),
+                    this.getMembers(null, options).catch(() => [])
+                ]);
+
+                const localList = this._getLocalGames();
+                const combinedMap = {};
+                // 1. DB 클라우드 데이터 우선 추가 (클라우드가 진실의 원천)
+                dbList.forEach(g => { if (g && g.id) combinedMap[String(g.id)] = g; });
+
+                // 2. DB에 존재하지 않는 로컬 전용 신규 임시 항목만 보완
+                localList.forEach(g => {
+                    if (g && g.id && !combinedMap[String(g.id)]) {
+                        const isLocalTemp = (typeof g.id === 'string' && isNaN(Number(g.id))) || Number(g.id) > 1000000000000;
+                        if (isLocalTemp || dbList.length === 0) {
+                            combinedMap[String(g.id)] = g;
+                        }
+                    }
+                });
+
+                const fullList = Object.values(combinedMap).sort((a, b) => new Date(b.game_date) - new Date(a.game_date));
+
+                // 멤버 정보 매핑 보완 (이미 병렬로 가져온 members 활용 — 직렬 대기 없음)
+                const memMap = {};
+                (members || []).forEach(m => { if (m && m.id) memMap[m.id] = m; });
+
+                fullList.forEach(g => {
+                    if (g.club_game_participants && Array.isArray(g.club_game_participants)) {
+                        g.club_game_participants.forEach(p => {
+                            if (!p.club_members || !p.club_members.name) {
+                                const m = memMap[p.member_id];
+                                if (m) p.club_members = { name: m.name };
+                            }
+                        });
+                        // 순위 정렬: 순위 오름차순, 순위 미정(시작 전)/동률일 경우 제작자(김상국) 최우선
+                        g.club_game_participants.sort((a, b) => {
+                            const ra = a.ranking || 999;
+                            const rb = b.ranking || 999;
+                            if (ra !== rb) return ra - rb;
+                            const nameA = a.club_members?.name || memMap[a.member_id]?.name || a.member_name || '';
+                            const nameB = b.club_members?.name || memMap[b.member_id]?.name || b.member_name || '';
+                            const isKimA = nameA.includes('김상국') || a.member_id === 6;
+                            const isKimB = nameB.includes('김상국') || b.member_id === 6;
+                            if (isKimA && !isKimB) return -1;
+                            if (!isKimA && isKimB) return 1;
+                            return (a.id || 0) - (b.id || 0);
+                        });
+                    }
+                });
+
+                // 전체 게임 목록을 로컬 캐시 및 메모리 캐시에 보존 (limit으로 잘리기 전 원본 저장!)
+                if (dbList.length > 0) {
+                    this._saveLocalGames(fullList);
                 }
+                this._setCache('games', fullList);
+
+                // 로컬 임시 데이터가 DB에 없는 경우 백그라운드 자동 동기화 시도
+                const hasUnsyncedTemp = localList.some(g => (typeof g.id === 'string' && isNaN(Number(g.id))) || Number(g.id) > 1000000000000);
+                if (hasUnsyncedTemp) {
+                    setTimeout(() => this.syncAllLocalDataToSupabase(), 300);
+                }
+
+                return fullList;
+            })().finally(() => {
+                delete this._inflight.games;
             });
-        } catch(e) {}
-
-        // DB 조회가 성공했으면 최신 DB 데이터를 로컬 캐시에 동기화
-        if (dbList.length > 0) {
-            this._saveLocalGames(list);
         }
 
-        // 로컬 임시 데이터가 DB에 없는 경우 백그라운드 자동 동기화 시도
-        const hasUnsyncedTemp = localList.some(g => (typeof g.id === 'string' && isNaN(Number(g.id))) || Number(g.id) > 1000000000000);
-        if (hasUnsyncedTemp) {
-            setTimeout(() => this.syncAllLocalDataToSupabase(), 300);
-        }
-
-        return list;
+        const fullList = await this._inflight.games;
+        return this._applyGameFilters(fullList, filters);
     },
 
     /** PC/모바일 로컬스토리지에만 저장되어 있는 게임기록/멤버/산출시트를 Supabase 클라우드 DB로 완전 동기화 */
@@ -583,6 +707,8 @@ const Store = {
         const localList = this._getLocalGames();
         localList.unshift(savedGame);
         this._saveLocalGames(localList);
+        this.invalidateCache('games');
+        this.invalidateCache('members');
 
         return savedGame;
     },
@@ -662,6 +788,7 @@ const Store = {
             localList.unshift(updatedGame);
         }
         this._saveLocalGames(localList);
+        this.invalidateCache('games');
 
         return updatedGame;
     },
@@ -673,6 +800,7 @@ const Store = {
         let localList = this._getLocalGames();
         localList = localList.filter(g => String(g.id) !== String(id));
         this._saveLocalGames(localList);
+        this.invalidateCache('games');
         return true;
     },
 
@@ -680,9 +808,11 @@ const Store = {
 
     async getGamesCount() {
         try {
-            const { count, error } = await this.from('club_games').select('*', { count: 'exact', head: true });
-            if (!error && count != null && count >= 0) return count;
-            // fallback: local cache length
+            if (this._isCacheValid('games') && Array.isArray(this._memCache.games)) {
+                return this._memCache.games.length;
+            }
+            const games = await this.getGames();
+            if (games && games.length > 0) return games.length;
             return this._getLocalGames().length;
         } catch(e) { return 0; }
     },
@@ -870,8 +1000,9 @@ const Store = {
         let updatedList = currentList.filter(item => item && item.calc_date && String(item.calc_date).slice(0, 10) !== calcItem.calc_date);
         updatedList.unshift(calcItem);
         
-        // 2. 로컬 스토리지 저장
+        // 2. 로컬 스토리지 및 메모리 캐시 저장
         this._saveLocalCalcHistory(updatedList);
+        this._setCache('calcHistory', updatedList);
 
         // 3. Supabase app_settings에 영구 클라우드 동기화 (기기 간 100% 실시간 공유)
         try {
@@ -880,71 +1011,69 @@ const Store = {
             console.error('saveCalcHistory to app_settings error:', e);
         }
 
-        // 4. Supabase club_calc_history 전용 테이블이 존재할 경우 대비하여 upsert 시도
-        try {
-            await this.from('club_calc_history').upsert(calcItem);
-        } catch(e) {}
-
         return calcItem;
     },
 
-    async getCalcHistoryList() {
-        let cloudList = [];
-
-        // 1. Supabase app_settings에서 산출 이력 조회 (클라우드 최우선)
-        try {
-            const settingVal = await this.getSetting('club_calc_history');
-            if (settingVal) {
-                const parsed = typeof settingVal === 'string' ? JSON.parse(settingVal) : settingVal;
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    cloudList = parsed;
-                }
-            }
-        } catch(e) {
-            console.warn('getCalcHistoryList app_settings check:', e);
+    async getCalcHistoryList(options = {}) {
+        // 1. 인메모리 캐시가 유효하면 0ms 즉시 반환
+        if (!options.forceRefresh && this._isCacheValid('calcHistory')) {
+            return [...(this._memCache.calcHistory || [])];
         }
 
-        // 2. 만약 club_calc_history 전용 테이블이 있다면 조회하여 병합
-        try {
-            const { data, error } = await this.from('club_calc_history').select('*').order('calc_date', { ascending: false });
-            if (!error && data && data.length > 0) {
-                const map = {};
-                cloudList.forEach(item => { if (item && item.calc_date) map[String(item.calc_date).slice(0, 10)] = item; });
-                data.forEach(item => { if (item && item.calc_date) map[String(item.calc_date).slice(0, 10)] = item; });
-                cloudList = Object.values(map);
-            }
-        } catch(e) {}
+        // 2. 동시 호출 시 단일 네트워크 요청으로 병합 (Deduplication)
+        if (!this._inflight.calcHistory) {
+            this._inflight.calcHistory = (async () => {
+                let cloudList = [];
 
-        // 3. 로컬 캐시와 병합 (클라우드 데이터 우선)
-        const localList = this._getLocalCalcHistory();
-        const finalMap = {};
-
-        // 클라우드 데이터 우선 등록
-        cloudList.forEach(item => {
-            if (item && item.calc_date) finalMap[String(item.calc_date).slice(0, 10)] = item;
-        });
-
-        // 로컬에만 있는 항목 보완
-        localList.forEach(item => {
-            if (item && item.calc_date) {
-                const dateKey = String(item.calc_date).slice(0, 10);
-                if (!finalMap[dateKey]) {
-                    finalMap[dateKey] = item;
+                // Supabase app_settings에서 산출 이력 단일 조회 (존재하지 않는 club_calc_history 404 쿼리 제거)
+                try {
+                    const settingVal = await this.getSetting('club_calc_history');
+                    if (settingVal) {
+                        const parsed = typeof settingVal === 'string' ? JSON.parse(settingVal) : settingVal;
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            cloudList = parsed;
+                        }
+                    }
+                } catch(e) {
+                    console.warn('getCalcHistoryList app_settings check:', e);
                 }
-            }
-        });
 
-        const sortedList = Object.values(finalMap).sort((a, b) => new Date(b.calc_date) - new Date(a.calc_date));
-        
-        // 최신 리스트로 로컬 캐시 갱신
-        this._saveLocalCalcHistory(sortedList);
+                // 로컬 캐시와 병합 (클라우드 데이터 우선)
+                const localList = this._getLocalCalcHistory();
+                const finalMap = {};
 
-        // 만약 클라우드에 아직 안 올라간 로컬 데이터가 있었다면 백그라운드에서 app_settings 동기화
-        if (localList.length > cloudList.length) {
-            this.setSetting('club_calc_history', JSON.stringify(sortedList)).catch(() => {});
+                cloudList.forEach(item => {
+                    if (item && item.calc_date) finalMap[String(item.calc_date).slice(0, 10)] = item;
+                });
+
+                localList.forEach(item => {
+                    if (item && item.calc_date) {
+                        const dateKey = String(item.calc_date).slice(0, 10);
+                        if (!finalMap[dateKey]) {
+                            finalMap[dateKey] = item;
+                        }
+                    }
+                });
+
+                const sortedList = Object.values(finalMap).sort((a, b) => new Date(b.calc_date) - new Date(a.calc_date));
+                
+                // 최신 리스트로 로컬 및 메모리 캐시 갱신
+                this._saveLocalCalcHistory(sortedList);
+                this._setCache('calcHistory', sortedList);
+
+                // 만약 클라우드에 아직 안 올라간 로컬 데이터가 있었다면 백그라운드에서 app_settings 동기화
+                if (localList.length > cloudList.length) {
+                    this.setSetting('club_calc_history', JSON.stringify(sortedList)).catch(() => {});
+                }
+
+                return sortedList;
+            })().finally(() => {
+                delete this._inflight.calcHistory;
+            });
         }
 
-        return sortedList;
+        const list = await this._inflight.calcHistory;
+        return [...list];
     },
 
     async getCalcHistoryByDate(dateStr) {
@@ -959,17 +1088,15 @@ const Store = {
         let localList = this._getLocalCalcHistory();
         localList = localList.filter(item => item.id !== id);
         this._saveLocalCalcHistory(localList);
+        this.invalidateCache('calcHistory');
 
         // 2. app_settings 클라우드에서도 삭제 반영
         try {
-            const currentCloud = await this.getCalcHistoryList();
+            const currentCloud = await this.getCalcHistoryList({ forceRefresh: true });
             const filteredCloud = currentCloud.filter(item => item.id !== id);
+            this._saveLocalCalcHistory(filteredCloud);
+            this._setCache('calcHistory', filteredCloud);
             await this.setSetting('club_calc_history', JSON.stringify(filteredCloud));
-        } catch(e) {}
-
-        // 3. club_calc_history 전용 테이블에서도 삭제 시도
-        try {
-            await this.from('club_calc_history').delete().eq('id', id);
         } catch(e) {}
 
         return true;
