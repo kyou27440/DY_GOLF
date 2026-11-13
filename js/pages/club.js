@@ -346,7 +346,8 @@ const ClubPage = {
                 const isSelected = selectedMap[m.id] !== undefined;
                 const handiText = m.ghandicap !== undefined && m.ghandicap !== null && m.ghandicap !== '' ? ` (${m.ghandicap})` : '';
                 const isInactive = m.status !== 'active';
-                const avatarText = m.nickname ? Utils.escapeHtml(m.nickname) : (m.name.length >= 3 ? m.name.slice(-2) : m.name);
+                const mName = String(m.name || '');
+                const avatarText = m.nickname ? Utils.escapeHtml(m.nickname) : (mName.length >= 3 ? mName.slice(-2) : (mName || '?'));
 
                 const activeStyle = isSelected
                     ? 'background:linear-gradient(135deg,rgba(16,185,129,0.25),rgba(5,150,105,0.35));border:1.5px solid #10b981;box-shadow:0 0 10px rgba(16,185,129,0.25);'
@@ -401,7 +402,8 @@ const ClubPage = {
                 if (!m) return '';
                 const currentRank = selectedMap[mid];
                 const rankText = currentRank ? `${currentRank}등` : '미정';
-                const avatarText = m.nickname ? Utils.escapeHtml(m.nickname) : (m.name.length >= 3 ? m.name.slice(-2) : m.name);
+                const mName = String(m.name || '');
+                const avatarText = m.nickname ? Utils.escapeHtml(m.nickname) : (mName.length >= 3 ? mName.slice(-2) : (mName || '?'));
 
                 let rankBadgeBg = 'background:rgba(30,41,59,0.6);color:#94a3b8;border:1px solid rgba(255,255,255,0.1);';
                 if (currentRank === 1) rankBadgeBg = 'background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:1px solid #f59e0b;';
@@ -639,7 +641,8 @@ const ClubPage = {
             </div>
             <div class="club-members-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));gap:16px;">
                 ${members.map(m => {
-            const avatarText = m.nickname ? Utils.escapeHtml(m.nickname) : (m.name.length >= 3 ? m.name.slice(-2) : m.name);
+            const mName = String(m.name || '');
+            const avatarText = m.nickname ? Utils.escapeHtml(m.nickname) : (mName.length >= 3 ? mName.slice(-2) : (mName || '?'));
             const typeBadge = m.member_type === 'regular'
                 ? `<span style="background:rgba(16,185,129,0.18);color:#34d399;border:1px solid rgba(16,185,129,0.35);font-size:0.82rem;font-weight:700;padding:2px 8px;border-radius:6px;white-space:nowrap;">상시</span>`
                 : `<span style="background:rgba(139,92,246,0.18);color:#c084fc;border:1px solid rgba(139,92,246,0.35);font-size:0.82rem;font-weight:700;padding:2px 8px;border-radius:6px;white-space:nowrap;">출장</span>`;
