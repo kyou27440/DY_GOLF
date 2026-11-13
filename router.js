@@ -77,10 +77,15 @@ const Router = {
             titleElem.textContent = titles[pageName] || pageName;
         }
 
-        // 페이지 렌더링
+        // 페이지 렌더링 (캐시 히트 시 깜빡이는 '로딩 중...' 스피너 생략)
         const container = document.getElementById('page-container');
         if (!container) return;
-        container.innerHTML = '<div class="page-content" style="text-align:center;padding:60px"><span style="font-size:2rem">⏳</span><p style="color:var(--text-muted);margin-top:8px">로딩 중...</p></div>';
+
+        const isInstantDashboard = (pageName === 'dashboard' && typeof Store !== 'undefined' && Store.hasInstantDashboardCache && Store.hasInstantDashboardCache());
+        const isInstantCached = isInstantDashboard || (typeof Store !== 'undefined' && Store._isCacheValid && Store._isCacheValid('games') && Store._isCacheValid('members'));
+        if (!isInstantCached) {
+            container.innerHTML = '<div class="page-content" style="text-align:center;padding:60px"><span style="font-size:2rem">⏳</span><p style="color:var(--text-muted);margin-top:8px">로딩 중...</p></div>';
+        }
 
         try {
             const html = await pageModule.render();
