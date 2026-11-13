@@ -1,7 +1,16 @@
-var APP_VERSION = 'v1.5.1';
-var APP_BUILD_TIME = '2026-11-13 14:15 (ICT)'; // 수정 작업 완료 시 자동 갱신
+var APP_VERSION = 'v1.5.2';
+var APP_BUILD_TIME = '2026-11-13 14:30 (ICT)'; // 수정 작업 완료 시 자동 갱신
 
 var APP_CHANGELOG = [
+    {
+        version: 'v1.5.2',
+        date: '2026-11-13 14:30',
+        items: [
+            'Supabase 클라우드 DB 휴면(Paused)/연결불가 감지 서킷 브레이커(2.5초 타임아웃 & 즉시 로컬 전환) 도입',
+            '클라우드 DB 일시중지(Paused) 시 상단 원클릭 복구 안내 배너(Supabase Restore 바로가기) 표시',
+            '모임 & 골프 관리 탭(게임 기록) 직렬 쿼리를 병렬(Promise.all)로 전환 및 로컬 게임 기반 멤버 임시 복원 지원'
+        ]
+    },
     {
         version: 'v1.5.1',
         date: '2026-11-13 14:15',
@@ -137,11 +146,86 @@ var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 // supabase CDN이 전역 var supabase = {...createClient...}로 노출됨
 // 절대 var supabase = null 로 덮어쓰면 안됨!
 var supabaseClient = null;
+window.__SUPABASE_OFFLINE__ = false;
+window.__SUPABASE_OFFLINE_TS__ = 0;
+
+function showSupabaseOfflineBanner() {
+    if (typeof document === 'undefined') return;
+    if (document.getElementById('supabase-offline-banner')) return;
+    const header = document.getElementById('page-header');
+    const main = document.getElementById('main-content');
+    if (!main) return;
+    const banner = document.createElement('div');
+    banner.id = 'supabase-offline-banner';
+    banner.style.cssText = 'margin:12px 16px 0 16px;padding:12px 16px;border-radius:12px;background:linear-gradient(135deg,rgba(244,63,94,0.22),rgba(159,18,57,0.3));border:1.5px solid rgba(244,63,94,0.6);color:#fecdd3;font-size:0.84rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,0.3);z-index:50;';
+    banner.innerHTML = `
+        <div style="display:flex;align-items:flex-start;gap:10px;flex:1;min-width:240px;">
+            <span style="font-size:1.3rem;line-height:1;">🚨</span>
+            <div>
+                <div style="font-weight:800;color:#fff;font-size:0.9rem;margin-bottom:3px;">
+                    클라우드 DB(Supabase)가 휴면(Paused) 상태이거나 연결할 수 없습니다!
+                </div>
+                <div style="color:#fda4af;font-size:0.78rem;line-height:1.45;">
+                    무료 플랜은 7일 이상 미사용 시 자동 일시중지(Paused)되어 멤버·게임 데이터가 보이지 않고 로딩이 지연됩니다.<br>
+                    우측 버튼을 눌러 <b>Supabase 대시보드</b>에서 <b>[Restore project]</b>를 클릭하면 1~2분 내 모든 멤버와 기록이 즉시 복구됩니다.
+                </div>
+            </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+            <a href="https://supabase.com/dashboard/project/qkkcugjuopjeuiyczjzf" target="_blank" rel="noopener"
+               style="padding:7px 13px;border-radius:8px;background:#f43f5e;color:#fff;font-weight:800;font-size:0.78rem;text-decoration:none;white-space:nowrap;box-shadow:0 2px 8px rgba(244,63,94,0.4);">
+               🔗 Supabase 복구하러 가기
+            </a>
+            <button onclick="window.__SUPABASE_OFFLINE__=false;if(typeof Store!=='undefined')Store.invalidateCache();location.reload();"
+                    style="padding:7px 11px;border-radius:8px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);color:#fff;font-weight:700;font-size:0.76rem;cursor:pointer;white-space:nowrap;">
+                🔄 재연결
+            </button>
+        </div>
+    `;
+    if (header && header.nextSibling) {
+        main.insertBefore(banner, header.nextSibling);
+    } else {
+        main.prepend(banner);
+    }
+}
+
 (function initSupabaseClient() {
     try {
         if (typeof supabase !== 'undefined' && supabase && supabase.createClient) {
-            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            console.log('✅ Supabase Client initialized (v1.4.3)');
+            const customFetch = async (url, options = {}) => {
+                // 서킷 브레이커: 이미 DB 오프라인/휴면으로 판정된 경우 0ms 즉시 실패 반환 (무한 로딩 완전 방지)
+                if (window.__SUPABASE_OFFLINE__ && (Date.now() - window.__SUPABASE_OFFLINE_TS__ < 60000)) {
+                    showSupabaseOfflineBanner();
+                    throw new Error('SUPABASE_OFFLINE_CIRCUIT_OPEN');
+                }
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 2500);
+                try {
+                    const res = await fetch(url, { ...options, signal: controller.signal });
+                    clearTimeout(timer);
+                    if (res.status >= 502) {
+                        window.__SUPABASE_OFFLINE__ = true;
+                        window.__SUPABASE_OFFLINE_TS__ = Date.now();
+                        setTimeout(showSupabaseOfflineBanner, 50);
+                        throw new Error('SUPABASE_BOOTING_HTTP_' + res.status);
+                    }
+                    window.__SUPABASE_OFFLINE__ = false;
+                    const existingBanner = typeof document !== 'undefined' && document.getElementById('supabase-offline-banner');
+                    if (existingBanner) existingBanner.remove();
+                    return res;
+                } catch (err) {
+                    clearTimeout(timer);
+                    window.__SUPABASE_OFFLINE__ = true;
+                    window.__SUPABASE_OFFLINE_TS__ = Date.now();
+                    setTimeout(showSupabaseOfflineBanner, 50);
+                    throw err;
+                }
+            };
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+                auth: { persistSession: false, autoRefreshToken: false },
+                global: { fetch: customFetch }
+            });
+            console.log('✅ Supabase Client initialized (v1.5.2)');
         } else {
             console.warn('⚠️ supabase CDN not loaded yet');
         }
