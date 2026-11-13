@@ -136,7 +136,8 @@ const AnalyticsPage = {
                             : '#64748b';
                         const first1 = memberFirstCount[s.name] || 0;
                         const last1 = memberLastCount[s.name] || 0;
-                        const avatarText = s.name.length >= 2 ? s.name.slice(-2) : s.name;
+                        const sName = String(s.name || '');
+            const avatarText = sName.length >= 2 ? sName.slice(-2) : (sName || '?');
 
                         return `
                         <div style="display:grid;grid-template-columns:minmax(80px,1fr) 48px 54px 48px 48px 44px;
