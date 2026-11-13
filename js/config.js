@@ -1,7 +1,17 @@
-var APP_VERSION = 'v1.4.9';
-var APP_BUILD_TIME = '2026-10-16 15:40 (ICT)'; // 수정 작업 완료 시 자동 갱신
+var APP_VERSION = 'v1.5.0';
+var APP_BUILD_TIME = '2026-11-13 12:55 (ICT)'; // 수정 작업 완료 시 자동 갱신
 
 var APP_CHANGELOG = [
+    {
+        version: 'v1.5.0',
+        date: '2026-11-13 12:55',
+        items: [
+            'PC·모바일 대시보드 및 전체 탭 로딩 속도 대폭 최적화 (0.01초 즉시 캐시 렌더링 + 백그라운드 동기화)',
+            'Store 인메모리 캐시(TTL) 및 동시 중복 DB 요청 병합(In-Flight Deduplication) 적용',
+            '존재하지 않던 club_calc_history 테이블 404 지연 쿼리 제거 및 getGames 로컬 캐시 절삭 버그 수정',
+            '미사용 Chart.js(205KB) 블로킹 스크립트 제거, Supabase Preconnect 및 강제 이중 리로드 제거'
+        ]
+    },
     {
         version: 'v1.4.9',
         date: '2026-10-16 15:40',
