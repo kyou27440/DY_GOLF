@@ -25,3 +25,4 @@ jobs:
             echo "⚠️ Supabase returned status ${HTTP_STATUS}"
             exit 1
           fi
+
