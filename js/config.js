@@ -1,7 +1,15 @@
-var APP_VERSION = 'v1.5.0';
-var APP_BUILD_TIME = '2026-11-13 12:55 (ICT)'; // 수정 작업 완료 시 자동 갱신
+var APP_VERSION = 'v1.5.1';
+var APP_BUILD_TIME = '2026-11-13 14:15 (ICT)'; // 수정 작업 완료 시 자동 갱신
 
 var APP_CHANGELOG = [
+    {
+        version: 'v1.5.1',
+        date: '2026-11-13 14:15',
+        items: [
+            '대시보드 즉시 렌더링 시 불완전한 로컬 멤버 캐시(m.name 누락)로 인한 length 참조 오류 핫픽스',
+            '로컬 스토리지 손상 멤버 데이터 자동 정화 및 전 페이지(대시보드/모임/성적/핸디) 안전 배열·문자열 가드 적용'
+        ]
+    },
     {
         version: 'v1.5.0',
         date: '2026-11-13 12:55',
