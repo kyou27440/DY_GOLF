@@ -22,6 +22,12 @@ AI 또는 개발자가 기능을 수정하거나 추가했을 때 **반드시 �
 
 ## 📜 버전별 변경 이력 (Changelog)
 
+### 🚀 [v1.5.2] — 2026-11-13 14:30 (ICT)
+* **Supabase 클라우드 DB 휴면(Paused) 감지 서킷 브레이커 및 복구 안내 배너 도입 (`js/config.js`, `js/store.js`, `js/pages/club.js`)**:
+  - **원인 규명**: 마지막 사용일(2026-10-16) 이후 7일 이상 경과하여 Supabase 무료 플랜 정책에 의해 프로젝트(`qkkcugjuopjeuiyczjzf.supabase.co`)가 **자동 일시중지(Paused / NXDOMAIN)** 상태로 전환됨 (이로 인해 DB 연결 재시도로 로딩이 길어지고 클라우드 멤버가 조회되지 않던 현상 발생)
+  - **2.5초 타임아웃 & 오프라인 서킷 브레이커(`__SUPABASE_OFFLINE__`)**: 첫 연결 실패 시 즉시 오프라인 상태로 판정하여 이후 모든 탭/쿼리가 네트워크 대기(무한 로딩) 없이 0ms 만에 로컬 캐시로 전환되도록 개선
+  - **원클릭 복구 안내 배너**: 클라우드 DB 연결 불가 시 상단에 `[🔗 Supabase 복구하러 가기]` 바로가기 배너를 자동 표시하고, 로컬 게임 기록의 참여자 정보에서 멤버 목록을 임시 복원하도록 보완
+
 ### 🚀 [v1.5.1] — 2026-11-13 14:15 (ICT)
 * **대시보드 초기 로딩 `length` 참조 오류 핫픽스 (`js/store.js`, `js/pages/dashboard.js`, `js/pages/club.js`, `js/pages/analytics.js`, `js/pages/ghandicap.js`)**:
   - 기존 브라우저 `localStorage`(`club_local_members_v1`)에 상태 변경 등으로 `name` 속성이 누락된 불완전한 멤버 객체가 남아 있을 때, 즉시 캐시 렌더링 시 `m.name.length`에서 발생하던 `Cannot read properties of undefined (reading 'length')` 오류 수정
