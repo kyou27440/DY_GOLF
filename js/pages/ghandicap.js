@@ -320,7 +320,8 @@ const GHandicapPage = {
         let html = '';
         sorted.forEach((m, idx) => {
             const cfg = this.configs[m.id] || {};
-            const avatarText = m.name.length >= 2 ? m.name.slice(-2) : m.name;
+            const mName = String(m.name || '');
+            const avatarText = mName.length >= 2 ? mName.slice(-2) : (mName || '?');
 
             const normalHandi = cfg.golfzonHandi !== undefined && cfg.golfzonHandi !== '' && cfg.golfzonHandi !== null
                 ? Number(cfg.golfzonHandi).toFixed(2)
