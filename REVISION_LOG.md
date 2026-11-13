@@ -22,6 +22,13 @@ AI 또는 개발자가 기능을 수정하거나 추가했을 때 **반드시 �
 
 ## 📜 버전별 변경 이력 (Changelog)
 
+### 🚀 [v1.5.0] — 2026-11-13 12:55 (ICT)
+* **PC & 모바일 대시보드 및 전체 탭 로딩 속도 대폭 최적화 (`index.html`, `js/store.js`, `js/pages/dashboard.js`, `js/router.js`, `js/app.js`)**:
+  - **0.01초 즉시 렌더링 (Stale-While-Revalidate)**: 대시보드 진입 시 로컬/메모리 캐시로 즉시 화면을 먼저 표시하고 백그라운드에서 클라우드 최신 데이터를 동기화하여 체감 대기시간 제거
+  - **인메모리 캐시(`_memCache`) 및 동시 요청 병합(`_inflight`) 도입**: 탭 전환(게임기록, 순위/성적, 성적통계, G-핸디) 시 매번 발생하던 5~7개의 중복 DB 조회 제거
+  - **404 지연 쿼리 및 직렬 병목 제거**: DB에 존재하지 않는 `club_calc_history` 테이블 조회(매번 404 왕복 지연 발생) 제거, `getGames()` 내부의 직렬 `getMembers()` 호출을 병렬화, `getGames({ limit: 5 })`가 전체 로컬 게임 캐시를 5개로 덮어쓰던 버그 수정
+  - **초기 HTML 렌더링 블로킹 해소**: 사용하지 않는 `Chart.js` CDN(약 205KB) 제거, Supabase 도메인 `preconnect` 추가, 폰트 비동기 로드 및 `location.reload(true)` 이중 새로고침 제거
+
 ### 🚀 [v1.4.9] — 2026-10-16 15:40 (ICT)
 * **실제 핸디 & 반영 핸디 구분 체제 도입 (`js/pages/ghandicap.js`, `pages/ghandicap.js`)**:
   - **실제 핸디**: 입력된 소수점 2자리 핸디 유지
